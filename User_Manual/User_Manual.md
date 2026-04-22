@@ -1,10 +1,10 @@
-# ASTRA User Manual
-## Autonomous Scientific Discovery in Astrophysics
+# BIODISC User Manual
+## Biology Discovery and Intelligence System
 
 **Version**: 7.0
 **Date**: April 2026
 **Authors**: Glenn J. White, Open University and Rutherford Appleton Laboratory, England
-**Repository**: https://github.com/Tilanthi/ASTRA
+**Repository**: https://github.com/Tilanthi/BIODISC
 
 ---
 
@@ -16,7 +16,7 @@
    - 3.1 System Requirements
    - 3.2 Installation Methods
    - 3.3 Configuration
-   - 3.4 Running ASTRA from Claude Code ⭐ NEW
+   - 3.4 Running BIODISC from Claude Code ⭐ NEW
 4. [Getting Started](#4-getting-started)
 5. [Core Capabilities Overview](#5-core-capabilities-overview)
 6. [V5.0 Discovery Enhancement System](#6-v50-discovery-enhancement-system)
@@ -33,9 +33,9 @@
 
 ## 1. Introduction
 
-### 1.1 What is ASTRA?
+### 1.1 What is BIODISC?
 
-ASTRA (Autonomous Scientific Discovery in Astrophysics) is an integrated computational framework that combines numerical data analysis, causal reasoning, physical validation, and statistical inference to enable automated scientific discovery in astrophysics. Unlike traditional machine learning systems that detect patterns without understanding their physical meaning, or large language models that can explain concepts but cannot process numerical data, ASTRA integrates multiple analytical approaches to provide physically interpretable, validated scientific insights.
+BIODISC (Biology Discovery and Intelligence System) is an integrated computational framework that combines numerical data analysis, causal reasoning, physical validation, and statistical inference to enable automated scientific discovery in biology. Unlike traditional machine learning systems that detect patterns without understanding their physical meaning, or large language models that can explain concepts but cannot process numerical data, BIODISC integrates multiple analytical approaches to provide physically interpretable, validated scientific insights.
 
 **Version 7.0** represents a major evolution with the introduction of the **Autonomous Research Scientist**—a system capable of conducting the entire scientific research cycle from question formulation through publication.
 
@@ -43,7 +43,7 @@ ASTRA (Autonomous Scientific Discovery in Astrophysics) is an integrated computa
 
 **Physics-Aware Reasoning**: All discoveries are validated against fundamental physical principles including conservation laws, dimensional consistency, and established theoretical frameworks.
 
-**Causal Understanding**: ASTRA distinguishes between correlation and causation using structural causal models, enabling identification of physical mechanisms rather than mere associations.
+**Causal Understanding**: BIODISC distinguishes between correlation and causation using structural causal models, enabling identification of physical mechanisms rather than mere associations.
 
 **Uncertainty Quantification**: Every result includes properly propagated uncertainties, confidence intervals, and statistical significance assessments.
 
@@ -57,7 +57,7 @@ This manual is written for expert users including:
 - Research astronomers and astrophysicists
 - Data scientists working with astronomical data
 - Computational scientists requiring physics-aware analysis tools
-- Graduate students and postdoctoral researchers in astrophysics
+- Graduate students and postdoctoral researchers in biology
 
 Users should have familiarity with:
 - Python programming
@@ -87,7 +87,7 @@ Users should have familiarity with:
 
 ### 2.1 Architectural Overview
 
-ASTRA implements a layered architecture designed for astrophysical data analysis and inference:
+BIODISC implements a layered architecture designed for astrophysical data analysis and inference:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -170,8 +170,8 @@ Organized astrophysical knowledge provides context for all analyses.
 
 ```bash
 # Clone the repository
-git clone https://github.com/Tilanthi/ASTRA.git
-cd ASTRA
+git clone https://github.com/Tilanthi/BIODISC.git
+cd BIODISC
 
 # Install in editable mode
 pip install -e .
@@ -184,10 +184,10 @@ pip install -e ".[dev]"
 
 ```python
 # Test installation
-python -c "import astra_core; print('ASTRA installed successfully')"
+python -c "import astra_core; print('BIODISC installed successfully')"
 
 # Check version
-python -c "from astra_core import __version__; print(__version__)"
+python -c "from biodisc_core import __version__; print(__version__)"
 ```
 
 ### 3.3 Configuration
@@ -198,23 +198,23 @@ Create a configuration file `~/.astra/config.json`:
 
 ```json
 {
-  "data_directory": "~/astronomy_data",
+  "data_directory": "~/biology_data",
   "memory_limit_gb": 16,
   "num_workers": 4,
   "log_level": "INFO"
 }
 ```
 
-### 3.4 Running ASTRA from Claude Code
+### 3.4 Running BIODISC from Claude Code
 
-**Claude Code** is Anthropic's official CLI for Claude, providing direct integration with ASTRA for autonomous scientific research. This is the recommended method for running ASTRA with conversational AI assistance.
+**Claude Code** is Anthropic's official CLI for Claude, providing direct integration with BIODISC for autonomous scientific research. This is the recommended method for running BIODISC with conversational AI assistance.
 
 #### 3.4.1 What is Claude Code?
 
 Claude Code is a command-line interface that:
 - Provides direct access to Claude's advanced reasoning capabilities
 - Enables autonomous execution of complex scientific workflows
-- Integrates seamlessly with ASTRA's domain modules
+- Integrates seamlessly with BIODISC's domain modules
 - Supports collaborative human-AI research
 
 #### 3.4.2 Installation
@@ -238,10 +238,10 @@ Set up your Claude Code environment:
 # Configure API credentials
 claude-code config set api-key YOUR_ANTHROPIC_API_KEY
 
-# Set ASTRA workspace
-claude-code config set workspace /path/to/ASTRA
+# Set BIODISC workspace
+claude-code config set workspace /path/to/BIODISC
 
-# Enable ASTRA integration
+# Enable BIODISC integration
 claude-code config set astra.enabled true
 ```
 
@@ -249,45 +249,45 @@ claude-code config set astra.enabled true
 
 **Interactive Mode**:
 ```bash
-# Start Claude Code with ASTRA
+# Start Claude Code with BIODISC
 claude-code --astra
 
-# Or navigate to ASTRA directory and start
-cd /path/to/ASTRA
+# Or navigate to BIODISC directory and start
+cd /path/to/BIODISC
 claude-code
 ```
 
 **Direct Commands**:
 ```bash
-# Ask ASTRA a question
-claude-code "Using ASTRA, explain why filament widths cluster at 0.1 pc"
+# Ask BIODISC a question
+claude-code "Using BIODISC, explain why filament widths cluster at 0.1 pc"
 
 # Run autonomous research
-claude-code "Use ASTRA's V7.0 autonomous scientist to study interstellar filaments"
+claude-code "Use BIODISC's V7.0 autonomous scientist to study interstellar filaments"
 
 # Generate publication
-claude-code "Create a research paper on filament width analysis using ASTRA"
+claude-code "Create a research paper on filament width analysis using BIODISC"
 ```
 
-#### 3.4.5 ASTRA-Claude Code Integration Modes
+#### 3.4.5 BIODISC-Claude Code Integration Modes
 
 ##### Mode 1: Conversational Query
 
-Ask ASTRA questions in natural language:
+Ask BIODISC questions in natural language:
 
 ```bash
 claude-code
-> In ASTRA, analyze the relationship between black hole mass and galaxy bulge velocity
-> ASTRA responds with analysis, confidence intervals, and physical interpretation
+> In BIODISC, analyze the relationship between black hole mass and galaxy bulge velocity
+> BIODISC responds with analysis, confidence intervals, and physical interpretation
 ```
 
 ##### Mode 2: Autonomous Research
 
-Let ASTRA conduct independent research:
+Let BIODISC conduct independent research:
 
 ```bash
 claude-code
-> Use ASTRA's V7.0 autonomous scientist to:
+> Use BIODISC's V7.0 autonomous scientist to:
 >   1. Generate research questions about galaxy evolution
 >   2. Formulate testable hypotheses
 >   3. Design observational tests
@@ -297,13 +297,13 @@ claude-code
 
 ##### Mode 3: Collaborative Analysis
 
-Work alongside ASTRA on complex problems:
+Work alongside BIODISC on complex problems:
 
 ```bash
 claude-code
 > I have ALMA observations of molecular clouds. Help me:
 >   - Load and calibrate the data
->   - Detect filaments using ASTRA's filament detection
+>   - Detect filaments using BIODISC's filament detection
 >   - Measure filament widths
 >   - Test the sonic scale hypothesis
 >   - Create publication-quality figures
@@ -313,63 +313,63 @@ claude-code
 
 **Multi-Mind Reasoning**:
 ```bash
-claude-code "Use ASTRA's physics mind to analyze this dataset"
-claude-code "Apply ASTRA's creative mind to generate new hypotheses"
+claude-code "Use BIODISC's physics mind to analyze this dataset"
+claude-code "Apply BIODISC's creative mind to generate new hypotheses"
 ```
 
 **Domain-Specific Analysis**:
 ```bash
-claude-code "Load ASTRA's ISM domain and analyze Herschel data"
-claude-code "Use ASTRA's exoplanet domain to characterize this transit light curve"
+claude-code "Load BIODISC's ISM domain and analyze Herschel data"
+claude-code "Use BIODISC's exoplanet domain to characterize this transit light curve"
 ```
 
 **Automated Publication**:
 ```bash
-claude-code "Generate an A&A-formatted paper from this ASTRA analysis"
-claude-code "Create figures and tables from ASTRA's filament width analysis"
+claude-code "Generate an A&A-formatted paper from this BIODISC analysis"
+claude-code "Create figures and tables from BIODISC's filament width analysis"
 ```
 
 #### 3.4.7 File Operations
 
-ASTRA through Claude Code can:
+BIODISC through Claude Code can:
 - Read and analyze data files (FITS, CSV, HDF5)
 - Generate output files (plots, tables, papers)
 - Access domain modules and capabilities
-- Execute Python scripts within ASTRA
+- Execute Python scripts within BIODISC
 
 ```bash
-claude-code "Analyze this FITS file using ASTRA: observations.fits"
-claude-code "Save ASTRA's filament analysis results to filament_results.json"
+claude-code "Analyze this FITS file using BIODISC: observations.fits"
+claude-code "Save BIODISC's filament analysis results to filament_results.json"
 ```
 
 #### 3.4.8 Best Practices
 
 1. **Be Specific**: Provide clear context and objectives
-2. **Use Domain Language**: ASTRA understands astrophysical terminology
+2. **Use Domain Language**: BIODISC understands astrophysical terminology
 3. **Iterate**: Refine queries based on intermediate results
 4. **Leverage V7.0**: Use autonomous research for complex projects
 5. **Verify Results**: Always check physical plausibility of outputs
 
 #### 3.4.9 Troubleshooting Claude Code Integration
 
-**Issue**: ASTRA not found by Claude Code
+**Issue**: BIODISC not found by Claude Code
 
 ```bash
-# Verify ASTRA path
+# Verify BIODISC path
 claude-code config get workspace
 
 # Set correct path
-claude-code config set workspace /Users/gjw255/astrodata/SWARM/ASTRA
+claude-code config set workspace /Users/gjw255/astrodata/SWARM/BIODISC
 ```
 
 **Issue**: Domain modules not loading
 
 ```bash
-# Check ASTRA installation
+# Check BIODISC installation
 python -c "import astra_core; print(astra_core.__version__)"
 
 # Verify domain modules
-python -c "from astra_core.domains import list_domains; print(list_domains())"
+python -c "from biodisc_core.domains import list_domains; print(list_domains())"
 ```
 
 **Issue**: Memory errors with large datasets
@@ -386,15 +386,15 @@ claude-code "Process this data in batches of 1000 sources each"
 
 ```bash
 $ claude-code --astra
-ASTRA V7.0 initialized. Ready for autonomous research.
+BIODISC V7.0 initialized. Ready for autonomous research.
 
-> Analyze why filament widths cluster at 0.1 pc using ASTRA
+> Analyze why filament widths cluster at 0.1 pc using BIODISC
 
-[ASTRA] Loading ISM domain...
-[ASTRA] Analyzing filament width measurements from 10 studies...
-[ASTRA] Mean width: 0.103 ± 0.008 pc across 5,476 filaments
-[ASTRA] Testing sonic scale hypothesis...
-[ASTRA] Confidence: 92% that sonic scale sets characteristic width
+[BIODISC] Loading ISM domain...
+[BIODISC] Analyzing filament width measurements from 10 studies...
+[BIODISC] Mean width: 0.103 ± 0.008 pc across 5,476 filaments
+[BIODISC] Testing sonic scale hypothesis...
+[BIODISC] Confidence: 92% that sonic scale sets characteristic width
 
 Result: The 0.1 pc width corresponds to the sonic scale of interstellar
 turbulence, where turbulent velocity dispersion equals thermal sound speed.
@@ -403,16 +403,16 @@ properties rather than local density.
 
 > Create publication-quality figure showing width vs. Mach number
 
-[ASTRA] Generating parameter space plot...
-[ASTRA] Saving to: filament_width_vs_mach.png
-[ASTRA] Figure ready for publication
+[BIODISC] Generating parameter space plot...
+[BIODISC] Saving to: filament_width_vs_mach.png
+[BIODISC] Figure ready for publication
 
 > Generate methods section for paper
 
-[ASTRA] Writing methods section...
-[ASTRA] Includes: filament detection, width measurement, statistical analysis
-[ASTRA] Word count: 847
-[ASTRA] Saved to: methods_section.tex
+[BIODISC] Writing methods section...
+[BIODISC] Includes: filament detection, width measurement, statistical analysis
+[BIODISC] Word count: 847
+[BIODISC] Saved to: methods_section.tex
 ```
 
 ---
@@ -424,10 +424,10 @@ properties rather than local density.
 #### Example 1: Basic Query
 
 ```python
-from astra_core import create_stan_system
+from biodisc_core import create_stan_system
 
 # Create system
-system = create_stan_system()
+system = create_biodisc_system()
 
 # Ask a question
 result = system.answer("What is the typical temperature of a molecular cloud?")
@@ -452,9 +452,9 @@ result = system.discover_scaling_relation(
 )
 ```
 
-### 4.2 Understanding ASTRA's Output
+### 4.2 Understanding BIODISC's Output
 
-ASTRA provides structured output:
+BIODISC provides structured output:
 
 **Results**: Primary answer with precision and units
 **Confidence**: Statistical confidence intervals
@@ -467,7 +467,7 @@ ASTRA provides structured output:
 
 ## 5. Core Capabilities Overview
 
-ASTRA integrates 20+ analytical capabilities.
+BIODISC integrates 20+ analytical capabilities.
 
 ### 5.1 Causal and Statistical Analysis
 
@@ -538,7 +538,7 @@ V5.0 adds advanced discovery capabilities for genuine scientific discovery.
 # Discover novel relationships
 result = system.genuine_discovery(
     data=survey_data,
-    knowledge_base="astrophysics_ontology",
+    knowledge_base="biology_ontology",
     novelty_threshold=0.95
 )
 ```
@@ -811,7 +811,7 @@ print("=" * 80)
 #### 7.4.1 Fully Autonomous Mode
 
 ```python
-# Let ASTRA conduct research independently
+# Let BIODISC conduct research independently
 result = scientist.conduct_autonomous_research(
     domain="your_choice",
     duration="medium",  # quick, medium, long
@@ -836,7 +836,7 @@ result = scientist.conduct_guided_research(
 #### 7.4.3 Collaborative Mode
 
 ```python
-# Collaborate with ASTRA
+# Collaborate with BIODISC
 result = scientist.collaborative_research(
     your_data="your_dataset",
     your_insights="your_hypotheses",
@@ -853,9 +853,9 @@ result = scientist.collaborative_research(
 **Question**: "Why do filament widths cluster at 0.1 pc?"
 
 ```python
-from astra_core import create_stan_system
+from biodisc_core import create_stan_system
 
-system = create_stan_system()
+system = create_biodisc_system()
 
 # Load Herschel data
 herschel_data = system.load_data("herschel_filaments.fits")
@@ -900,7 +900,7 @@ result = system.discover_scaling_relation(
 
 ### 9.1 Multi-Mind Orchestration
 
-ASTRA V7.0 includes 7 specialized minds:
+BIODISC V7.0 includes 7 specialized minds:
 
 ```python
 # Query with specific mind
@@ -929,17 +929,17 @@ result = system.coherent_analysis(
 
 ## 10. Domain Modules
 
-ASTRA includes 75 specialized domain modules.
+BIODISC includes 75 specialized domain modules.
 
 ### 10.1 Available Domains (75 Total)
 
-ASTRA includes **75 specialized domain modules** organized into the following categories:
+BIODISC includes **75 specialized domain modules** organized into the following categories:
 
 #### Stellar Astrophysics (8 domains)
 - **stellar_structure**: Stellar structure and evolution models
 - **stellar_atmospheres**: Stellar atmosphere modeling and spectroscopy
 - **stellar_populations**: Stellar population synthesis and evolution
-- **nuclear_astrophysics**: Nuclear processes in stars and nucleosynthesis
+- **nuclear_biology**: Nuclear processes in stars and nucleosynthesis
 - **compact_binaries**: Binary star systems and compact objects
 - **xray_binaries**: X-ray binary systems and accretion physics
 - **supernovae**: Supernova explosions and remnants
@@ -964,7 +964,7 @@ ASTRA includes **75 specialized domain modules** organized into the following ca
 #### High-Energy Astrophysics (5 domains)
 - **high_energy**: High-energy processes and particles
 - **agn**: Active galactic nuclei and quasars
-- **gamma_ray**: Gamma-ray astronomy and sources
+- **gamma_ray**: Gamma-ray biology and sources
 - **astroparticle**: Astrophysical particle physics
 - **gravitational_waves**: Gravitational wave sources and detection
 
@@ -974,7 +974,7 @@ ASTRA includes **75 specialized domain modules** organized into the following ca
 - **dwarf_galaxies**: Dwarf galaxy properties and evolution
 - **galactic_structure**: Milky Way structure and dynamics
 - **galactic_archaeology**: Stellar archaeology and chemical evolution
-- **extragalactic**: Extragalactic astronomy and sources
+- **extragalactic**: Extragalactic biology and sources
 - **intergalactic_medium**: Intergalactic medium physics
 - **large_scale_structure**: Large-scale structure of universe
 
@@ -988,29 +988,29 @@ ASTRA includes **75 specialized domain modules** organized into the following ca
 - **frbs**: Fast radio bursts and transients
 
 #### Observational Techniques & Wavelengths (12 domains)
-- **radio_galactic**: Radio astronomy of Galactic sources
-- **radio_extragalactic**: Radio astronomy of extragalactic sources
-- **millimetre_astronomy**: Millimetre-wavelength astronomy
-- **submillimeter_astronomy**: Submillimeter observations
-- **infrared_astronomy**: Infrared observations and analysis
-- **farinfrared_astronomy**: Far-infrared and Herschel data
+- **radio_galactic**: Radio biology of Galactic sources
+- **radio_extragalactic**: Radio biology of extragalactic sources
+- **millimetre_biology**: Millimetre-wavelength biology
+- **submillimeter_biology**: Submillimeter observations
+- **infrared_biology**: Infrared observations and analysis
+- **farinfrared_biology**: Far-infrared and Herschel data
 - **interferometry**: Radio interferometry and synthesis imaging
 - **polarimetry**: Polarimetric observations and analysis
 - **astrometry**: Astrometric measurements and catalogues
-- **time_domain**: Time-domain astronomy and transients
+- **time_domain**: Time-domain biology and transients
 - **cmb**: Cosmic microwave background analysis
 - **xray_binaries**: X-ray binary systems (also in stellar)
 
 #### Theoretical & Computational Physics (10 domains)
-- **theoretical_astrophysics**: Theoretical astrophysics methods
-- **computational_astrophysics**: Computational methods and simulations
+- **theoretical_biology**: Theoretical biology methods
+- **computational_biology**: Computational methods and simulations
 - **numerical_methods**: Numerical algorithms and techniques
 - **mhd**: Magnetohydrodynamics and plasma physics
 - **plasma_physics**: Plasma physics and processes
 - **fluid_dynamics**: Fluid dynamics and hydrodynamics
 - **statistical_mechanics**: Statistical mechanics applications
-- **quantum_applications**: Quantum effects in astrophysics
-- **solid_state_astro**: Solid-state physics in astronomy
+- **quantum_applications**: Quantum effects in biology
+- **solid_state_astro**: Solid-state physics in biology
 - **dynamical_systems**: Dynamical systems theory
 
 #### Radiation & Atomic Physics (6 domains)
@@ -1036,7 +1036,7 @@ ASTRA includes **75 specialized domain modules** organized into the following ca
 
 ```python
 # Load specific domain
-from astra_core.domains import load_domain
+from biodisc_core.domains import load_domain
 
 ism_domain = load_domain("ism")
 
@@ -1055,7 +1055,7 @@ result = ism_domain.process_query(
 
 ```python
 class STANSystem:
-    """Main ASTRA system"""
+    """Main BIODISC system"""
     
     def answer(self, question: str) -> Dict:
         """Answer a natural language question"""
@@ -1202,4 +1202,4 @@ class V7AutonomousScientist:
 **Authors**: Glenn J. White, Open University and Rutherford Appleton Laboratory, England
 **License**: [License information]
 
-For the latest version, visit: https://github.com/Tilanthi/ASTRA
+For the latest version, visit: https://github.com/Tilanthi/BIODISC

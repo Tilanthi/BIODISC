@@ -4,23 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**ASTRA** (Autonomous Scientific Discovery in Astrophysics) is a unified AGI-inspired framework for autonomous hypothesis generation and validation in astronomy and astrophysics. The system integrates ~303,000 lines of clean, functional code across modular cognitive capabilities.
+**BIODISC** (Biology Discovery and Intelligence System) is a unified AGI-inspired framework for autonomous hypothesis generation and validation in biology. The system integrates ~303,000 lines of clean, functional code across modular cognitive capabilities.
 
 **Version**: 4.7
 **AGI Capability Estimate**: 70-75%
 
 ### IMPORTANT: Naming Convention
 
-The system was previously known as "STAN-XI-ASTRO" or "STAN". **It must now be referred to exclusively as "ASTRA"** in all:
+The system was previously known as "STAN-XI-ASTRO" or "STAN". **It must now be referred to exclusively as "BIODISC"** in all:
 - Academic papers and documentation
 - External communications
 - User-facing text
 - Paper titles and abstracts
 
-The internal codebase has been renamed from `stan_core` to `astra_core` for consistency with the ASTRA project name. Function names like `create_stan_system()` are retained for API backward compatibility.
+The internal codebase uses `biodisc_core` for consistency with the BIODISC project name. Function names like `create_biodisc_system()` are the primary interface.
 
-**Full name**: ASTRA: Autonomous Scientific Discovery in Astrophysics
-**Subtitle**: An AGI-inspired framework for autonomous hypothesis generation and validation
+**Full name**: BIODISC: Biology Discovery and Intelligence System
+**Subtitle**: An AGI-inspired framework for autonomous hypothesis generation and validation in biology
 
 ---
 
@@ -34,7 +34,7 @@ The internal codebase has been renamed from `stan_core` to `astra_core` for cons
 
 ```python
 # RUN THIS AT SESSION START
-from astra_core.memory.persistent import create_integrator, quick_hallucination_check
+from biodisc_core.memory.persistent import create_integrator, quick_hallucination_check
 
 integrator = create_integrator()
 integrator.initialize_session()
@@ -45,7 +45,7 @@ integrator.initialize_session()
 ALWAYS verify numerical claims against the hallucination register:
 
 ```python
-result = integrator.verify_claim_before_output("54 MHz observations")
+result = integrator.verify_claim_before_output("protein folding mechanism")
 if not result.safe:
     # Use the correct value instead
     correct = result.hallucination_match.correct_value
@@ -53,11 +53,11 @@ if not result.safe:
 
 ### Known Hallucinations
 
-The hallucination register is stored in `~/.astra_persistent/hallucination_register.json`.
+The hallucination register is stored in `~/.biodisc_persistent/hallucination_register.json`.
 To view or manage entries:
 
 ```python
-from astra_core.memory.persistent import BootstrapMemory
+from biodisc_core.memory.persistent import BootstrapMemory
 bm = BootstrapMemory()
 bm.list_hallucinations()  # View all entries
 bm.remove_hallucination("54 MHz")  # Remove if no longer needed
@@ -66,7 +66,7 @@ bm.remove_hallucination("54 MHz")  # Remove if no longer needed
 ### Document Review Protocol
 
 When reviewing ANY document:
-1. Extract key info first (frequencies, sample sizes, instruments)
+1. Extract key info first (experimental conditions, sample sizes, methodologies)
 2. Verify each claim with `quick_hallucination_check()`
 3. Include mandatory anti-hallucination verification table in all reviews
 
@@ -84,49 +84,49 @@ integrator.create_session_checkpoint({"current_task": "your task description"})
 ### Basic System Usage
 
 ```python
-from astra_core import create_stan_system
+from biodisc_core import create_biodisc_system
 
 # Create system with auto-optimized capabilities
-system = create_stan_system()
+system = create_biodisc_system()
 
 # Answer queries with automatic capability selection
-result = system.answer("What causes filament width variations?")
+result = system.answer("What causes protein misfolding?")
 print(result['answer'])
 ```
 
 ### V4.0 Revolutionary Capabilities
 
 ```python
-from astra_core.v4_revolutionary import create_v4_system, IntegrationMode
+from biodisc_core.v4_revolutionary import create_biodisc_v4_system, IntegrationMode
 
 # Create V4.0 system with MCE, ASC, CRN, MMOL capabilities
-system = create_v4_system()
+system = create_biodisc_v4_system()
 
 # Process with different integration modes
-result = system.process_query("Anze query", mode=IntegrationMode.FULL)
+result = system.process_query("biological query", mode=IntegrationMode.FULL)
 ```
 
 ### Individual Capability Usage
 
 ```python
 # Meta-Context Engine
-from astra_core.metacognitive.meta_context_engine import create_meta_context_engine
+from biodisc_core.metacognitive.meta_context_engine import create_meta_context_engine
 mce = create_meta_context_engine()
 result = mce.layer_context(query, dimensions=["temporal", "perceptual"])
 
 # Domain modules
-from astra_core.domains import DomainRegistry
+from biodisc_core.domains import DomainRegistry
 registry = DomainRegistry()
 registry.load_all_domains()
-result = registry.process_query("pulsar timing analysis")
+result = registry.process_query("gene expression analysis")
 
 # Physics engine
-from astra_core.physics import UnifiedPhysicsEngine
+from biodisc_core.physics import UnifiedPhysicsEngine
 physics = UnifiedPhysicsEngine()
 result = physics.compute("blackbody", {"temperature": 5778, "wavelength": 500e-7})
 
 # MAML optimizer
-from astra_core.reasoning.maml_optimizer import create_maml_optimizer
+from biodisc_core.reasoning.maml_optimizer import create_maml_optimizer
 optimizer = create_maml_optimizer(model_fn, loss_fn, n_inner_steps=5)
 ```
 
@@ -138,37 +138,37 @@ optimizer = create_maml_optimizer(model_fn, loss_fn, n_inner_steps=5)
 
 ```bash
 # Run V4.0 capability tests
-python astra_core/tests/v4/run_tests.py
+python biodisc_core/tests/v4/run_tests.py
 
 # Run specialist capability tests (66 V45 capabilities)
-python astra_core/tests/test_specialist_capabilities.py
+python biodisc_core/tests/test_specialist_capabilities.py
 
 # Run Phase 2-4 enhancement tests
-python astra_core/tests/test_phase_2_4.py
+python biodisc_core/tests/test_phase_2_4.py
 ```
 
 ### Run Specific Tests
 
 ```bash
 # V4.0 individual capabilities
-python astra_core/tests/v4/run_tests.py --mce        # Meta-Context Engine
-python astra_core/tests/v4/run_tests.py --asc        # Autocatalytic Self-Compiler
-python astra_core/tests/v4/run_tests.py --crn        # Cognitive-Relativity Navigator
-python astra_core/tests/v4/run_tests.py --mmol       # Multi-Mind Orchestration
-python astra_core/tests/v4/run_tests.py --integration # Integration tests
+python biodisc_core/tests/v4/run_tests.py --mce        # Meta-Context Engine
+python biodisc_core/tests/v4/run_tests.py --asc        # Autocatalytic Self-Compiler
+python biodisc_core/tests/v4/run_tests.py --crn        # Cognitive-Relativity Navigator
+python biodisc_core/tests/v4/run_tests.py --mmol       # Multi-Mind Orchestration
+python biodisc_core/tests/v4/run_tests.py --integration # Integration tests
 ```
 
 ### Test Individual Components
 
 ```python
 # Test physics modules
-python -c "from astra_core.physics.relativistic_physics import RelativisticPhysics; print(RelativisticPhysics.schwarzschild_radius(1.989e33))"
+python -c "from biodisc_core.physics.relativistic_physics import RelativisticPhysics; print(RelativisticPhysics.schwarzschild_radius(1.989e33))"
 
 # Test domain modules
-python -c "from astra_core.domains.high_energy import create_high_energy_domain; d = create_high_energy_domain(); print(d.get_capabilities())"
+python -c "from biodisc_core.domains.molecular_biology import create_molecular_biology_domain; d = create_molecular_biology_domain(); print(d.get_capabilities())"
 
 # Test MAML optimizer
-python -c "from astra_core.reasoning.maml_optimizer import MAMLOptimizer; print('MAML imported')"
+python -c "from biodisc_core.reasoning.maml_optimizer import MAMLOptimizer; print('MAML imported')"
 ```
 
 ---
@@ -180,7 +180,7 @@ python -c "from astra_core.reasoning.maml_optimizer import MAMLOptimizer; print(
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Entry Points (Top Layer)                     │
-│  create_stan_system() | create_v4_system() | process_query()   │
+│  create_biodisc_system() | create_biodisc_v4_system() | process_query()   │
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
@@ -192,8 +192,9 @@ python -c "from astra_core.reasoning.maml_optimizer import MAMLOptimizer; print(
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Domain Architecture                          │
 │  BaseDomainModule → DomainRegistry → Specialized Domains        │
-│  (9 domains: ISM, Star Formation, Exoplanets, GW, Cosmology,   │
-│   Solar System, Time Domain, High-Energy, Galactic Archaeology) │
+│  (10 domains: Molecular Biology, Biochemistry, Genetics,        │
+│   Cell Biology, Biophysics, Bioinformatics, Computational       │
+│   Biology, Genomics, Proteomics, Systems Biology)               │
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
@@ -249,7 +250,7 @@ result = system.answer(query)  # Auto-selects best capabilities
 All domain modules use `@register_domain` decorator or explicit `DomainModuleRegistry.register()`. This enables runtime discovery and hot-swapping.
 
 ```python
-from astra_core.domains import BaseDomainModule, register_domain
+from biodisc_core.domains import BaseDomainModule, register_domain
 
 @register_domain
 class MyDomain(BaseDomainModule):
@@ -268,11 +269,11 @@ All major components use factory functions for creation, not direct constructors
 
 ```python
 # Use factory functions
-system = create_stan_system()
+system = create_biodisc_system()
 mce = create_meta_context_engine()
 optimizer = create_maml_optimizer(model_fn, loss_fn)
 
-# NOT: system = UnifiedSTANSystem()  # Avoid direct constructors
+# NOT: system = UnifiedBIODISCSystem()  # Avoid direct constructors
 ```
 
 ### 4. Physics Curriculum Learning
@@ -285,22 +286,22 @@ Physics capabilities develop through staged curriculum (`ComplexityLevel.BASIC` 
 
 ### Capability Files
 
-- **V36-V50 capabilities**: `astra_core/capabilities/vXX_*.py`
-- **Physics modules**: `astra_core/physics/*.py` (relativistic_physics.py, quantum_mechanics.py, nuclear_astro.py)
-- **Domain modules**: `astra_core/domains/<domain_name>/__init__.py`
-- **Meta-learning**: `astra_core/reasoning/maml_optimizer.py`, `cross_domain_meta_learner.py`
+- **V36-V50 capabilities**: `biodisc_core/capabilities/vXX_*.py`
+- **Physics modules**: `biodisc_core/physics/*.py` (relativistic_physics.py, quantum_mechanics.py, nuclear_physics.py)
+- **Domain modules**: `biodisc_core/domains/<domain_name>/__init__.py`
+- **Meta-learning**: `biodisc_core/reasoning/maml_optimizer.py`, `cross_domain_meta_learner.py`
 
 ### Memory Hierarchy
 
-- **MORK Ontology**: `astra_core/memory/mork_ontology.py` (concept hierarchies)
-- **Memory Graph**: `astra_core/memory/context_graph.py` (context relationships)
-- **Working Memory**: `astra_core/memory/working/` (7±2 capacity constraint)
+- **MORK Ontology**: `biodisc_core/memory/mork_ontology.py` (concept hierarchies)
+- **Memory Graph**: `biodisc_core/memory/context_graph.py` (context relationships)
+- **Working Memory**: `biodisc_core/memory/working/` (7±2 capacity constraint)
 
 ### Test Files
 
-- **Integration tests**: `astra_core/tests/v4/test_v4_integration.py`
-- **Capability tests**: `astra_core/tests/test_specialist_capabilities.py`
-- **Validation**: `astra_core/tests/validation_benchmarks.py`
+- **Integration tests**: `biodisc_core/tests/v4/test_v4_integration.py`
+- **Capability tests**: `biodisc_core/tests/test_specialist_capabilities.py`
+- **Validation**: `biodisc_core/tests/validation_benchmarks.py`
 
 ---
 
@@ -336,13 +337,13 @@ PREDICTIVE, ANALYTICAL, EMOTIONAL, CREATIVE, CRITICAL, SYNTHETIC, NARRATIVE, CON
 
 4. **Skipping Initialization**: Domain modules must call `.initialize(global_config)` after creation before `.process_query()`.
 
-5. **Backup File Accumulation**: Run `cleanup_astra_core.py` if directory exceeds expected size. Backup files (`*.backup`) from `cleanup_bloat.py` can accumulate to GBs.
+5. **Backup File Accumulation**: Run `cleanup_biodisc_core.py` if directory exceeds expected size. Backup files (`*.backup`) from `cleanup_bloat.py` can accumulate to GBs.
 
 ---
 
 ## PDF Generation Requirements
 
-When generating PDF documents using `astra_core/utils/pdf_generator.py`:
+When generating PDF documents using `biodisc_core/utils/pdf_generator.py`:
 
 ### Critical Rules
 
@@ -394,7 +395,7 @@ def _process_inline_formatting(self, text: str) -> str:
 
 ## Post-Upgrade Verification Testing
 
-**CRITICAL**: After any substantial upgrade to ASTRA functionality or astra_core components, comprehensive verification testing MUST be performed to ensure all dependencies, files, and components remain properly linked.
+**CRITICAL**: After any substantial upgrade to BIODISC functionality or biodisc_core components, comprehensive verification testing MUST be performed to ensure all dependencies, files, and components remain properly linked.
 
 ### When to Run Comprehensive Tests
 
@@ -411,19 +412,19 @@ Run the comprehensive system verification after:
 
 ```bash
 # Run the comprehensive system test
-python astra_core/comprehensive_system_test.py
+python biodisc_core/comprehensive_system_test.py
 
 # Expected output: All 18 capabilities should PASS (100%)
 ```
 
 The comprehensive test verifies:
-- **75 Domain Modules**: Import, instantiation, and query handling (100% pass rate required)
+- **10 Domain Modules**: Import, instantiation, and query handling (100% pass rate required)
 - **Memory Systems**: MORK Ontology, Context Graph, Working Memory, Episodic Memory
 - **Physics Engine**: UnifiedPhysicsEngine with all models and constraints
-- **Causal Discovery**: V50, V70, and astrophysical causal discovery engines
+- **Causal Discovery**: V50, V70, and biological causal discovery engines
 - **Advanced Reasoning**: Swarm reasoning, hierarchical Bayesian meta-learning
 - **V4 Capabilities**: Meta-Context Engine (if available)
-- **Orchestrator Integration**: create_stan_system(), answer(), process_query()
+- **Orchestrator Integration**: create_biodisc_system(), answer(), process_query()
 
 ### Fix-Test Loop
 
@@ -435,21 +436,21 @@ If errors are found:
 
 ### Test Files Reference
 
-- **Comprehensive Test**: `astra_core/comprehensive_system_test.py`
-- **Domain Validation**: `astra_core/tests/validation_benchmarks.py`
-- **V4 Integration Tests**: `astra_core/tests/v4/test_v4_integration.py`
-- **Specialist Capabilities**: `astra_core/tests/test_specialist_capabilities.py`
+- **Comprehensive Test**: `biodisc_core/comprehensive_system_test.py`
+- **Domain Validation**: `biodisc_core/tests/validation_benchmarks.py`
+- **V4 Integration Tests**: `biodisc_core/tests/v4/test_v4_integration.py`
+- **Specialist Capabilities**: `biodisc_core/tests/test_specialist_capabilities.py`
 
 ### Verification Report
 
 After successful verification, update the verification report:
 ```bash
-# Update RASTI/SYSTEM_VERIFICATION_COMPLETE.md with current status
+# Update BIODISC/SYSTEM_VERIFICATION_COMPLETE.md with current status
 ```
 
 The report should document:
 - Date and version of verification
-- All 75 domains with PASS status
+- All 10 domains with PASS status
 - All 18+ advanced capabilities with PASS status
 - Cross-module dependency verification
 - Any issues found and resolved
@@ -462,5 +463,5 @@ The report should document:
 - **Python Files**: 514
 - **Directory Size**: ~9 MB (after cleanup from 3.6 GB of backups)
 - **Specialist Capabilities**: 66 (V45 baseline)
-- **Domain Modules**: 75 (23 core + 48 astrophysics)
+- **Domain Modules**: 10 (biology-focused)
 - **Physics Stages**: 15 learning stages (relativistic, quantum, nuclear)
