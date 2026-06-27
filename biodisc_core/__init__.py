@@ -283,6 +283,51 @@ except ImportError:
     create_biodisc_system = None
 
 # -----------------------------------------------------------------------------
+# Autonomous System: V73 Integrated with V60/V93 for genuine autonomy
+# -----------------------------------------------------------------------------
+try:
+    from .autonomous.autonomous_orchestrator import AutonomousOrchestrator
+    from .autonomous.config import (
+        AutonomousConfig,
+        AutonomousState,
+        GoalType,
+        AutonomousGoal,
+        Discovery,
+        ValidationResult,
+        get_default_config,
+        get_conservative_config,
+        get_exploratory_config,
+        get_testing_config
+    )
+    from .autonomous.decision_maker import AutonomousDecisionMaker
+    from .autonomous.discovery_validator import DiscoveryValidator
+    from .autonomous.resource_manager import ResourceManager
+    from .autonomous.self_modification import SelfModificationFramework
+    from .autonomous.sub_agent_spawner import SubAgentSpawner, SubAgent
+    from .autonomous.discovery_reporter import DiscoveryReporter
+    AUTONOMOUS_AVAILABLE = True
+except ImportError:
+    AutonomousOrchestrator = None
+    AutonomousConfig = None
+    AutonomousState = None
+    GoalType = None
+    AutonomousGoal = None
+    Discovery = None
+    ValidationResult = None
+    get_default_config = None
+    get_conservative_config = None
+    get_exploratory_config = None
+    get_testing_config = None
+    AutonomousDecisionMaker = None
+    DiscoveryValidator = None
+    ResourceManager = None
+    SelfModificationFramework = None
+    SubAgentSpawner = None
+    SubAgent = None
+    DiscoveryReporter = None
+    AUTONOMOUS_AVAILABLE = False
+
+# -----------------------------------------------------------------------------
 # Validation Framework (Phase 4): Benchmarking and testing
 # -----------------------------------------------------------------------------
 try:

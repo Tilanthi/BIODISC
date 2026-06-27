@@ -1,5 +1,5 @@
 """
-Enhanced unified STAN system with all Phase 2-4 enhancements
+Enhanced unified BIODISC system with all Phase 2-4 enhancements
 
 Integrates:
 - Modular domain architecture
@@ -8,7 +8,7 @@ Integrates:
 - Physical intuition development
 - All existing capabilities
 
-This is the main entry point for the enhanced STAN-XI-ASTRO system.
+This is the main entry point for the enhanced BIODISC system.
 """
 
 from typing import Dict, List, Any, Optional, Union
@@ -100,6 +100,10 @@ if BASE_UNIFIED_AVAILABLE:
 
         # Intuition development
         enable_intuition_development: bool = True
+
+        # Autonomous system configuration
+        enable_autonomous: bool = True
+        autonomous_config: Dict[str, Any] = field(default_factory=dict)
 else:
     @dataclass
     class EnhancedUnifiedConfig:
@@ -128,10 +132,14 @@ else:
         # Intuition development
         enable_intuition_development: bool = True
 
+        # Autonomous system configuration
+        enable_autonomous: bool = True
+        autonomous_config: Dict[str, Any] = field(default_factory=dict)
+
 
 class EnhancedUnifiedBIODISCSystem:
     """
-    Enhanced unified STAN system with all Phase 2-4 capabilities
+    Enhanced unified BIODISC system with all Phase 2-4 capabilities
 
     This is the main system that integrates all enhancements.
     """
@@ -193,6 +201,31 @@ class EnhancedUnifiedBIODISCSystem:
             self.counterfactual_system = get_counterfactual_system()
             logger.info("Counterfactual reasoning system initialized")
 
+        # Initialize autonomous orchestrator
+        self.autonomous_orchestrator = None
+        if self.config.enable_autonomous:
+            try:
+                from ..autonomous.autonomous_orchestrator import AutonomousOrchestrator
+                from ..autonomous.config import AutonomousConfig
+
+                # Create autonomous config
+                autonomous_config = AutonomousConfig(**self.config.autonomous_config)
+
+                # Initialize autonomous orchestrator
+                self.autonomous_orchestrator = AutonomousOrchestrator(autonomous_config)
+
+                # Start autonomous loop
+                self.autonomous_orchestrator.start_autonomous_loop()
+
+                logger.info("Autonomous Orchestrator initialized and started")
+
+            except ImportError as e:
+                logger.warning(f"Autonomous system not available: {e}")
+                self.autonomous_orchestrator = None
+            except Exception as e:
+                logger.error(f"Failed to initialize autonomous system: {e}")
+                self.autonomous_orchestrator = None
+
         # Performance tracking
         self.performance_stats = {
             'queries_processed': 0,
@@ -213,84 +246,17 @@ class EnhancedUnifiedBIODISCSystem:
         # Configure domains to auto-load
         # Include ALL 75 available domains
         domains_config = {
-            # Core astrophysics domains (HIGH PRIORITY)
-            'ism': {'enabled': True},
-            'star_formation': {'enabled': True},
-            'exoplanets': {'enabled': True},
-            'gravitational_waves': {'enabled': True},
-            'cosmology': {'enabled': True},
-            'solar_system': {'enabled': True},
-            'time_domain': {'enabled': True},
-
-            # Additional domain modules (ALL 75 DOMAINS)
-            'high_energy': {'enabled': True},
-            'galactic_archaeology': {'enabled': True},
-            'radio_extragalactic': {'enabled': True},
-            'radio_galactic': {'enabled': True},
-            'accretion_disk_theory': {'enabled': True},
-            'agn': {'enabled': True},
-            'astrochemical_surveys': {'enabled': True},
-            'astrometry': {'enabled': True},
-            'astroparticle': {'enabled': True},
-            'atomic_physics': {'enabled': True},
-            'black_holes': {'enabled': True},
-            'cmb': {'enabled': True},
-            'compact_binaries': {'enabled': True},
-            'computational_astrophysics': {'enabled': True},
-            'dust_formation': {'enabled': True},
-            'dust_grain_physics': {'enabled': True},
-            'dwarf_galaxies': {'enabled': True},
-            'dynamical_systems': {'enabled': True},
-            'exoplanet_atmospheres': {'enabled': True},
-            'extragalactic': {'enabled': True},
-            'farinfrared_astronomy': {'enabled': True},
-            'fluid_dynamics': {'enabled': True},
-            'frbs': {'enabled': True},
-            'galactic_structure': {'enabled': True},
-            'galaxy_clusters': {'enabled': True},
-            'galaxy_evolution': {'enabled': True},
-            'gamma_ray': {'enabled': True},
-            'general_relativity': {'enabled': True},
-            'gravitational_lensing': {'enabled': True},
-            'hii_regions': {'enabled': True},
-            'heliospheric_physics': {'enabled': True},
-            'hpc': {'enabled': True},
-            'infrared_astronomy': {'enabled': True},
-            'interferometry': {'enabled': True},
-            'intergalactic_medium': {'enabled': True},
-            'inverse_problems': {'enabled': True},
-            'kilonovae': {'enabled': True},
-            'large_scale_structure': {'enabled': True},
-            'mhd': {'enabled': True},
-            'millimetre_astronomy': {'enabled': True},
-            'molecular_cloud_collapse': {'enabled': True},
-            'molecular_cloud_dynamics': {'enabled': True},
-            'molecular_cloud_evolution': {'enabled': True},
-            'molecular_spectroscopy': {'enabled': True},
-            'nuclear_astrophysics': {'enabled': True},
-            'numerical_methods': {'enabled': True},
-            'orbital_dynamics': {'enabled': True},
-            'photoionization': {'enabled': True},
-            'planetary_formation': {'enabled': True},
-            'plasma_physics': {'enabled': True},
-            'polarimetry': {'enabled': True},
-            'prebiotic_chemistry': {'enabled': True},
-            'quantum_applications': {'enabled': True},
-            'radiative_processes': {'enabled': True},
-            'radiative_transfer_theory': {'enabled': True},
-            'shock_physics_extended': {'enabled': True},
-            'signal_processing': {'enabled': True},
-            'solar_physics': {'enabled': True},
-            'solid_state_astro': {'enabled': True},
-            'statistical_mechanics': {'enabled': True},
-            'stellar_atmospheres': {'enabled': True},
-            'stellar_populations': {'enabled': True},
-            'stellar_structure': {'enabled': True},
-            'submillimeter_astronomy': {'enabled': True},
-            'supernovae': {'enabled': True},
-            'theoretical_astrophysics': {'enabled': True},
-            'tidal_disruption': {'enabled': True},
-            'xray_binaries': {'enabled': True}
+            # BIODISC Biology Domains (10 domains)
+            'molecular_biology': {'enabled': True},
+            'biochemistry': {'enabled': True},
+            'genetics': {'enabled': True},
+            'cell_biology': {'enabled': True},
+            'biophysics': {'enabled': True},
+            'bioinformatics': {'enabled': True},
+            'computational_biology': {'enabled': True},
+            'genomics': {'enabled': True},
+            'proteomics': {'enabled': True},
+            'systems_biology': {'enabled': True}
         }
 
         # Merge with user config
@@ -324,7 +290,7 @@ class EnhancedUnifiedBIODISCSystem:
         """
         Process a query using all available capabilities
 
-        This is the main entry point for interacting with STAN-XI-ASTRO.
+        This is the main entry point for interacting with BIODISC.
 
         Args:
             query: User query
@@ -334,6 +300,11 @@ class EnhancedUnifiedBIODISCSystem:
         Returns:
             Processing result with answer and metadata
         """
+        # Update autonomous system activity timestamp
+        # This ensures reactive priority - autonomous operations pause during user queries
+        if self.autonomous_orchestrator:
+            self.autonomous_orchestrator.update_user_activity()
+
         context = context or {}
         result = {
             'query': query,
@@ -393,7 +364,7 @@ class EnhancedUnifiedBIODISCSystem:
                     if 'confidence' not in result or result['confidence'] == 0:
                         result['confidence'] = 0.6  # Default confidence for base system
                 else:
-                    result['answer'] = "STAN-XI-ASTRO is ready to assist with your query."
+                    result['answer'] = "BIODISC is ready to assist with your biology query."
                     result['confidence'] = 0.5
         except Exception as e:
             logger.error(f"Query processing failed: {e}")
@@ -610,7 +581,7 @@ class EnhancedUnifiedBIODISCSystem:
         """
         Process query using counterfactual reasoning engine.
 
-        This is the key method that enables ASTRA's "nascent discovery mode"—the
+        This is the key method that enables BIODISC's "nascent discovery mode"—the
         ability to go beyond recovering known results and explore hypothetical alternatives.
         """
         try:
@@ -872,6 +843,67 @@ class EnhancedUnifiedBIODISCSystem:
         if self.physics_engine:
             return list(self.physics_engine.models.keys())
         return []
+
+    def get_autonomous_discoveries(self) -> List[Any]:
+        """
+        Get discoveries made during autonomous operation.
+
+        Returns:
+            List of validated discoveries
+        """
+        if self.autonomous_orchestrator:
+            return self.autonomous_orchestrator.get_validated_discoveries()
+        return []
+
+    def get_autonomous_status(self) -> Dict[str, Any]:
+        """
+        Get status of autonomous operations.
+
+        Returns:
+            Dictionary with autonomous system status
+        """
+        if self.autonomous_orchestrator:
+            return self.autonomous_orchestrator.get_autonomous_status()
+        return {
+            'autonomous_enabled': False,
+            'message': 'Autonomous system not initialized'
+        }
+
+    def enable_autonomous_mode(self, enabled: bool = True) -> Dict[str, Any]:
+        """
+        Enable or disable autonomous mode.
+
+        Args:
+            enabled: True to enable, False to disable
+
+        Returns:
+            Status update result
+        """
+        if self.autonomous_orchestrator:
+            if enabled:
+                self.autonomous_orchestrator.resume()
+                return {'status': 'enabled', 'message': 'Autonomous mode enabled'}
+            else:
+                self.autonomous_orchestrator.pause()
+                return {'status': 'disabled', 'message': 'Autonomous mode disabled'}
+        return {
+            'status': 'error',
+            'message': 'Autonomous system not initialized'
+        }
+
+    def generate_autonomous_report(self) -> Optional[str]:
+        """
+        Generate comprehensive autonomous discovery report.
+
+        Returns:
+            Report summary or None if autonomous system not available
+        """
+        if self.autonomous_orchestrator and hasattr(self.autonomous_orchestrator, 'discovery_reporter'):
+            discoveries = self.get_autonomous_discoveries()
+            if discoveries:
+                report = self.autonomous_orchestrator.discovery_reporter.report_discoveries(discoveries)
+                return report.generate_summary()
+        return None
 
 
 def create_biodisc_system(config: Optional[EnhancedUnifiedConfig] = None) -> EnhancedUnifiedBIODISCSystem:
