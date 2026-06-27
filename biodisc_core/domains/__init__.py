@@ -362,7 +362,30 @@ try:
 except ImportError:
     TimeDomainDomain = None
 
-# V80+ New specialist domains (17 new astronomy domains)
+# =============================================================================
+# WARNING: ASTRONOMY-SPECIFIC DOMAINS - NOT FOR BIODISC (BIOLOGY-FOCUSED SYSTEM)
+# =============================================================================
+# The following domains are ASTRONOMY-specific and should be moved to a separate
+# astronomy-focused system (e.g., STAN-XI-ASTRO). They are kept here for backward
+# compatibility but SHOULD NOT BE USED in BIODISC biology research.
+#
+# BIODISC (Biology Discovery and Intelligence System) should focus on:
+# - Molecular Biology, Biochemistry, Genetics, Cell Biology
+# - Biophysics, Bioinformatics, Computational Biology
+# - Genomics, Proteomics, Systems Biology
+#
+# These astronomy domains should be moved to a separate system:
+# - Radio Extragalactic, Radio Galactic, Black Holes
+# - AGN (Active Galactic Nuclei), Galaxy Evolution, CMB (Cosmic Microwave Background)
+# - Astrochemical Surveys, Molecular Cloud Evolution, Stellar Populations
+# - Infrared/Millimetre/Submillimeter/Far-Infrared Astronomy
+# - Nuclear Astrophysics, Astroparticle Physics, Stellar Atmospheres
+#
+# If you are working on ASTRONOMY research, please use the appropriate astronomy
+# system instead of BIODISC.
+# =============================================================================
+
+# V80+ New specialist domains (17 new astronomy domains) - DEPRECATED FOR BIODISC
 try:
     from .radio_extragalactic import RadioExtragalacticDomain, create_radio_extragalactic_domain
 except ImportError:
@@ -731,11 +754,12 @@ except ImportError:
     StellarAtmospheresDomain = None
     create_stellar_atmospheres_domain = None
 
-try:
-    from .nuclear_astrophysics import NuclearAstrophysicsDomain, create_nuclear_astrophysics_domain
-except ImportError:
-    NuclearAstrophysicsDomain = None
-    create_nuclear_astrophysics_domain = None
+# ASTRONOMY-SPECIFIC MODULES - REMOVED FROM BIODISC
+# Nuclear astrophysics domain (nuclear_astrophysics) has been deleted from BIODISC
+# and is available in separate astronomy systems. DO NOT USE in BIODISC biology research.
+NUCLEAR_ASTROPHYSICS_AVAILABLE = False
+NuclearAstrophysicsDomain = None
+create_nuclear_astrophysics_domain = None
 
 try:
     from .fluid_dynamics import FluidDynamicsDomain, create_fluid_dynamics_domain

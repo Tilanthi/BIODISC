@@ -53,11 +53,20 @@ except ImportError:
     ConsciousnessSimulator = None
 
 # Import V3.0 astronomy modules
+# WARNING: astronomy_causal_discovery has been DELETED from BIODISC (biology-focused system)
+# This module should be used in a separate astronomy system.
 try:
     from .astronomy_causal_discovery import (
         AstronomyCausalDiscoverySystem, GasDynamicsCausalDiscovery,
         FilamentFormationDiscovery, RadiativeTransferCausalDiscovery
     )
+    ASTRONOMY_CAUSAL_AVAILABLE = True
+except ImportError:
+    ASTRONOMY_CAUSAL_AVAILABLE = False
+    AstronomyCausalDiscoverySystem = None
+    GasDynamicsCausalDiscovery = None
+    FilamentFormationDiscovery = None
+    RadiativeTransferCausalDiscovery = None
     from .sph_simulation import (
         GasDynamicsSPH, FilamentFormationSPH, StarFormationSPH,
         SPHSelfImprovingSystem, create_gas_dynamics_simulation

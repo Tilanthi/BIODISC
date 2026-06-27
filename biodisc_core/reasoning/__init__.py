@@ -1457,74 +1457,44 @@ except ImportError:
     what_traces = None
     get_critical_density = None
 
-try:
-    from .astrophysical_causal_discovery import (
-        ConservationLaw,
-        ObservationalBias,
-        CausalEdge,
-        LatentVariable,
-        CausalGraph as AstroCausalGraph,
-        BiasAwareCausalDiscovery,
-        PhysicsConstrainedGraph,
-        MechanismIdentifier,
-        LatentPhysicsProposer,
-        DynamicalCausalModel,
-        AstrophysicalCausalDiscovery,
-        discover_causal_structure,
-        identify_mechanism_for_correlation,
-    )
-except ImportError:
-    ConservationLaw = None
-    ObservationalBias = None
-    AstroCausalGraph = None
-    BiasAwareCausalDiscovery = None
-    PhysicsConstrainedGraph = None
-    MechanismIdentifier = None
-    LatentPhysicsProposer = None
-    DynamicalCausalModel = None
-    AstrophysicalCausalDiscovery = None
-    discover_causal_structure = None
-    identify_mechanism_for_correlation = None
-    LatentVariable = None
+# ASTRONOMY-SPECIFIC MODULES - REMOVED FROM BIODISC
+# These modules (astrophysical_causal_discovery) have been deleted from BIODISC
+# and are available in separate astronomy systems. DO NOT USE in BIODISC biology research.
+ASTROPHYSICAL_CAUSAL_AVAILABLE = False
+ConservationLaw = None
+ObservationalBias = None
+AstroCausalGraph = None
+BiasAwareCausalDiscovery = None
+PhysicsConstrainedGraph = None
+MechanismIdentifier = None
+LatentPhysicsProposer = None
+DynamicalCausalModel = None
+AstrophysicalCausalDiscovery = None
+discover_causal_structure = None
+identify_mechanism_for_correlation = None
+LatentVariable = None
 
-try:
-    from .astrophysical_theory_synthesis import (
-        AstroPatternType,
-        ConfidenceLevel,
-        ObservedPattern,
-        PhysicalLaw as AstroPhysicalLaw,
-        Mechanism,
-        Prediction as AstroPrediction,
-        MechanismTheory,
-        PatternIdentifier,
-        LawPromoter,
-        TheoryComparator,
-        PredictionGenerator as AstroPredictionGenerator,
-        TheoryBuilder,
-        get_turbulent_sf_theory,
-        get_magnetic_sf_theory,
-        identify_pattern,
-        build_theory_from_patterns,
-        compare_sf_theories,
-    )
-except ImportError:
-    AstroPatternType = None
-    ConfidenceLevel = None
-    ObservedPattern = None
-    AstroPhysicalLaw = None
-    Mechanism = None
-    AstroPrediction = None
-    MechanismTheory = None
-    PatternIdentifier = None
-    LawPromoter = None
-    TheoryComparator = None
-    AstroPredictionGenerator = None
-    TheoryBuilder = None
-    get_turbulent_sf_theory = None
-    get_magnetic_sf_theory = None
-    identify_pattern = None
-    build_theory_from_patterns = None
-    compare_sf_theories = None
+# ASTRONOMY-SPECIFIC MODULES - REMOVED FROM BIODISC
+# These modules (astrophysical_theory_synthesis) have been deleted from BIODISC
+# and are available in separate astronomy systems. DO NOT USE in BIODISC biology research.
+ASTROPHYSICAL_THEORY_AVAILABLE = False
+AstroPatternType = None
+ConfidenceLevel = None
+ObservedPattern = None
+AstroPhysicalLaw = None
+Mechanism = None
+AstroPrediction = None
+MechanismTheory = None
+PatternIdentifier = None
+LawPromoter = None
+TheoryComparator = None
+AstroPredictionGenerator = None
+TheoryBuilder = None
+get_turbulent_sf_theory = None
+get_magnetic_sf_theory = None
+identify_pattern = None
+build_theory_from_patterns = None
+compare_sf_theories = None
 
 from .multiwavelength_reconciliation import (
     WavelengthDomain,

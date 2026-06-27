@@ -549,11 +549,11 @@ except ImportError:
     QuantumMechanics = None
     logger.warning("QuantumMechanics not available")
 
-try:
-    from .nuclear_astro import NuclearAstrophysics
-except ImportError:
-    NuclearAstrophysics = None
-    logger.warning("NuclearAstrophysics not available")
+# ASTRONOMY-SPECIFIC MODULES - REMOVED FROM BIODISC
+# Nuclear astrophysics (nuclear_astro.py) has been deleted from BIODISC
+# and is available in separate astronomy systems. DO NOT USE in BIODISC biology research.
+NUCLEAR_ASTROPHYSICS_AVAILABLE = False
+NuclearAstrophysics = None
 
 
 # Export all public classes

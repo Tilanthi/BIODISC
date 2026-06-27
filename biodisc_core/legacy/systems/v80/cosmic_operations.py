@@ -17,7 +17,17 @@ from typing import Dict, List, Any, Optional, Tuple, Union
 from dataclasses import dataclass
 from enum import Enum
 
-from .astro_grounding import AstroGroundedConcept, CelestialObject, ObservationalGrounding, PhysicalGrounding
+# ASTRONOMY-SPECIFIC MODULE - DELETED FROM BIODISC
+# astro_grounding has been deleted from BIODISC
+try:
+    from .astro_grounding import AstroGroundedConcept, CelestialObject, ObservationalGrounding, PhysicalGrounding
+    ASTRO_GROUNDING_AVAILABLE = True
+except ImportError:
+    ASTRO_GROUNDING_AVAILABLE = False
+    AstroGroundedConcept = None
+    CelestialObject = None
+    ObservationalGrounding = None
+    PhysicalGrounding = None
 
 
 class CosmicCompositionType(Enum):
