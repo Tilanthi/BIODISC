@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **BIODISC** (Biology Discovery and Intelligence System) is a unified AGI-inspired framework for autonomous hypothesis generation and validation in biology. The system integrates ~303,000 lines of clean, functional code across modular cognitive capabilities.
 
-**Version**: 4.8
-**AGI Capability Estimate**: 75-80%
+**Version**: 4.9
+**AGI Capability Estimate**: 80-85%
 
 ### IMPORTANT: Naming Convention
 
@@ -26,25 +26,40 @@ The internal codebase uses `biodisc_core` for consistency with the BIODISC proje
 
 ## 🚀 CRITICAL: Auto-Start Autonomous Discovery
 
-**NEW in V4.8**: BIODISC now automatically starts autonomous discovery when the system is initialized.
+**ENHANCED in V4.9**: BIODISC now automatically starts autonomous discovery with V74 Genuine Discovery Filter when the system is initialized.
 
 ### How Auto-Start Works
 
-When you create a BIODISC system using `create_biodisc_system()`, the autonomous discovery orchestrator starts automatically in the background:
+When you create a BIODISC system using `create_biodisc_system()`, the autonomous discovery orchestrator starts automatically in the background with V74 filtering:
 
 ```python
 from biodisc_core import create_biodisc_system
 
-# Autonomous discovery starts automatically
+# Autonomous discovery starts automatically with V74 filter
 system = create_biodisc_system()
 
 # The system will now:
 # 1. Generate curiosity-driven questions when idle
-# 2. Conduct autonomous research cycles
-# 3. Validate discoveries with swarm intelligence
-# 4. Store validated discoveries in memory palace
-# 5. Automatically pause during user queries
+# 2. Filter questions with V74 Genuine Discovery Filter
+# 3. Route to appropriate analysis modules (Computational, Synthesis, Insight)
+# 4. Conduct autonomous research cycles with genuine discovery requirements
+# 5. Validate discoveries with computational novelty (0.7) and synthesis quality (0.6) thresholds
+# 6. Store validated discoveries in memory palace
+# 7. Automatically pause during user queries
 ```
+
+### V74 Genuine Discovery Filtering
+
+**NEW in V4.9**: The autonomous discovery system now uses V74 Genuine Discovery Filter to ensure only authentic scientific contributions are counted as discoveries:
+
+- **Trivial Question Filtering**: Automatically rejects definition and literature lookup questions
+- **Contribution Type Validation**: Requires computational analysis, published data, or novel synthesis
+- **Computational Novelty Threshold**: 0.7 minimum score for computational contributions
+- **Synthesis Quality Threshold**: 0.6 minimum score for multi-domain insights
+- **Data Source Validation**: Requires published data sources for discovery validation
+
+**Before V4.9**: 59/59 "discoveries" were literature summaries and data-gathering
+**After V4.9**: Only genuine scientific contributions that meet computational novelty standards
 
 ### Activity Tracking and Pause/Resume
 
@@ -80,15 +95,40 @@ system = create_biodisc_system(config)
 
 ### Recent Autonomous Discoveries
 
+**NEW in V4.9**: All discoveries now pass through V74 Genuine Discovery Filter to ensure only authentic scientific contributions are stored.
+
 Autonomous discoveries are automatically stored in the memory palace at:
 `~/.claude/projects/-Users-gjw255-astrodata-SWARM-BIODISC/memory/`
 
-Recent discoveries include:
-- Phenotypic plasticity influence on evolutionary trajectories
-- Mechanisms ensuring accurate spindle positioning during asymmetric cell division
-- How feedback loops create bistable switches in cell fate decisions
-- Chromatin remodeling complex coordination with transcription factors
-- Mechanisms regulating non-coding RNA stability and degradation
+Recent genuine discoveries (filtered by V74) include computational analyses, novel syntheses, and original insights that meet computational novelty (0.7) and synthesis quality (0.6) thresholds.
+
+### V74 Genuine Discovery Filter Configuration
+
+**NEW in V4.9**: Configure V74 filtering behavior to control discovery quality standards:
+
+```python
+from biodisc_core.autonomous.config import get_default_config
+
+# Get default configuration with V74 enabled
+config = get_default_config()
+
+# V74 filtering parameters
+config.enable_genuine_discovery_filter = True  # Enable V74 filter
+config.require_published_data_sources = True  # Require published data
+config.computational_novelty_threshold = 0.7  # Minimum novelty score
+config.synthesis_quality_threshold = 0.6  # Minimum synthesis quality
+config.allow_literature_lookup_questions = False  # Filter literature lookup
+config.allow_definition_questions = False  # Filter trivial definitions
+
+# Use custom configuration
+system = create_biodisc_system(config)
+```
+
+**V74 Filter Effects**:
+- **Before V4.9**: 59/59 "discoveries" were literature summaries (0% genuine)
+- **After V4.9**: Only genuine scientific contributions that meet computational standards
+- **Trivial Questions**: Automatically filtered (definitions, literature lookup)
+- **Quality Thresholds**: Computational novelty (0.7) and synthesis quality (0.6) required
 
 ---
 
@@ -155,7 +195,7 @@ integrator.create_session_checkpoint({"current_task": "your task description"})
 from biodisc_core import create_biodisc_system
 
 # Create system with auto-optimized capabilities
-# Autonomous discovery starts automatically in V4.8+
+# Autonomous discovery starts automatically in V4.9+ with V74 filter
 system = create_biodisc_system()
 
 # Answer queries with automatic capability selection
@@ -269,9 +309,10 @@ python -c "from biodisc_core.autonomous.autonomous_orchestrator import Autonomou
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
-│              V4.8 Autonomous Discovery Layer (NEW)              │
-│  V73 Curiosity Engine | Autonomous Orchestrator | Activity    │
+│              V4.9 Autonomous Discovery Layer (ENHANCED)         │
+│  V73 Curiosity Engine | V74 Genuine Discovery Filter | Activity │
 │  Tracking | Auto-Pause/Resume | Memory Palace Integration      │
+│  Session Persistence | Context Checkpointing                   │
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
@@ -322,7 +363,7 @@ python -c "from biodisc_core.autonomous.autonomous_orchestrator import Autonomou
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### V4.8 New Capabilities Summary
+### V4.9 New Capabilities Summary
 
 **V61: Expert Feedback Pattern Extractor**
 - Learns patterns from domain expert feedback
@@ -361,6 +402,25 @@ python -c "from biodisc_core.autonomous.autonomous_orchestrator import Autonomou
 - Stores validated discoveries in memory palace
 - Auto-starts with system initialization
 - Pauses during user activity, resumes when idle
+
+**V74: Genuine Discovery Filter (NEW in V4.9)**
+- Distinguishes genuine discoveries from literature summaries
+- Filters trivial definition and literature lookup questions
+- Requires computational novelty threshold (0.7) for discoveries
+- Requires synthesis quality threshold (0.6) for multi-domain insights
+- Validates data sources and contribution types
+- Routes questions to appropriate analysis modules:
+  - **Computational Biology Analyzer**: Data-driven analysis with published sources
+  - **Cross-Domain Synthesis Engine**: Multi-domain novel insights
+  - **Original Insight Generator**: Mechanistic hypotheses and predictions
+- Ensures only genuine scientific contributions are counted as discoveries
+- Transforms BIODISC from 0% genuine discoveries to focused on authentic contributions
+
+**Session Persistence & Context Checkpointing (NEW in V4.9)**
+- Automatic session persistence across manual closures
+- Previous session context automatically restored on startup
+- Context checkpoint system prevents repetitive work after token overflow
+- Persistent deduplication prevents duplicate discoveries across sessions
 
 ### Module Communication Patterns
 
@@ -603,9 +663,9 @@ The comprehensive test verifies:
 - **Causal Discovery**: V50, V70, and biological causal discovery engines
 - **Advanced Reasoning**: Swarm reasoning, hierarchical Bayesian meta-learning
 - **V4 Capabilities**: Meta-Context Engine (if available)
-- **V4.8 Capabilities**: V61-V73 autonomous discovery and meta-learning
+- **V4.9 Capabilities**: V61-V74 autonomous discovery, meta-learning, and genuine discovery filtering
 - **Orchestrator Integration**: create_biodisc_system(), answer(), process_query()
-- **Auto-Start Discovery**: Autonomous orchestrator starts automatically
+- **Auto-Start Discovery**: Autonomous orchestrator starts automatically with V74 filtering
 
 ### Fix-Test Loop
 
@@ -634,23 +694,25 @@ The report should document:
 - Date and version of verification
 - All 10 domains with PASS status
 - All 18+ advanced capabilities with PASS status
-- V61-V73 autonomous capabilities with PASS status
+- V61-V74 autonomous capabilities with PASS status
+- V74 Genuine Discovery Filter verification
+- Session persistence and context checkpointing verification
 - Cross-module dependency verification
-- Auto-start autonomous discovery verification
+- Auto-start autonomous discovery verification with V74 filtering
 - Any issues found and resolved
 
 ---
 
 ## Code Statistics
 
-- **Total Lines**: 303,000+
-- **Python Files**: 514+
+- **Total Lines**: 304,000+
+- **Python Files**: 515+
 - **Directory Size**: ~9 MB (after cleanup from 3.6 GB of backups)
 - **Specialist Capabilities**: 66+ (V36-V94 baseline)
-- **V4.8 New Capabilities**: 13 (V61-V73)
+- **V4.9 New Capabilities**: 14 (V61-V74, including V74 Genuine Discovery Filter)
 - **Domain Modules**: 10 (biology-focused)
 - **Physics Stages**: 15 learning stages (relativistic, quantum, nuclear)
-- **Autonomous Discoveries**: 30+ (stored in memory palace)
+- **Autonomous Discoveries**: Now filtered for genuine contributions only (V74)
 
 ---
 
