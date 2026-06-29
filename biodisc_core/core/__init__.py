@@ -52,6 +52,10 @@ class UnifiedBIODISCSystem:
         self.mode = mode
         self.config = config or {}
 
+        # AUTOMATIC CONTEXT CHECKPOINT RESTORATION
+        # This happens automatically on every system initialization
+        self._init_context_checkpoint()
+
         # Initialize components based on mode
         self._init_causal_components()
         self._init_memory_components()
@@ -213,6 +217,47 @@ class UnifiedBIODISCSystem:
 
         except Exception as e:
             warnings.warn(f"Could not initialize multi-messenger components: {e}")
+
+    def _init_context_checkpoint(self):
+        """
+        AUTOMATIC CONTEXT CHECKPOINT RESTORATION
+
+        This method automatically restores context checkpoint on system initialization.
+        It provides seamless continuation of work across context loss without requiring
+        user intervention.
+
+        This happens automatically every time the BIODISC system is initialized.
+        """
+        try:
+            from ..memory.persistent.context_checkpoint import ContextCheckpoint
+
+            checkpoint = ContextCheckpoint()
+            restored = checkpoint.restore_and_display()
+
+            if restored:
+                # Context was restored - provide continuation guidance
+                print("\n" + "="*70)
+                print("🔄 CONTEXT RESTORED - You can continue exactly where you left off")
+                print("="*70)
+                print("\n💡 TIP: All your work context has been automatically restored.")
+                print("   - Task status and decisions made")
+                print("   - Files modified and created")
+                print("   - Next steps and test results")
+                print("   - Issues discovered and solutions implemented")
+                print("\n➡️ Simply continue working from the restored state above.\n")
+
+                # Store checkpoint for potential auto-save
+                self.context_checkpoint = checkpoint
+            else:
+                # No checkpoint found - system will auto-save checkpoints during work
+                print("💾 No previous checkpoint found - auto-save enabled for this session")
+                self.context_checkpoint = checkpoint
+
+        except Exception as e:
+            # Don't fail system initialization if checkpoint has issues
+            import logging
+            logging.warning(f"Could not initialize context checkpoint: {e}")
+            self.context_checkpoint = None
 
     def _check_data_sufficiency(self, query: str) -> Optional[str]:
         """

@@ -337,7 +337,7 @@ class CuriosityEngine:
     - V73 Autonomous Discovery (orchestration)
     """
 
-    def __init__(self):
+    def __init__(self, enable_genuine_discovery_filter: bool = True):
         self.gap_analyzer = KnowledgeGapAnalyzer()
         self.impact_estimator = ImpactEstimator()
         self.question_history: List[CuriosityQuestion] = []
@@ -345,6 +345,19 @@ class CuriosityEngine:
         self.biological_kb = self._build_biological_knowledge_base()
         self.generated_questions_pool: List[CuriosityQuestion] = []  # Pool of generated questions
         self.question_cycle_index = 0  # Track position in question pool
+
+        # V74 Genuine Discovery Filter integration
+        self.enable_genuine_discovery_filter = enable_genuine_discovery_filter
+        self.genuine_discovery_filter = None
+        if enable_genuine_discovery_filter:
+            try:
+                from ..capabilities.v1xx_genuine_discovery_filter import get_genuine_discovery_filter
+                self.genuine_discovery_filter = get_genuine_discovery_filter()
+                import logging
+                logging.getLogger(__name__).info("V74 Genuine Discovery Filter enabled")
+            except ImportError:
+                import logging
+                logging.getLogger(__name__).warning("V74 Genuine Discovery Filter not available, using legacy filtering")
 
     def generate_questions(
         self,
@@ -386,6 +399,40 @@ class CuriosityEngine:
         # If no knowledge base provided or no gaps found, generate diverse questions
         if not questions:
             questions = self._generate_diverse_biological_questions()
+
+        # Apply V74 Genuine Discovery Filter if enabled
+        if self.genuine_discovery_filter:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Applying V74 Genuine Discovery Filter to {len(questions)} questions")
+
+            # Extract question texts for filtering
+            question_texts = [q.question for q in questions]
+            filtered_texts, assessments = self.genuine_discovery_filter.filter_questions(question_texts)
+
+            # Get filter statistics
+            stats = self.genuine_discovery_filter.get_filter_statistics(assessments)
+            logger.info(f"V74 Filter results: {stats['kept']}/{stats['total_questions']} genuine contributions kept")
+            logger.info(f"  - Trivial definitions filtered: {stats['trivial_definitions']}")
+            logger.info(f"  - Literature lookup filtered: {stats['literature_lookup']}")
+            logger.info(f"  - Genuine discoveries: {stats['genuine_discoveries']}")
+            logger.info(f"  - Synthesis required: {stats['synthesis_required']}")
+            logger.info(f"  - Computational required: {stats['computational_required']}")
+
+            # Rebuild questions list with only genuine contributions
+            filtered_questions = []
+            assessment_dict = {a.question: a for a in assessments}
+
+            for question in questions:
+                assessment = assessment_dict.get(question.question)
+                if assessment and assessment.is_genuine_contribution and not assessment.should_filter_out:
+                    # Update question with assessment metadata
+                    question.potential_discovery = f"[{assessment.contribution_type.value}] {assessment.potential_discovery or ''}"
+                    # Update confidence based on assessment
+                    question.confidence = max(question.confidence, assessment.confidence)
+                    filtered_questions.append(question)
+
+            questions = filtered_questions
 
         # Estimate impact for each question
         for question in questions:
@@ -558,7 +605,12 @@ class CuriosityEngine:
         return questions
 
     def _is_high_quality_question(self, question_text: str) -> bool:
-        """Check if a question is sufficiently complex to be worth exploring"""
+        """
+        Check if a question is sufficiently complex to be worth exploring.
+
+        ENHANCED FOR GENUINE DISCOVERY: Stricter filtering to ensure questions require
+        genuine discovery contributions rather than trivial definitions or literature lookup.
+        """
         # Filter out simple "What is X" definition questions
         if re.match(r'^What (is|are|does|do) \w+\?$', question_text, re.IGNORECASE):
             return False
@@ -568,24 +620,55 @@ class CuriosityEngine:
             r'^What is \w+\?$',
             r'^Define \w+\?$',
             r'^Explain \w+\?$',
+            r'^What (is|are) \w+\?$',  # "What is Feedback?", "What is Natural?"
         ]
         for pattern in simple_patterns:
             if re.match(pattern, question_text, re.IGNORECASE):
                 return False
 
-        # Question should be at least somewhat complex
-        # - Either multi-clause, or
-        # - Contains domain-specific terminology, or
-        # - Asks about relationships/mechanisms
-        quality_indicators = [
-            'how', 'why', 'mechanism', 'determine', 'regulate', 'specificity',
-            'interaction', 'pathway', 'signal', 'cascade', 'network', 'complex',
-            'relationship', 'between', 'affect', 'influence', 'control', 'modulate',
-            'coordinate', 'integrate', 'synthesize', 'degrade', 'transport'
+        # Filter out literature lookup questions
+        literature_patterns = [
+            r'^What is the function of \w+\?$',
+            r'^Where is \w+ found\?$',
+            r'^Who discovered \w+\?$',
+        ]
+        for pattern in literature_patterns:
+            if re.match(pattern, question_text, re.IGNORECASE):
+                return False
+
+        # ENHANCED: Require genuine discovery contribution indicators
+        # Question should require one or more of:
+        # 1. Computational analysis (quantitative, modeling, prediction)
+        # 2. Novel synthesis (cross-domain, integrative, systems-level)
+        # 3. Mechanism explanation (how/why questions requiring reasoning)
+        # 4. Hypothesis generation (testable predictions, counterfactuals)
+
+        genuine_discovery_indicators = [
+            # Mechanism/Explanation (requires reasoning, not lookup)
+            'how does', 'how do', 'why do', 'why does', 'mechanism', 'determine',
+            'regulate', 'control', 'coordinate', 'modulate', 'mediate', 'facilitate',
+
+            # Computational Analysis (requires quantitative work)
+            'quantitative', 'predict', 'model', 'calculate', 'measure', 'estimate',
+            'optimize', 'probability', 'statistical', 'correlation', 'distribution',
+
+            # Novel Synthesis (requires cross-domain integration)
+            'integration', 'interaction', 'relationship', 'between', 'combine',
+            'synthesize', 'connect', 'coupling', 'feedback', 'network', 'systems',
+
+            # Hypothesis Generation (requires novel insight)
+            'would happen if', 'consequence', 'effect of', 'impact of', 'influence',
+            'hypothesis', 'prediction', 'testable', 'counterfactual', 'emergent'
         ]
 
+        # If V74 filter is available, use it for more sophisticated assessment
+        if self.genuine_discovery_filter:
+            assessment = self.genuine_discovery_filter.assess_question(question_text)
+            return assessment.is_genuine_contribution and not assessment.should_filter_out
+
+        # Fallback to keyword-based filtering
         question_lower = question_text.lower()
-        return any(indicator in question_lower for indicator in quality_indicators)
+        return any(indicator in question_lower for indicator in genuine_discovery_indicators)
 
     def _question_from_gap(self, gap: KnowledgeGap, domain: str) -> CuriosityQuestion:
         """Generate curiosity question from knowledge gap"""
@@ -663,9 +746,14 @@ class CuriosityEngine:
                 break
 
 
-def create_curiosity_engine() -> CuriosityEngine:
-    """Factory function to create curiosity engine"""
-    return CuriosityEngine()
+def create_curiosity_engine(enable_genuine_discovery_filter: bool = True) -> CuriosityEngine:
+    """
+    Factory function to create curiosity engine
+
+    Args:
+        enable_genuine_discovery_filter: Whether to enable V74 Genuine Discovery Filter
+    """
+    return CuriosityEngine(enable_genuine_discovery_filter=enable_genuine_discovery_filter)
 
 
 # Singleton instance

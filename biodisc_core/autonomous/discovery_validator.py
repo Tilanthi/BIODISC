@@ -53,6 +53,26 @@ class DiscoveryValidator:
         self.validation_history: List[ValidationResult] = []
         self.known_discoveries: set = set()  # Track discovery IDs to prevent duplicates
 
+        # V74 Genuine Discovery Integration
+        self.genuine_discovery_filter = None
+        self.data_source_validator = None
+
+        if config.enable_genuine_discovery_filter:
+            try:
+                from ..capabilities.v1xx_genuine_discovery_filter import get_genuine_discovery_filter
+                self.genuine_discovery_filter = get_genuine_discovery_filter()
+                logger.info("V74 Genuine Discovery Filter integrated into validator")
+            except ImportError:
+                logger.warning("V74 Genuine Discovery Filter not available")
+
+        if config.require_published_data_sources:
+            try:
+                from ..capabilities.v1xx_data_source_validator import get_data_source_validator
+                self.data_source_validator = get_data_source_validator()
+                logger.info("V74 Data Source Validator integrated into validator")
+            except ImportError:
+                logger.warning("V74 Data Source Validator not available")
+
         logger.info("Discovery Validator initialized")
 
     def validate(self, discovery: Discovery) -> ValidationResult:
@@ -103,6 +123,20 @@ class DiscoveryValidator:
             metacognitive_score, metacognitive_analysis = self._metacognitive_evaluation(discovery)
             validation_scores['metacognitive_approval'] = metacognitive_score
             discovery.metacognitive_approval = metacognitive_score
+
+            # 7. Genuine contribution assessment (V74)
+            if self.genuine_discovery_filter or self.data_source_validator:
+                genuine_score, genuine_analysis = self._assess_genuine_contribution(discovery)
+                validation_scores['genuine_contribution'] = genuine_score
+
+                # 8. Data source validation (V74)
+                data_quality_score, data_analysis = self._validate_data_sources(discovery)
+                validation_scores['data_quality'] = data_quality_score
+
+                # Update discovery with V74 metrics
+                discovery.computational_novelty = data_quality_score
+                discovery.synthesis_quality = genuine_score
+                discovery.is_genuine_contribution = (genuine_score >= 0.6 and data_quality_score >= 0.5)
 
             # Aggregate scores
             overall_score = self._aggregate_scores(validation_scores)
@@ -496,30 +530,36 @@ class DiscoveryValidator:
         # Weights based on validation mode
         if self.config.validation_mode == 'strict':
             weights = {
-                'novelty': 0.30,  # Novelty is most important
-                'scientific_value': 0.20,
-                'testability': 0.15,
-                'consistency': 0.10,
-                'swarm_consensus': 0.15,
-                'metacognitive_approval': 0.10
+                'novelty': 0.25,  # Novelty is most important
+                'scientific_value': 0.15,
+                'testability': 0.12,
+                'consistency': 0.08,
+                'swarm_consensus': 0.12,
+                'metacognitive_approval': 0.10,
+                'genuine_contribution': 0.12,  # V74: Genuine contribution requirement
+                'data_quality': 0.06  # V74: Data source quality
             }
         elif self.config.validation_mode == 'moderate':
             weights = {
-                'novelty': 0.25,
-                'scientific_value': 0.20,
-                'testability': 0.15,
-                'consistency': 0.15,
-                'swarm_consensus': 0.15,
-                'metacognitive_approval': 0.10
+                'novelty': 0.22,
+                'scientific_value': 0.18,
+                'testability': 0.12,
+                'consistency': 0.12,
+                'swarm_consensus': 0.12,
+                'metacognitive_approval': 0.10,
+                'genuine_contribution': 0.09,  # V74: Genuine contribution requirement
+                'data_quality': 0.05  # V74: Data source quality
             }
         else:  # permissive
             weights = {
                 'novelty': 0.20,
                 'scientific_value': 0.20,
-                'testability': 0.15,
-                'consistency': 0.15,
-                'swarm_consensus': 0.15,
-                'metacognitive_approval': 0.15
+                'testability': 0.12,
+                'consistency': 0.13,
+                'swarm_consensus': 0.13,
+                'metacognitive_approval': 0.12,
+                'genuine_contribution': 0.05,  # V74: Lower weight in permissive mode
+                'data_quality': 0.05  # V74: Data source quality
             }
 
         # Calculate weighted average
@@ -566,3 +606,133 @@ class DiscoveryValidator:
             'average_novelty': sum(result.breakdown.get('novelty', 0) for result in self.validation_history) / total_count,
             'average_scientific_value': sum(result.breakdown.get('scientific_value', 0) for result in self.validation_history) / total_count
         }
+
+    def _assess_genuine_contribution(self, discovery: Discovery) -> tuple[float, str]:
+        """
+        Assess if discovery represents genuine contribution (V74).
+
+        Uses V74 Genuine Discovery Filter to evaluate if discovery requires:
+        - Novel computational analysis
+        - Published data integration
+        - Genuine synthesis/insight
+
+        Returns:
+            Tuple of (contribution_score, analysis)
+        """
+        analysis_parts = []
+        score = 0.5
+
+        if not self.genuine_discovery_filter:
+            return 0.7, "V74 filter not available - assuming moderate contribution"
+
+        # Assess the question using V74 filter
+        try:
+            assessment = self.genuine_discovery_filter.assess_question(
+                discovery.question,
+                discovery.finding
+            )
+
+            # Base score from contribution type
+            if assessment.contribution_type:
+                contribution_scores = {
+                    'computational_analysis': 0.9,
+                    'published_data_integration': 0.85,
+                    'novel_synthesis': 0.8,
+                    'original_insight': 0.85,
+                    'hypothesis_generation': 0.75,
+                    'meta_discovery': 0.95
+                }
+                score = contribution_scores.get(assessment.contribution_type.value, 0.5)
+                analysis_parts.append(f"Contribution type: {assessment.contribution_type.value}")
+            else:
+                score = 0.3
+                analysis_parts.append("No clear contribution type")
+
+            # Adjust based on quality
+            if assessment.quality:
+                quality_scores = {
+                    'genuine_discovery': 1.0,
+                    'synthesis_required': 0.85,
+                    'computational_required': 0.9,
+                    'literature_lookup': 0.2,
+                    'trivial_definition': 0.1
+                }
+                quality_factor = quality_scores.get(assessment.quality.value, 0.5)
+                score *= quality_factor
+                analysis_parts.append(f"Quality: {assessment.quality.value}")
+
+            # Use confidence from assessment
+            if assessment.confidence:
+                score = max(score, assessment.confidence)
+                analysis_parts.append(f"Assessment confidence: {assessment.confidence:.2f}")
+
+            # Add reasoning
+            if assessment.reasons:
+                analysis_parts.extend(assessment.reasons[:2])
+
+            return min(score, 1.0), " | ".join(analysis_parts)
+
+        except Exception as e:
+            logger.error(f"Error in V74 genuine contribution assessment: {e}")
+            return 0.5, f"V74 assessment error: {e}"
+
+    def _validate_data_sources(self, discovery: Discovery) -> tuple[float, str]:
+        """
+        Validate data sources for discovery (V74).
+
+        Uses V74 Data Source Validator to ensure discovery uses:
+        - Published data from repositories/archives
+        - Peer-reviewed sources
+        - Validated datasets
+
+        Returns:
+            Tuple of (data_quality_score, analysis)
+        """
+        analysis_parts = []
+        score = 0.5
+
+        if not self.data_source_validator:
+            return 0.6, "V74 data validator not available - assuming moderate data quality"
+
+        try:
+            # Validate data sources
+            validation = self.data_source_validator.validate_discovery(
+                discovery.finding,
+                discovery.evidence
+            )
+
+            # Base score from validation
+            score = validation.data_quality_score
+            analysis_parts.append(f"Data quality score: {validation.data_quality_score:.2f}")
+
+            # Add source counts
+            if validation.peer_reviewed_count > 0:
+                analysis_parts.append(f"Peer-reviewed sources: {validation.peer_reviewed_count}")
+                score += 0.1 * min(validation.peer_reviewed_count, 3)  # Bonus up to 0.3
+
+            if validation.repository_count > 0:
+                analysis_parts.append(f"Repository sources: {validation.repository_count}")
+                score += 0.05 * min(validation.repository_count, 5)  # Bonus up to 0.25
+
+            # Check for validation issues
+            if validation.unverified_count > 0:
+                analysis_parts.append(f"Unverified sources: {validation.unverified_count}")
+                score -= 0.1 * validation.unverified_count
+
+            # Check if overall valid
+            if validation.is_valid:
+                analysis_parts.append("Data sources validated")
+                score += 0.1
+            else:
+                analysis_parts.append("Data sources NOT validated")
+                score -= 0.2
+
+            # Add recommendations if any
+            if validation.recommendations:
+                analysis_parts.append(f"Recommendations: {len(validation.recommendations)}")
+
+            return min(max(score, 0.0), 1.0), " | ".join(analysis_parts)
+
+        except Exception as e:
+            logger.error(f"Error in V74 data source validation: {e}")
+            return 0.5, f"V74 data validation error: {e}"

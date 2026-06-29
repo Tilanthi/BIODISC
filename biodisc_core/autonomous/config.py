@@ -54,6 +54,14 @@ class AutonomousConfig:
     max_memory_percent: float = 20.0
     idle_timeout_minutes: int = 1
 
+    # === Genuine Discovery Configuration (V74) ===
+    enable_genuine_discovery_filter: bool = True  # Enable V74 Genuine Discovery Filter
+    require_published_data_sources: bool = True  # Require published data for discoveries
+    computational_novelty_threshold: float = 0.7  # Minimum computational novelty score
+    synthesis_quality_threshold: float = 0.6  # Minimum synthesis quality score
+    allow_literature_lookup_questions: bool = False  # Filter out literature lookup questions
+    allow_definition_questions: bool = False  # Filter out trivial definition questions
+
     # === Component Control ===
     enable_v73_discovery: bool = True
     enable_v60_swarm: bool = True
@@ -123,6 +131,13 @@ class AutonomousConfig:
         if not (0 <= self.min_discovery_novelty <= 1):
             raise ValueError(f"min_discovery_novelty must be 0-1, got {self.min_discovery_novelty}")
 
+        # Validate V74 genuine discovery thresholds
+        if not (0 <= self.computational_novelty_threshold <= 1):
+            raise ValueError(f"computational_novelty_threshold must be 0-1, got {self.computational_novelty_threshold}")
+
+        if not (0 <= self.synthesis_quality_threshold <= 1):
+            raise ValueError(f"synthesis_quality_threshold must be 0-1, got {self.synthesis_quality_threshold}")
+
         # Set validation mode enum
         try:
             self.validation_mode = ValidationMode(self.discovery_validation_mode)
@@ -160,6 +175,12 @@ class Discovery:
     Represents a scientific discovery made during autonomous operation.
 
     Discoveries must pass rigorous validation before being reported to the user.
+
+    ENHANCED WITH GENUINE CONTRIBUTION TRACKING (V74):
+    - Tracks contribution type (computational analysis, published data, novel synthesis)
+    - Validates data sources
+    - Assesses computational novelty
+    - Ensures genuine scientific contribution
     """
     discovery_id: str
     question: str
@@ -175,6 +196,14 @@ class Discovery:
     swarm_consensus: float = 0.0
     metacognitive_approval: float = 0.0
 
+    # Genuine Contribution Metrics (V74)
+    contribution_type: str = "unknown"  # computational_analysis, published_data, novel_synthesis, original_insight
+    data_sources: List[str] = field(default_factory=list)  # Published data sources used
+    computational_novelty: float = 0.0  # Novelty of computational approach (0-1)
+    synthesis_quality: float = 0.0  # Quality of multi-domain synthesis (0-1)
+    is_genuine_contribution: bool = False  # Whether this represents genuine discovery
+    contribution_reasons: List[str] = field(default_factory=list)  # Why this is genuine
+
     # Metadata
     domain: str = "general"
     question_type: str = "knowledge_gap"
@@ -187,14 +216,21 @@ class Discovery:
     validated_by: List[str] = field(default_factory=list)
 
     def calculate_overall_score(self) -> float:
-        """Calculate overall validation score"""
+        """
+        Calculate overall validation score.
+
+        ENHANCED WITH GENUINE CONTRIBUTION SCORING (V74):
+        Includes computational novelty and synthesis quality in the overall score.
+        """
         weights = {
-            'novelty': 0.25,
-            'scientific_value': 0.20,
-            'testability': 0.15,
-            'consistency': 0.10,
-            'swarm_consensus': 0.15,
-            'metacognitive_approval': 0.15
+            'novelty': 0.20,
+            'scientific_value': 0.15,
+            'testability': 0.12,
+            'consistency': 0.08,
+            'swarm_consensus': 0.12,
+            'metacognitive_approval': 0.12,
+            'computational_novelty': 0.15,  # V74: Weight for computational novelty
+            'synthesis_quality': 0.06  # V74: Weight for synthesis quality
         }
 
         self.overall_score = (
@@ -203,7 +239,9 @@ class Discovery:
             self.testability * weights['testability'] +
             self.consistency * weights['consistency'] +
             self.swarm_consensus * weights['swarm_consensus'] +
-            self.metacognitive_approval * weights['metacognitive_approval']
+            self.metacognitive_approval * weights['metacognitive_approval'] +
+            self.computational_novelty * weights['computational_novelty'] +
+            self.synthesis_quality * weights['synthesis_quality']
         )
 
         return self.overall_score

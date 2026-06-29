@@ -153,6 +153,14 @@ class EnhancedUnifiedBIODISCSystem:
         """
         self.config = config or EnhancedUnifiedConfig()
 
+        # AUTOMATIC SESSION PERSISTENCE INITIALIZATION
+        # This restores previous session context automatically
+        self._init_session_persistence()
+
+        # AUTOMATIC CONTEXT CHECKPOINT RESTORATION
+        # This happens automatically on every system initialization
+        self._init_context_checkpoint()
+
         # Initialize base system if available
         self.base_system = None
         if UnifiedBIODISCSystem is not None:
@@ -238,6 +246,172 @@ class EnhancedUnifiedBIODISCSystem:
 
         logger.info("EnhancedUnifiedBIODISCSystem initialized")
 
+    def _init_session_persistence(self):
+        """
+        AUTOMATIC SESSION PERSISTENCE INITIALIZATION
+
+        This method automatically starts a new session or restores the previous one.
+        It provides TRUE session-to-session memory retention across manual closures.
+
+        Completely automatic - no user intervention required.
+        """
+        try:
+            from ..memory.persistent.session_persistence import get_session_persistence
+
+            self.session_persistence = get_session_persistence()
+
+            # Start new session or restore previous one
+            previous_session = self.session_persistence.restore_session_context()
+
+            if previous_session:
+                # Restore previous session context automatically
+                self.current_session = self.session_persistence.start_session(
+                    session_id=previous_session.session_id
+                )
+
+                # Minimal output to show context was loaded
+                if previous_session.conversation_summary:
+                    logger.info(f"Session context restored: {previous_session.conversation_summary[:80]}...")
+                elif previous_session.key_topics:
+                    logger.info(f"Session context restored with {len(previous_session.key_topics)} topics")
+                else:
+                    logger.info(f"Session context restored: {previous_session.session_id}")
+
+                # Store previous context for immediate access
+                self.previous_context = {
+                    'session_id': previous_session.session_id,
+                    'last_activity': previous_session.end_time or previous_session.start_time,
+                    'tasks_in_progress': previous_session.tasks_in_progress,
+                    'conversation_summary': previous_session.conversation_summary,
+                    'key_topics': previous_session.key_topics,
+                    'decisions_made': previous_session.decisions_made,
+                    'files_modified': previous_session.files_modified
+                }
+            else:
+                # Start new session
+                self.current_session = self.session_persistence.start_session()
+                self.previous_context = {}
+                logger.info(f"New session started: {self.current_session.session_id}")
+
+        except Exception as e:
+            # Don't fail system initialization if session persistence has issues
+            logger.warning(f"Could not initialize session persistence: {e}")
+            self.session_persistence = None
+            self.current_session = None
+            self.previous_context = {}
+
+    def _init_context_checkpoint(self):
+        """
+        AUTOMATIC CONTEXT CHECKPOINT RESTORATION
+
+        This method automatically restores context checkpoint on system initialization.
+        It provides seamless continuation of work across context loss without requiring
+        user intervention.
+
+        Completely automatic - no user intervention required.
+        """
+        try:
+            from ..memory.persistent.context_checkpoint import ContextCheckpoint
+
+            checkpoint = ContextCheckpoint()
+            restored_state = checkpoint.get_latest_checkpoint()
+
+            if restored_state:
+                # Context was restored automatically - no display needed
+                logger.info(f"Context checkpoint restored: {restored_state.task_description[:60]}...")
+
+                # Store checkpoint state for immediate access
+                self.context_checkpoint = checkpoint
+                self.restored_checkpoint = restored_state
+
+                # Integrate checkpoint data into previous context
+                if hasattr(self, 'previous_context'):
+                    self.previous_context.update({
+                        'checkpoint_task': restored_state.task_description,
+                        'checkpoint_status': restored_state.task_status,
+                        'checkpoint_files_modified': restored_state.files_modified,
+                        'checkpoint_next_steps': restored_state.next_steps,
+                        'checkpoint_decisions': restored_state.decisions_made
+                    })
+            else:
+                # No checkpoint found - system will auto-save checkpoints during work
+                logger.debug("No previous checkpoint found - auto-save enabled")
+                self.context_checkpoint = checkpoint
+                self.restored_checkpoint = None
+
+        except Exception as e:
+            # Don't fail system initialization if checkpoint has issues
+            logger.warning(f"Could not initialize context checkpoint: {e}")
+            self.context_checkpoint = None
+            self.restored_checkpoint = None
+
+    def _auto_save_checkpoint(self, query: str, result: Dict[str, Any]):
+        """
+        AUTOMATIC CONTEXT CHECKPOINT SAVE
+
+        This method automatically saves checkpoints during work to preserve state
+        across context loss. It runs automatically after every query.
+
+        Args:
+            query: The query that was processed
+            result: The result that was generated
+        """
+        if self.context_checkpoint is None:
+            return
+
+        try:
+            # Only save checkpoints for substantive work, not simple queries
+            # This prevents cluttering the checkpoint system with trivial interactions
+            is_substantive = (
+                len(query) > 50 or  # Substantial query
+                'fix' in query.lower() or  # Fixing something
+                'implement' in query.lower() or  # Implementing something
+                'create' in query.lower() or  # Creating something
+                'modify' in query.lower() or  # Modifying something
+                'analyze' in query.lower() or  # Analysis work
+                'test' in query.lower() or  # Testing work
+                'debug' in query.lower()  # Debugging work
+            )
+
+            if not is_substantive:
+                return
+
+            # Extract relevant information from the result
+            capabilities_used = result.get('capabilities_used', [])
+            mode = result.get('mode', 'unknown')
+            confidence = result.get('confidence', 0.0)
+
+            # Create task description from query and context
+            task_description = f"Processing: {query[:100]}..." if len(query) > 100 else query
+
+            # Save checkpoint with current state
+            self.context_checkpoint.save_current_state(
+                task_description=task_description,
+                task_status='in_progress',
+                files_modified=[],  # Could be enhanced to track modified files
+                files_created=[],
+                files_read=[],
+                next_steps=[f"Continue processing queries in {mode} mode"],
+                decisions_made={
+                    'processing_mode': mode,
+                    'capabilities_used': str(capabilities_used),
+                    'confidence_level': str(confidence)
+                },
+                issues_discovered=[],
+                solutions_implemented=[],
+                test_results={
+                    'last_query_success': str(result.get('success', True)),
+                    'last_confidence': str(confidence)
+                },
+                notes=f"Automatic checkpoint saved after processing query in {mode} mode"
+            )
+
+            logger.debug(f"Auto-saved checkpoint after query processing")
+
+        except Exception as e:
+            # Don't fail query processing if checkpoint save fails
+            logger.warning(f"Could not auto-save checkpoint: {e}")
+
     def _initialize_domains(self):
         """Initialize domain modules"""
         if self.domain_registry is None or not self.config.auto_load_domains:
@@ -300,6 +474,15 @@ class EnhancedUnifiedBIODISCSystem:
         Returns:
             Processing result with answer and metadata
         """
+        # AUTOMATIC SESSION TRACKING - User query
+        # Track user queries for session persistence
+        if self.session_persistence:
+            self.session_persistence.add_conversation_turn(
+                role='user',
+                content=query,
+                context_summary=f"User query in {mode or 'auto'} mode"
+            )
+
         # Update autonomous system activity timestamp
         # This ensures reactive priority - autonomous operations pause during user queries
         if self.autonomous_orchestrator:
@@ -390,6 +573,34 @@ class EnhancedUnifiedBIODISCSystem:
 
         # Update performance stats
         self.performance_stats['queries_processed'] += 1
+
+        # AUTOMATIC CONTEXT CHECKPOINT SAVE
+        # Automatically save checkpoint after each query to preserve work state
+        self._auto_save_checkpoint(query, result)
+
+        # AUTOMATIC SESSION TRACKING - Assistant response
+        # Track assistant responses for session persistence
+        if self.session_persistence and result.get('answer'):
+            # Extract key points from the result
+            key_points = []
+            if result.get('capabilities_used'):
+                key_points.append(f"Used capabilities: {result.get('capabilities_used')}")
+            if result.get('confidence'):
+                key_points.append(f"Confidence: {result.get('confidence'):.2f}")
+
+            # Track assistant response
+            self.session_persistence.add_conversation_turn(
+                role='assistant',
+                content=str(result.get('answer', ''))[:5000],  # Limit response size
+                context_summary=f"Response in {result.get('mode', 'auto')} mode",
+                key_points=key_points
+            )
+
+            # Update session context with relevant information
+            if 'fix' in query.lower() or 'implement' in query.lower():
+                self.session_persistence.update_session_context(
+                    tasks_in_progress=[f"Working on: {query[:100]}"]
+                )
 
         return result
 

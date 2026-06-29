@@ -1263,90 +1263,137 @@ from .v70_meta_scientific import (
     MethodologyEvaluator,
     QuestionEvaluator,
     KnowledgeGapAnalyzer,
-    ExperimentalDesignGenerator,
-    EvidenceSynthesizer,
-    ScientificQuestion,
+    MethodologyGenerator,
+    ExperimentDesigner,
+    LiteratureIntegrator,
+    ResearchQuestion as ScientificQuestion,
     Methodology,
-    Evidence as V70Evidence,
     KnowledgeGap as V70KnowledgeGap,
     ExperimentalDesign,
-    EpistemicState,
-    MethodologyType,
-    EvidenceQuality,
+    MetaScientificResult,
+    MetaAnalysis,
     QuestionType,
-    KnowledgeState,
-    BiasType,
-    create_meta_scientific_reasoner,
-    analyze_scientific_question,
-    recommend_methodology
+    GapType,
+    MethodologyStatus,
+    create_meta_scientific_reasoner
 )
 
-# V70: Emergent Computation Layer
-from .v70_emergent_computation import (
-    EmergentComputationLayer,
-    EmergenceDetector,
-    ReservoirComputer,
-    CellularAutomataEngine,
-    SwarmIntelligenceEngine,
-    PhaseTransitionAnalyzer,
-    EmergentPattern,
-    ReservoirState,
-    CellularAutomaton,
-    SwarmAgent,
-    SwarmState,
-    PhaseAnalysis,
-    EmergenceType,
-    ReservoirType,
-    CARule,
-    CollectiveType,
-    PhaseType,
-    create_emergent_computation_layer,
-    create_reservoir_computer,
-    create_cellular_automaton
-)
+# V70: Emergent Computation Layer (COMMENTED OUT - Import errors preventing V74 filter from loading)
+# from .v70_emergent_computation import (
+#     EmergentComputationLayer,
+#     EmergenceDetector,
+#     ReservoirComputer,
+#     CellularAutomataEngine,
+#     SwarmIntelligenceEngine,
+#     PhaseTransitionAnalyzer,
+#     EmergentPattern,
+#     ReservoirState,
+#     CellularAutomaton,
+#     SwarmAgent,
+#     SwarmState,
+#     PhaseAnalysis,
+#     EmergenceType,
+#     ReservoirType,
+#     CARule,
+#     CollectiveType,
+#     PhaseType,
+#     create_emergent_computation_layer,
+#     create_reservoir_computer,
+#     create_cellular_automaton
+# )
 
-# V70: Temporal Hierarchy Learner
-from .v70_temporal_hierarchy import (
-    TemporalHierarchyLearner,
-    TemporalSegmenter,
-    TemporalPatternDiscoverer,
-    HierarchicalTemporalModel,
-    TemporalSegment,
-    TemporalPattern,
-    TemporalState,
-    TemporalTransition,
-    HierarchicalState,
-    TemporalPrediction,
-    TemporalScale,
-    SegmentationType,
-    PatternType as TemporalPatternType,
-    AbstractionLevel as TemporalAbstractionLevel,
-    create_temporal_hierarchy_learner,
-    learn_temporal_patterns,
-    segment_time_series
-)
+# V70: Temporal Hierarchy Learner (COMMENTED OUT - Import errors)
+# from .v70_temporal_hierarchy import (
+#     TemporalHierarchyLearner,
+#     TemporalSegmenter,
+#     TemporalPatternDiscoverer,
+#     HierarchicalTemporalModel,
+#     TemporalSegment,
+#     TemporalPattern,
+#     TemporalState,
+#     TemporalTransition,
+#     HierarchicalState,
+#     TemporalPrediction,
+#     TemporalScale,
+#     SegmentationType,
+#     PatternType as TemporalPatternType,
+#     AbstractionLevel as TemporalAbstractionLevel,
+#     create_temporal_hierarchy_learner,
+#     learn_temporal_patterns,
+#     segment_time_series
+# )
 
 # V70: Deep Analogical Transfer Engine
 from .v70_analogical_transfer import (
     DeepAnalogicalTransferEngine,
-    DomainModeler,
-    StructuralAligner,
-    AnalogicalReasoner as V70AnalogicalReasoner,
-    TransferEngine,
-    AbstractPatternLibrary,
-    Concept as V70Concept,
-    Relation as V70Relation,
-    DomainStructure,
-    AnalogicalMapping,
-    AnalogicalInference,
-    AbstractPattern,
-    AnalogicalRelationType,
-    MappingType,
-    DomainType as V70AnalogicalDomainType,
     TransferStrategy,
     create_analogical_transfer_engine,
     find_structural_analogy
 )
+
+# Create stubs for missing classes to maintain backward compatibility
+# These were referenced but not implemented in v70_analogical_transfer.py
+class DomainModeler:
+    """Stub for DomainModeler - not implemented"""
+    pass
+
+class StructuralAligner:
+    """Stub for StructuralAligner - not implemented"""
+    pass
+
+class AnalogicalReasoner:
+    """Stub for AnalogicalReasoner - not implemented"""
+    pass
+
+class TransferEngine:
+    """Stub for TransferEngine - not implemented"""
+    pass
+
+class AbstractPatternLibrary:
+    """Stub for AbstractPatternLibrary - not implemented"""
+    pass
+
+class Concept:
+    """Stub for Concept - not implemented"""
+    pass
+
+class Relation:
+    """Stub for Relation - not implemented"""
+    pass
+
+class DomainStructure:
+    """Stub for DomainStructure - not implemented"""
+    pass
+
+class AnalogicalMapping:
+    """Stub for AnalogicalMapping - not implemented"""
+    pass
+
+class AnalogicalInference:
+    """Stub for AnalogicalInference - not implemented"""
+    pass
+
+class AbstractPattern:
+    """Stub for AbstractPattern - not implemented"""
+    pass
+
+class AnalogicalRelationType:
+    """Stub for AnalogicalRelationType - not implemented"""
+    pass
+
+class MappingType:
+    """Stub for MappingType - not implemented"""
+    pass
+
+class DomainType:
+    """Stub for DomainType - not implemented"""
+    pass
+
+# Aliases for compatibility
+V70AnalogicalReasoner = AnalogicalReasoner
+V70Concept = Concept
+V70Relation = Relation
+V70AnalogicalDomainType = DomainType
 
 # Set the AnalogicalReasoning alias after V70 import
 AnalogicalReasoning = create_analogical_transfer_engine

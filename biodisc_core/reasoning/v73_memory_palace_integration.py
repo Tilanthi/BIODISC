@@ -299,7 +299,7 @@ class AutomaticMemoryPalaceIntegration:
         if success:
             self.last_storage_time = datetime.now()
             self.storage_count += 1
-            print(f"Discovery {discovery['id']} stored to memory palace")
+            logger.info(f"Discovery {discovery['id']} written to memory palace file")
 
             # Trigger GraphPalace auto-save for knowledge graph integration
             try:
