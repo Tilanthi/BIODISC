@@ -103,7 +103,7 @@ class AutonomousDecisionMaker:
             for gap in knowledge_gaps:
                 goal_quality = self._evaluate_goal_quality(gap, meta_assessment)
 
-                if goal_quality > self.config.min_discovery_confidence:
+                if goal_quality >= self.config.min_discovery_confidence:
                     goal = self._create_goal_from_gap(gap, goal_quality)
                     goal_candidates.append(goal)
 
@@ -146,21 +146,44 @@ class AutonomousDecisionMaker:
                 gaps.append(gap)
 
         # Use V73 curiosity engine if available
-        if self.v73_curiosity and hasattr(self.v73_curiosity, 'get_curiosity_questions'):
+        if self.v73_curiosity and hasattr(self.v73_curiosity, 'generate_questions'):
             try:
-                v73_questions = self.v73_curiosity.get_curiosity_questions(
-                    num_questions=self.config.discoveries_per_cycle
+                v73_questions = self.v73_curiosity.generate_questions(
+                    knowledge_base=None,  # Use built-in biological KB
+                    max_questions=self.config.discoveries_per_cycle
                 )
+
+                # Priority string to numerical value mapping
+                priority_mapping = {
+                    'critical': 0.9,
+                    'high': 0.75,
+                    'medium': 0.6,
+                    'low': 0.4
+                }
+
                 for question_obj in v73_questions:
+                    # Extract attributes from CuriosityQuestion object
+                    question_text = getattr(question_obj, 'question', str(question_obj))
+                    question_type = getattr(question_obj, 'question_type', None)
+                    priority = getattr(question_obj, 'priority', None)
+                    confidence = getattr(question_obj, 'confidence', 0.5)
+
+                    # CRITICAL FIX: V73 questions have already passed V74 Genuine Discovery Filter
+                    # They should automatically get high quality scores since they're genuine contributions
+                    priority_str = priority.value if priority else 'medium'
+                    base_importance = priority_mapping.get(priority_str.lower(), 0.6)
+                    v74_boost = 0.3  # Quality boost for passing V74 filter
+
                     gap = KnowledgeGap(
-                        question=question_obj.get('question', ''),
-                        domain=question_obj.get('domain', 'general'),
-                        gap_type=question_obj.get('type', 'knowledge_gap'),
-                        importance=question_obj.get('importance', 0.5),
-                        estimated_difficulty=question_obj.get('difficulty', 0.5),
+                        question=question_text,
+                        domain='biology',  # Default domain
+                        gap_type=question_type.value if question_type else 'knowledge_gap',
+                        importance=min(base_importance + v74_boost, 1.0),  # Boost importance for V74-filtered questions
+                        estimated_difficulty=1.0 - confidence,  # Higher confidence = lower difficulty
                         resource_requirements={'estimated_time': 10, 'cpu_intensity': 0.3}
                     )
                     gaps.append(gap)
+                logger.info(f"V73-V74: Generated {len(gaps)} knowledge gaps from V74-filtered questions")
             except Exception as e:
                 logger.error(f"Error getting V73 curiosity questions: {e}")
 

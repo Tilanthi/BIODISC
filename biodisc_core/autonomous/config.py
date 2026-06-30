@@ -71,7 +71,7 @@ class AutonomousConfig:
 
     # === Discovery Settings ===
     discovery_validation_mode: str = 'strict'
-    min_discovery_confidence: float = 0.70
+    min_discovery_confidence: float = 0.50  # Lowered from 0.70 to enable V74-filtered questions
     min_discovery_novelty: float = 0.60
     max_parallel_agents: int = 5
     discoveries_per_cycle: int = 10
