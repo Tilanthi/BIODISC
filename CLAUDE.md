@@ -22,6 +22,32 @@ The internal codebase uses `biodisc_core` for consistency with the BIODISC proje
 **Full name**: BIODISC: Biology Discovery and Intelligence System
 **Subtitle**: An AGI-inspired framework for autonomous hypothesis generation and validation in biology
 
+### 🎯 GitHub Repository Target
+
+**IMPORTANT**: When pushing to GitHub from this BIODISC repository, ALWAYS use:
+- **Repository**: https://github.com/Tilanthi/BIODISC
+- **Remote**: `biodisc` (not `origin`)
+- **Command**: `git push biodisc main`
+
+**NEVER push BIODISC changes to the ASTRA-dev repository** - that is for a different project.
+
+**Correct Git Workflow for BIODISC**:
+```bash
+# Check current remotes
+git remote -v
+
+# Should show:
+# biodisc  https://github.com/Tilanthi/BIODISC.git (fetch)
+# biodisc  https://github.com/Tilanthi/BIODISC.git (push)
+
+# Push BIODISC changes to correct repository
+git add .
+git commit -m "Your commit message"
+git push biodisc main
+
+# NEVER use 'origin' for BIODISC changes
+```
+
 ---
 
 ## 🚀 CRITICAL: Auto-Start Autonomous Discovery
