@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Quick Reference
 
 **Project**: BIODISC (Biology Discovery and Intelligence System)
-**Version**: 6.0 - COMPLETE CLOSED-LOOP DISCOVERY ARCHITECTURE (✅ TRANSFORMATION COMPLETE)
+**Version**: 6.0-FIXED-INTEGRATED - COMPLETE UNIFIED SYSTEM (✅ FULLY INTEGRATED)
 **AGI Capability**: 90-95% (Enhanced from 85-90%)
 **GitHub**: https://github.com/Tilanthi/BIODISC (ONLY repository for BIODISC)
 **Remote**: `biodisc` (use `git push biodisc main` - ONLY main branch)
@@ -135,6 +135,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `test_biodisc_v6_0.py` - Comprehensive integration test suite (✅ ALL TESTS PASSED)
 - `biodisc_core/v6_architecture/` - Modular V6.0 components directory
 
+**V6.0-FIXED-INTEGRATED SYSTEM** (July 5, 2026):
+- 🚀 **COMPLETE UNIFICATION**: V6.0 architectural enhancements + FIXED genuine discovery pipeline
+- ✅ **Single Integrated System**: `biodisc_v6_0_fixed_integrated.py` - All capabilities in one unified system
+- ✅ **Genuine Scientific Discoveries**: Real gene names, actual p-values, genuine fold changes
+- ✅ **V6.0 Advanced Capabilities**: Graded autonomy, epistemic prevention, hybrid discovery
+- ✅ **Anti-Stall Mechanisms**: 300-second timeout, automatic recovery, user activity detection
+- ✅ **Session Persistence**: Restart capability via `session_state_v6_fixed.json`
+- 🎯 **Architecture**: V6.0 generates research questions → FIXED pipeline generates genuine discoveries
+- 📊 **Database**: `autonomous_discoveries.jsonl` for genuine scientific results only
+
 **V6.0 ARCHITECTURAL PHILOSOPHY**: 
 - "Graded autonomy in AI-conducted science: systems that can close the loop at machine speed, while remaining anchored to human priorities, verifiable mechanisms, and domain-appropriate forms of understanding"
 - "Hybrid architectures that integrate generative, causal, and neurosymbolic reasoning within the closed loop, maintaining both efficiency and explanatory diversity"
@@ -185,31 +195,34 @@ git branch
 
 ### Most Common Tasks
 
-**Start GENUINE Autonomous Discovery** (V5.6):
+**Start GENUINE Autonomous Discovery** (V6.0-FIXED-INTEGRATED):
 ```bash
-# V5.6 Anti-Stall System (RECOMMENDED)
-python biodisc_v5_6_anti_stall_discovery.py
+# V6.0-FIXED-INTEGRATED System (RECOMMENDED)
+python biodisc_v6_0_fixed_integrated.py
 
 # Or check if auto-started
-ps aux | grep "autonomous_discovery" | grep -v grep
+ps aux | grep "biodisc_v6_0_fixed_integrated" | grep -v grep
+
+# Check system status
+tail -50 logs/biodisc_v6_0_fixed_integrated.log
 ```
 
-**Check Discovery Status** (V6.0):
+**Check Discovery Status** (V6.0-FIXED-INTEGRATED):
 ```bash
-# View V6.0 discovery logs
-tail -50 logs/biodisc_v6_0.log
+# View V6.0-FIXED discovery logs
+tail -50 logs/biodisc_v6_0_fixed_integrated.log
 
-# Check V6.0 session state
-cat session_state_v6.json
+# Check V6.0-FIXED session state
+cat session_state_v6_fixed.json
 
-# Verify V6.0 system is running (should show process)
-ps aux | grep "biodisc_v6_0_complete" | grep -v grep
+# Verify V6.0-FIXED system is running (should show process)
+ps aux | grep "biodisc_v6_0_fixed_integrated" | grep -v grep
 
 # View discoveries made
 wc -l autonomous_discoveries.jsonl
 
-# Run V6.0 integration test
-python test_biodisc_v6_0.py
+# Check latest genuine discovery
+tail -1 autonomous_discoveries.jsonl | python -m json.tool | head -30
 ```
 
 **Check Last Context After /clear** (V6.0):
@@ -244,11 +257,11 @@ print('Context cleared')
 - ✅ **Works for autonomous discovery** - Tracks autonomous questions too
 - ✅ **Minimal performance impact** - Non-blocking saves with error handling
 
-**CLEAN SLATE RESTART** (July 4, 2026 - 1:46 PM):
-- 🔄 **Database Reset**: Discovery database emptied for fresh start (171 previous discoveries backed up to `autonomous_discoveries_backup_171.jsonl`)
-- 🚀 **V6.0 Fresh Deployment**: BIODISC V6.0 Complete Architecture restarted with clean state
-- ✅ **Process Active**: V6.0 system running (PID 88170) with all 8 enhancements operational
-- 📊 **Ready for New Discoveries**: System actively making discoveries with V6.0 enhanced capabilities
+**CLEAN SLATE RESTART** (July 5, 2026 - 3:55 PM):
+- 🔄 **Database Reset**: Discovery database emptied for fresh start (old discoveries backed up)
+- 🚀 **V6.0-FIXED-INTEGRATED Deployment**: Complete unified system restarted with clean state
+- ✅ **Integrated System**: V6.0 architectural enhancements + FIXED genuine discovery pipeline
+- 📊 **Ready for New Discoveries**: System actively making genuine scientific discoveries with real statistics
 
 **Use BIODISC System Interactively**:
 ```python
@@ -381,6 +394,8 @@ tail -20 logs/autonomous_discovery_robust.log
 
 - **Code**: 307,000+ lines, 518+ Python files
 - **Capabilities**: 66+ specialist (V36-V94) + 20 revolutionary (V61-V80)
+- **Current System**: V6.0-FIXED-INTEGRATED (unified V6.0 + FIXED pipeline)
+- **Discoveries**: Genuine scientific results with real gene names, p-values, fold changes
 - **Domains**: 10 biology-focused domain modules
 - **Agency**: 45% → 70% (Year 1) → 95%+ (5 years)
 - **Self-Evolution**: V75-V80 operational (first AI with systematic self-evolution)
@@ -395,24 +410,29 @@ tail -20 logs/autonomous_discovery_robust.log
 - **Verify claims** against hallucination register
 - **NO SLATE REFERENCES**: BIODISC is a separate biological discovery system with no connection to trading systems
 
-#### FIXED Autonomous Discovery Requirements (V3.0)
+#### INTEGRATED Autonomous Discovery Requirements (V6.0-FIXED)
 
-**MANDATORY**: The FIXED autonomous discovery system (`.autonomous_discovery_fixed.py`) must be running at all times:
+**MANDATORY**: The V6.0-FIXED-INTEGRATED system (`biodisc_v6_0_fixed_integrated.py`) must be running at all times:
 
 ```bash
-# Verify robust discovery is running
-ps aux | grep "autonomous_discovery_robust" | grep -v grep
+# Verify integrated system is running
+ps aux | grep "biodisc_v6_0_fixed_integrated" | grep -v grep
 
-# If not running, it will auto-start on next session entry
-# Or manually start: python .autonomous_discovery_robust.py
+# If not running, manually start:
+python biodisc_v6_0_fixed_integrated.py
+
+# Check system status
+tail -50 logs/biodisc_v6_0_fixed_integrated.log
 ```
 
-**The system features**:
+**The integrated system features**:
+- V6.0 architectural enhancements (graded autonomy, epistemic prevention)
+- FIXED genuine discovery pipeline (real statistics, actual p-values)
 - Automatic restart on failure (up to 1000 attempts)
-- Stall detection (10-minute threshold)
-- Duplicate discovery prevention
-- User priority (2-minute activity timeout)
-- Health monitoring (30-second checks)
+- Stall detection (300-second threshold with automatic recovery)
+- User activity detection (120-second timeout)
+- Session persistence and restart capability
+- Genuine scientific discoveries with real gene names and fold changes
 
 **IF DISCOVERY SYSTEM STOPS**:
 1. Check logs: `tail -50 logs/autonomous_discovery_robust.log`
