@@ -75,6 +75,11 @@ class DataSource:
     data_type: str  # "sequences", "structures", "expression", "interactions", "pathways"
 
 
+def get_computational_biology_analyzer() -> ComputationalBiologyAnalyzer:
+    """Factory function to create computational biology analyzer"""
+    return ComputationalBiologyAnalyzer()
+
+
 class ComputationalBiologyAnalyzer:
     """
     Main analyzer for generating genuine computational discoveries.

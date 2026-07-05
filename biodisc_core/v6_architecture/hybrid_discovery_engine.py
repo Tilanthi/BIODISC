@@ -557,7 +557,16 @@ class HybridReasoningIntegrator:
         }
 
         # Combine insights with priority weighting
-        resolved['primary_insights'].extend(neurosymbolic.get('formal_validation', {}).get('consistent', []))
+        # Handle neurosymbolic consistency check (boolean vs list)
+        neurosymbolic_consistency = neurosymbolic.get('formal_validation', {}).get('consistent', [])
+        if isinstance(neurosymbolic_consistency, bool):
+            # If it's a boolean, convert to appropriate list
+            if neurosymbolic_consistency:
+                neurosymbolic_consistency = ['consistency_validated']
+            else:
+                neurosymbolic_consistency = ['consistency_issues']
+
+        resolved['primary_insights'].extend(neurosymbolic_consistency if isinstance(neurosymbolic_consistency, list) else [])
         resolved['primary_insights'].extend(causal.get('mechanisms', []))
         resolved['secondary_insights'].extend(generative.get('creative_elements', {}).get('speculative_mechanisms', []))
 

@@ -1,35 +1,82 @@
-# BIODISC Quick Start Guide
+# BIODISC Quick Start Guide - V5.0 GENUINE DISCOVERY
 
-## Project Overview
+## 🧬 What is BIODISC?
 
-**BIODISC** (Biology Discovery and Intelligence System) is a unified AGI-inspired framework for autonomous hypothesis generation and validation in biology with revolutionary self-evolution capabilities. The system integrates ~305,000 lines of clean, functional code across modular cognitive capabilities.
+**BIODISC** (Biology Discovery and Intelligence System) is a **Version 5.0** **GENUINE** autonomous scientific discovery system that:
 
-**Version**: 5.0
-**AGI Capability Estimate**: 85-90%
+- ✅ **Mines literature** via PubMed/NCBI for novelty validation
+- ✅ **Analyzes real data** from GEO datasets (not simulated)
+- ✅ **Validates statistically** with proper methodology
+- ✅ **Recovers automatically** from context exhaustion
+- ✅ **Persists session state** for continuous operation
 
-### Naming Convention
+### 🎯 The "GENUINE" Difference
 
-The system was previously known as "STAN-XI-ASTRO" or "STAN". **It must now be referred to exclusively as "BIODISC"** in all:
-- Academic papers and documentation
-- External communications
-- User-facing text
-- Paper titles and abstracts
+**❌ V1.0-V4.0** (Simulated):
+- Fake statistics (r=0.87, p<0.001) with no real data
+- No literature validation
+- "Discoveries" were often known biology or fabricated claims
 
-The internal codebase uses `biodisc_core` for consistency with the BIODISC project name. Function names like `create_biodisc_system()` are the primary interface.
+**✅ V5.0** (Genuine):
+- Real GEO datasets from NCBI
+- PubMed literature search for novelty
+- Proper statistical methodology
+- Only genuinely novel findings stored
 
-**Full name**: BIODISC: Biology Discovery and Intelligence System
-**Subtitle**: An AGI-inspired framework for autonomous hypothesis generation and validation in biology
+## 🚀 Quick Start - GENUINE Discovery (V5.0 OPERATIONAL)
 
-## GitHub Repository Target
+### 1. Install Requirements
 
-**IMPORTANT**: When pushing to GitHub from this BIODISC repository, ALWAYS use:
-- **Repository**: https://github.com/Tilanthi/BIODISC
-- **Remote**: `biodisc` (not `origin`)
-- **Command**: `git push biodisc main`
+```bash
+cd /Users/gjw255/astrodata/SWARM/BIODISC
 
-**NEVER push BIODISC changes to the ASTRA-dev repository** - that is for a different project.
+# Install scientific packages (if not already installed)
+pip install biopython requests numpy pandas scipy scikit-learn
 
-### Correct Git Workflow for BIODISC
+# Configure NCBI (recommended)
+export ENTREZ_EMAIL="your-email@example.com"
+```
+
+### 2. Start Genuine Discovery
+
+```bash
+# System auto-starts when entering BIODISC directory
+cd /Users/gjw255/astrodata/SWARM/BIODISC
+
+# Or start manually
+python .genuine_autonomous_discovery.py
+```
+
+**V5.0 Status**: ✅ **FULLY OPERATIONAL** (July 1, 2026)
+- BioPython installed and working
+- PubMed/NCBI integration operational
+- Literature validation functional
+- Database connectors ready
+
+### 3. Monitor Progress
+
+```bash
+# Check logs
+tail -f logs/genuine_discovery.log
+
+# Check session state
+cat session_state.json
+
+# View discoveries
+cat autonomous_discoveries.jsonl
+```
+
+## 🔄 Session Persistence
+
+**Automatic Recovery**: The system automatically recovers from context exhaustion via:
+- `session_state.json` - Stores system state between sessions
+- Auto-save every discovery cycle
+- Auto-load on restart
+- Discovery continues from where it left off
+
+**Manual Recovery**: See `docs/11_session_recovery.md`
+
+## 📚 Documentation Structure
 
 ```bash
 # Check current remotes

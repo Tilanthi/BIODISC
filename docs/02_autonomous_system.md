@@ -1,17 +1,23 @@
 # BIODISC Autonomous Discovery & Self-Evolution System
 
-## CRITICAL: Auto-Start Autonomous Discovery
+## CRITICAL: Robust Auto-Start Autonomous Discovery (V2.0)
 
-**ENHANCED in V5.0**: BIODISC now automatically starts autonomous discovery with V74 Genuine Discovery Filter and comprehensive self-evolution infrastructure when the system is initialized.
+**REVOLUTIONARY in V5.0**: BIODISC now features a **ROBUST** autonomous discovery system with automatic restart, stall detection, and duplicate prevention. The system **NEVER** stops running unless explicitly disabled or working on user tasks.
 
-### How Auto-Start Works
+### How Robust Auto-Start Works
 
-When you create a BIODISC system using `create_biodisc_system()`, the autonomous discovery orchestrator starts automatically in the background with V74 filtering:
+**ARCHITECTURAL BREAKTHROUGH**: The system now uses a dual-layer approach:
+
+1. **Guardian Process** - Monitors health and auto-restarts on failure
+2. **Discovery Process** - Conducts actual scientific discovery
+3. **Stall Detection** - Automatically restarts if no progress for 10 minutes
+4. **Duplicate Prevention** - Prevents analyzing same discoveries repeatedly
+5. **User Priority** - Always pauses for user interaction
 
 ```python
 from biodisc_core import create_biodisc_system
 
-# Autonomous discovery starts automatically with V74 filter
+# Robust autonomous discovery starts automatically
 system = create_biodisc_system()
 
 # The system will now:
@@ -22,6 +28,214 @@ system = create_biodisc_system()
 # 5. Validate discoveries with computational novelty (0.7) and synthesis quality (0.6) thresholds
 # 6. Store validated discoveries in memory palace
 # 7. Automatically pause during user queries
+# 8. AUTOMATICALLY RESTART if stalled or crashed
+# 9. Prevent duplicate discoveries
+# 10. Monitor system health continuously
+```
+
+### Session-Level Auto-Start (Default in V5.0)
+
+**AUTOMATIC**: When you start a Claude session in the BIODISC directory, the robust autonomous discovery system starts automatically:
+
+```bash
+# No manual action needed!
+# Simply navigate to BIODISC directory:
+cd /Users/gjw255/astrodata/SWARM/BIODISC
+
+# Autonomous discovery starts automatically via session hook
+# See: ~/.claude/session-start-hook.sh
+```
+
+**V5.0 GENUINE DISCOVERY STATUS**: ✅ **FULLY OPERATIONAL** (July 1, 2026)
+
+The system has been successfully transformed into a **genuine autonomous discovery system** with:
+- ✅ Real literature validation via PubMed/NCBI
+- ✅ Genuine database access (GEO, STRING, KEGG)
+- ✅ Statistical validation with proper methodology
+- ✅ Novelty scoring against existing research
+- ✅ Session persistence for restart capability
+
+See `docs/10_genuine_discovery_system.md` for complete technical documentation.
+
+**Session Auto-Start Features**:
+- **Automatic detection** when entering BIODISC directory
+- **Automatic startup** of robust autonomous discovery
+- **Automatic cleanup** of old processes
+- **Health monitoring** with automatic restart
+- **User priority** - pauses during active work
+
+### CRITICAL FIXES (V3.0) - Genuine Discovery Enforcement
+
+**REVOLUTIONARY FIXES**: V3.0 addresses fundamental flaws that prevented genuine discovery:
+
+#### Root Cause Analysis (V2.0 Problems)
+
+**THE STALL PROBLEM**:
+- **Issue**: System processed same 27 questions repeatedly for hours
+- **Symptom**: "Using fallback question wrapping (not genuine discovery)"
+- **Impact**: 0 discoveries made despite running for 3+ hours
+- **Root Cause**: Fallback mechanism masking lack of computational analysis
+
+**THE COMPUTATIONAL GAP**:
+- **Issue**: Insight generator received question metadata, not computational results
+- **Symptom**: "No findings in computational results"
+- **Impact**: No genuine scientific discoveries generated
+- **Root Cause**: Broken routing between analysis modules
+
+#### What Was Fixed (V2.0 → V3.0)
+
+**1. Fallback Mechanism DISABLED**
+```python
+# BEFORE: System used fallback when computational analysis failed
+enable_fallback=True  # Led to fake discoveries
+
+# AFTER: System MUST use genuine computational analysis
+enable_fallback=False  # Only genuine discoveries allowed
+```
+
+**Impact**: Questions without proper computational backing are rejected, not wrapped as "discoveries"
+
+**2. Question-Level Duplicate Detection**
+```python
+# NEW: Track processed questions to prevent circular processing
+processed_questions: Dict[str, datetime] = {}
+question_duplicate_window_hours = 1
+
+# Prevent same question from being processed repeatedly
+if question_hash in processed_questions:
+    time_since = (now - processed_questions[question_hash]).total_seconds()
+    if time_since < 3600:  # 1 hour window
+        return None  # Skip duplicate
+```
+
+**Impact**: System cannot get stuck in circular processing loops
+
+**3. Fixed Computational Analysis Routing**
+```python
+# BEFORE: Questions routed to insight generator with metadata
+result = INSIGHT_GENERATOR.generate_testable_hypothesis({
+    'question': question.question,  # Just metadata!
+    'context': question.context
+})
+
+# AFTER: Questions routed to actual computational analysis
+result = COMPUTATIONAL_ANALYZER.analyze_gene_expression_data(dataset)
+discovery = self._create_discovery_from_computational_result(question, result)
+```
+
+**Impact**: Actual computational analysis performed, not question wrapping
+
+**4. Progress-Based Stall Detection**
+```python
+# NEW: Detect when system makes no progress despite being "busy"
+if current_discovery_count == last_discovery_count:
+    time_since_progress = (now - last_progress_time).total_seconds()
+    if time_since_progress > 300:  # 5 minutes
+        logger.error("System stalled - restarting")
+        break
+```
+
+**Impact**: System restarted when stuck, even if technically "running"
+
+**5. Circular Processing Detection**
+```python
+# NEW: Detect when same questions processed repeatedly
+recent_question_hashes = []
+circular_threshold = 5  # Same question 5 times = circular
+
+if question_hash in recent_question_hashes:
+    repeat_count = recent_question_hashes.count(question_hash)
+    if repeat_count >= circular_threshold:
+        raise Exception("Circular processing detected")
+```
+
+**Impact**: Automatic detection and restart of circular processing
+
+### Robust Architecture (V3.0) - Anti-Failure Systems
+
+**CRITICAL IMPROVEMENT**: The new robust architecture solves the fundamental problem of silent failures that plagued previous versions.
+
+#### What Was Wrong (V1.0)
+- **Silent failures**: Process could stop without notification
+- **Stall detection**: No mechanism to detect when system stopped making progress
+- **No restart**: Manual intervention required to restart failed processes
+- **Duplicate loops**: Could analyze same discoveries repeatedly
+- **No health monitoring**: No way to know if system was actually working
+
+#### What Was Fixed (V2.0)
+
+**1. Automatic Restart System**
+```python
+# System now automatically restarts on any failure
+# Maximum 1000 restart attempts before giving up
+# 10-second delay between restart attempts
+# Never exits silently - always logs and attempts restart
+```
+
+**2. Stall Detection and Recovery**
+```python
+# Detects when system stops making progress
+# 10-minute threshold without discoveries = stalled
+# Automatic restart of stalled processes
+# Progress monitoring with detailed logging
+```
+
+**3. Duplicate Prevention System**
+```python
+# Maintains cache of recent discoveries (1000 entries)
+# 24-hour duplicate detection window
+# Hash-based question and discovery comparison
+# Prevents wasted cycles on same analysis
+```
+
+**4. Health Monitoring**
+```python
+# 30-second health check interval
+# Monitors discovery count, cycle count, process status
+# Detects broken connections, memory issues, resource exhaustion
+# Comprehensive status reporting
+```
+
+**5. User Priority System**
+```python
+# 2-minute user activity timeout
+# Automatic pausing during user interaction
+# Resumes when idle
+# Never interferes with active work
+```
+
+### Robust Architecture Components (V3.0)
+
+**Three Key Files**:
+
+1. **`.autonomous_discovery_fixed.py`** - FIXED discovery system (V3.0)
+   - ❌ Fallback mechanism disabled
+   - ✅ Question-level duplicate detection
+   - ✅ Circular processing detection
+   - ✅ Fixed computational analysis routing
+   - ✅ Progress-based stall detection
+   - Automatic restart on failure
+
+2. **`biodisc_core/reasoning/v73_autonomous_discovery_fixed.py`** - Fixed orchestrator
+   - Genuine discovery enforcement
+   - Proper computational analysis routing
+   - Question duplicate filtering
+   - Computational backing validation
+   - No fallback mechanism
+
+3. **`biodisc_autonomous_guardian.py`** - Guardian monitoring system
+   - Process health monitoring
+   - Duplicate discovery prevention
+   - Resource monitoring
+   - Automatic restart orchestration
+
+**How They Work Together**:
+```
+Session Start Hook → FIXED Discovery Process → FIXED Orchestrator
+                      ↓ (monitors)              ↓ (enforces genuine analysis)
+                  Guardian System ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ←
+                      ↓ (detects failures and circular processing)
+                  Automatic Recovery + Genuine Discovery Only
 ```
 
 ### V74 Genuine Discovery Filtering

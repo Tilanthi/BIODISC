@@ -483,6 +483,26 @@ class EnhancedUnifiedBIODISCSystem:
                 context_summary=f"User query in {mode or 'auto'} mode"
             )
 
+        # AUTOMATIC CONTEXT PRESERVATION - Save last user question
+        # This survives /clear commands and provides continuity
+        try:
+            from biodisc_core.memory.persistent.context_preservation import save_last_context
+            save_last_context(
+                question=query,
+                response=None,  # Will be updated when assistant responds
+                metadata={
+                    'current_task': f'Processing query in {mode or "auto"} mode',
+                    'question_type': 'user',
+                    'active_work': 'query_processing'
+                }
+            )
+        except ImportError:
+            # Context preservation module not available - silently continue
+            pass
+        except Exception:
+            # Don't break query processing if context save fails
+            pass
+
         # Update autonomous system activity timestamp
         # This ensures reactive priority - autonomous operations pause during user queries
         if self.autonomous_orchestrator:
@@ -601,6 +621,20 @@ class EnhancedUnifiedBIODISCSystem:
                 self.session_persistence.update_session_context(
                     tasks_in_progress=[f"Working on: {query[:100]}"]
                 )
+
+        # AUTOMATIC CONTEXT PRESERVATION - Update with assistant response
+        # This completes the context state with both question and response
+        try:
+            from biodisc_core.memory.persistent.context_preservation import update_context_field
+            if result.get('answer'):
+                update_context_field('last_assistant_response', str(result.get('answer', '')))
+                update_context_field('current_task', f'Completed query in {result.get("mode", "auto")} mode')
+        except ImportError:
+            # Context preservation module not available - silently continue
+            pass
+        except Exception:
+            # Don't break query processing if context update fails
+            pass
 
         return result
 
