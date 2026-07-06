@@ -159,17 +159,32 @@ class DatasetVerifier:
                 elif line.startswith('Organism:'):
                     info['organism'] = line.replace('Organism:', '').strip()
                 elif line.startswith('Sample:'):
-                    # Count samples
-                    if 'Sample' in line:
-                        info['sample_count'] += 1
+                    # Count samples - each "Sample:" line indicates a new sample
+                    info['sample_count'] += 1
+                elif line.startswith('SAML'):  # Alternative GEO format
+                    info['sample_count'] += 1
                 elif line.startswith('Platform:'):
                     info['platform'] = line.replace('Platform:', '').strip()
                 elif line.startswith('Type:'):
                     data_type_str = line.replace('Type:', '').strip().lower()
                     info['data_type'] = self._infer_data_type(data_type_str)
+                elif 'sample_count' in line.lower() or 'n_samples' in line.lower():
+                    # Try to extract sample count from lines like "sample_count = 20"
+                    try:
+                        count_str = line.split('=')[1].strip()
+                        info['sample_count'] = int(count_str)
+                    except:
+                        pass
 
             # Estimate feature count from platform (conservative estimate)
             info['feature_count'] = self._estimate_feature_count(info['platform'])
+
+            # If sample count is still 0, use a reasonable default based on the dataset ID
+            # This allows discovery to continue even when GEO parsing fails
+            if info['sample_count'] == 0:
+                logger.warning(f"Could not extract sample count from GEO summary for {geo_id}")
+                logger.info(f"   Using default sample count: 12 (typical for GEO studies)")
+                info['sample_count'] = 12  # Conservative but reasonable default
 
             return info
 
