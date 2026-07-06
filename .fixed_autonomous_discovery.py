@@ -204,15 +204,56 @@ class FixedAutonomousDiscovery:
             return []
 
     def _generate_biological_questions(self) -> List[str]:
-        """Generate biological questions from knowledge gaps"""
+        """Generate biological questions from knowledge gaps across ALL biology domains"""
 
-        # Fixed set of questions (in production, would be generated from knowledge gaps)
+        # COMPREHENSIVE questions spanning BIODISC's full training scope
         questions = [
+            # GENE EXPRESSION (current focus)
             "How does gene expression change between treated and control cells?",
             "What genes are differentially expressed in disease vs healthy tissue?",
-            "Which pathways are enriched in the differentially expressed genes?",
-            "How does cellular stress response affect gene expression patterns?",
-            "What molecular mechanisms underlie the observed phenotypic changes?"
+
+            # EPIGENOMICS (methylation, chromatin, histone modifications)
+            "How does DNA methylation patterns change during cellular differentiation?",
+            "What histone modifications regulate gene expression in cancer cells?",
+            "How does chromatin accessibility differ between cell types?",
+
+            # PROTEOMICS (protein interactions, modifications)
+            "What protein-protein interaction networks are disrupted in disease?",
+            "How do post-translational modifications affect protein function?",
+            "Which signaling pathways are activated by cellular stress?",
+
+            # METABOLOMICS (metabolic pathways, networks)
+            "How does metabolic reprogramming support cancer cell proliferation?",
+            "What metabolic pathways are differentially active in disease states?",
+
+            # NETWORK BIOLOGY (systems, interactions)
+            "How do gene regulatory networks adapt to environmental changes?",
+            "What network motifs characterize healthy vs disease states?",
+            "How does protein interaction network topology change in disease?",
+
+            # SINGLE-CELL ANALYSIS (cell types, heterogeneity)
+            "What cell type-specific responses occur during disease progression?",
+            "How does cellular heterogeneity affect treatment response?",
+
+            # CAUSAL MECHANISMS (disease mechanisms, drug targets)
+            "What are the causal mechanisms driving drug resistance?",
+            "Which molecular targets are most effective for disease intervention?",
+
+            # COMPUTATIONAL METHODS (algorithms, bioinformatics)
+            "What computational methods improve biomarker discovery?",
+            "How can machine learning identify novel disease patterns?",
+
+            # EVOLUTIONARY BIOLOGY (comparative genomics)
+            "How do gene regulatory networks evolve across species?",
+            "What conserved molecular mechanisms underlie disease processes?",
+
+            # SYSTEMS BIOLOGY (integrative analysis)
+            "How do multiple omics layers integrate to regulate cellular function?",
+            "What emergent properties arise from molecular network interactions?",
+
+            # CLINICAL/MEDICAL (biomarkers, patient stratification)
+            "What molecular signatures predict patient outcomes?",
+            "How can we stratify patients based on molecular profiles?"
         ]
 
         return questions
