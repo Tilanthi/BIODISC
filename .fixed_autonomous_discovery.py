@@ -58,7 +58,7 @@ class FixedAutonomousDiscovery:
         self.orchestrator = None
         self.running = False
         self.session_file = project_root / "fixed_discovery_state.json"
-        self.discoveries_file = project_root / "fixed_discoveries.jsonl"
+        self.discoveries_file = project_root / "autonomous_discoveries.jsonl"
 
         # Setup signal handlers
         signal.signal(signal.SIGTERM, self._signal_handler)
@@ -119,27 +119,44 @@ class FixedAutonomousDiscovery:
                 for i, question in enumerate(questions, 1):
                     logger.info(f"\n🔬 Processing question {i}/{len(questions)}: {question[:60]}...")
 
-                    # Generate a dataset ID (in production, this would search GEO)
-                    dataset_id = f"SYNTHETIC_TEST_{int(time.time())}_{i}"
+                    # Search for REAL GEO datasets instead of synthetic test data
+                    geo_datasets = self._search_real_geo_datasets(question, max_results=3)
 
-                    try:
-                        # Generate GENUINE discovery using fixed pipeline
-                        discovery_report = self.orchestrator.generate_genuine_discovery(
-                            question=question,
-                            geo_dataset_id=dataset_id
-                        )
-
-                        if discovery_report:
-                            # Save the discovery
-                            self.save_discovery(discovery_report)
-                            discoveries_made_this_cycle += 1
-                            logger.info(f"✅ Discovery {i} generated and saved")
-                        else:
-                            logger.info(f"❌ Discovery {i} failed validation")
-
-                    except Exception as e:
-                        logger.error(f"Error processing question {i}: {e}")
+                    if not geo_datasets:
+                        logger.warning(f"❌ No GEO datasets found for question {i}, skipping...")
                         continue
+
+                    # Try each dataset until one works
+                    discovery_made = False
+                    for j, dataset_metadata in enumerate(geo_datasets, 1):
+                        dataset_id = dataset_metadata.get('geo_id', 'Unknown')
+                        sample_count = dataset_metadata.get('sample_count', 0)
+
+                        logger.info(f"   Trying dataset {j}/{len(geo_datasets)}: {dataset_id} ({sample_count} samples)")
+
+                        try:
+                            # Generate GENUINE discovery using REAL GEO dataset
+                            discovery_report = self.orchestrator.generate_genuine_discovery(
+                                question=question,
+                                geo_dataset_id=dataset_id
+                            )
+
+                            if discovery_report:
+                                # Save the discovery
+                                self.save_discovery(discovery_report)
+                                discoveries_made_this_cycle += 1
+                                discovery_made = True
+                                logger.info(f"✅ Discovery {i} generated and saved using dataset {dataset_id}")
+                                break  # Success! Don't try other datasets for this question
+                            else:
+                                logger.info(f"❌ Discovery {i} failed with dataset {dataset_id}, trying next...")
+
+                        except Exception as e:
+                            logger.error(f"Error processing question {i} with dataset {dataset_id}: {e}")
+                            continue
+
+                    if not discovery_made:
+                        logger.warning(f"❌ Question {i} failed with all available datasets")
 
                 logger.info(f"\n📊 Discovery cycle complete: {discoveries_made_this_cycle} discoveries")
 
@@ -163,6 +180,28 @@ class FixedAutonomousDiscovery:
         logger.info("Stopping fixed autonomous discovery...")
         self.running = False
         self.save_session_state()
+
+    def _search_real_geo_datasets(self, question: str, max_results: int = 3) -> List[Dict]:
+        """Search for REAL GEO datasets instead of using synthetic test data"""
+        try:
+            from biodisc_core.analysis.genuine_discovery_validator import create_genuine_discovery_orchestrator
+            validator = create_genuine_discovery_orchestrator()
+
+            # Search for relevant GEO datasets
+            datasets = validator.search_relevant_geo_datasets(question, max_results=max_results)
+
+            if datasets:
+                logger.info(f"✅ Found {len(datasets)} real GEO datasets for question")
+                for i, dataset in enumerate(datasets, 1):
+                    logger.info(f"   {i}. {dataset.get('geo_id', 'Unknown')}: {dataset.get('sample_count', 0)} samples")
+            else:
+                logger.warning(f"❌ No GEO datasets found for question")
+
+            return datasets
+
+        except Exception as e:
+            logger.error(f"❌ Error searching GEO datasets: {e}")
+            return []
 
     def _generate_biological_questions(self) -> List[str]:
         """Generate biological questions from knowledge gaps"""
