@@ -184,11 +184,11 @@ class FixedAutonomousDiscovery:
     def _search_real_geo_datasets(self, question: str, max_results: int = 3) -> List[Dict]:
         """Search for REAL GEO datasets instead of using synthetic test data"""
         try:
-            from biodisc_core.analysis.genuine_discovery_validator import create_genuine_discovery_orchestrator
-            validator = create_genuine_discovery_orchestrator()
+            from biodisc_core.analysis.genuine_discovery_validator import create_real_data_analyzer
+            data_analyzer = create_real_data_analyzer()
 
             # Search for relevant GEO datasets
-            datasets = validator.search_relevant_geo_datasets(question, max_results=max_results)
+            datasets = data_analyzer.search_relevant_geo_datasets(question, max_results=max_results)
 
             if datasets:
                 logger.info(f"✅ Found {len(datasets)} real GEO datasets for question")
