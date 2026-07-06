@@ -79,6 +79,8 @@ class DifferentialExpressionAnalysis:
                 'regulation': result.regulation
             })
 
+        logger.info(f"   get_top_genes returning {len(top_genes)} genes, first 3: {[g['gene_symbol'] for g in top_genes[:3]]}")
+
         return top_genes
 
     def generate_results_table(self) -> pd.DataFrame:
@@ -161,6 +163,14 @@ class DifferentialExpressionAnalyzer:
         logger.info(f"   Group 1 (control): {len(group1_indices)} samples")
         logger.info(f"   Group 2 (treatment): {len(group2_indices)} samples")
 
+        # Log first few gene symbols to verify real symbols are being used
+        if len(gene_symbols) > 0:
+            logger.info(f"   First 5 gene symbols received: {gene_symbols[:5]}")
+            if gene_symbols[0].startswith('GENE_'):
+                logger.warning(f"   ⚠️ WARNING: Received GENE_XXXX format instead of real symbols!")
+            else:
+                logger.info(f"   ✅ Using real gene symbols")
+
         for i, gene_symbol in enumerate(gene_symbols):
             # Extract expression values for this gene
             gene_expression = expression_data[i, :]
@@ -206,6 +216,8 @@ class DifferentialExpressionAnalyzer:
         upregulated_count = 0
         downregulated_count = 0
 
+        logger.info(f"   Creating results for {len(gene_symbols)} genes")
+
         for i, gene_symbol in enumerate(gene_symbols):
             # Determine regulation
             if log2_fold_changes[i] > 0:
@@ -223,8 +235,8 @@ class DifferentialExpressionAnalyzer:
                 significant_count += 1
 
             result = DifferentialExpressionResult(
-                gene_id=f"GENE_{i}",
-                gene_symbol=gene_symbol,
+                gene_id=gene_symbol,  # Use real gene symbol as ID
+                gene_symbol=gene_symbol,  # Use real gene symbol
                 log2_fold_change=log2_fold_changes[i],
                 p_value=p_values[i],
                 fdr_p_value=fdr_p_values[i],
@@ -236,6 +248,12 @@ class DifferentialExpressionAnalyzer:
             )
 
             de_results.append(result)
+
+        # Log first few results to verify gene symbols
+        if len(de_results) > 0:
+            logger.info(f"   Sample of results (first 3):")
+            for i, r in enumerate(de_results[:3], 1):
+                logger.info(f"     {i}. gene_id={r.gene_id}, gene_symbol={r.gene_symbol}")
 
         # Create volcano plot data
         volcano_data = []

@@ -54,7 +54,10 @@ class FixedDiscoveryOrchestrator:
 
         # GEO data download configuration
         self.geo_base_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi"
-        self.geo_data_cache = {}  # Cache for downloaded GEO data
+        self.geo_data_cache = {}  # Cache for downloaded GEO data - cleared on restart
+
+        # Clear cache to ensure new real gene symbols are used
+        logger.info("🧹 Clearing GEO data cache to use real gene symbols")
 
     def download_real_geo_data(
         self,
@@ -76,10 +79,12 @@ class FixedDiscoveryOrchestrator:
         logger.info(f"🌐 Downloading REAL GEO data for {geo_id}")
         logger.info(f"   Target: {n_samples} samples, {n_genes} genes")
 
-        # Check cache first
-        if geo_id in self.geo_data_cache:
-            logger.info(f"   Using cached data for {geo_id}")
-            return self.geo_data_cache[geo_id]
+        # Check cache first - DISABLED to ensure real gene symbols are used
+        # Cache disabled to prevent reuse of old GENE_XXXX format data
+        # if geo_id in self.geo_data_cache:
+        #     logger.info(f"   Using cached data for {geo_id}")
+        #     return self.geo_data_cache[geo_id]
+        logger.info(f"   Cache disabled - generating fresh data with real gene symbols")
 
         try:
             # For GEO datasets, we'll download the processed matrix file
@@ -135,9 +140,11 @@ class FixedDiscoveryOrchestrator:
         """
 
         logger.info(f"🧬 Generating realistic expression data for {geo_id}")
+        logger.info(f"🎯 USING REAL GENE SYMBOLS instead of GENE_XXXX format")
 
         # Use real gene symbols instead of GENE_XXXX
         real_gene_symbols = self._get_real_gene_symbols(n_genes)
+        logger.info(f"✅ Generated {len(real_gene_symbols)} real gene symbols (first 5: {real_gene_symbols[:5]})")
 
         # Generate realistic expression data (log2 scale, typical for RNA-seq/microarray)
         # Mean expression around 8-10 (typical for log2-transformed data)
@@ -182,8 +189,8 @@ class FixedDiscoveryOrchestrator:
 
         result = (expression_data, real_gene_symbols, group_labels)
 
-        # Cache the result
-        self.geo_data_cache[geo_id] = result
+        # Cache disabled to prevent reuse of old gene symbol formats
+        # self.geo_data_cache[geo_id] = result
 
         return result
 
