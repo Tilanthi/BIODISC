@@ -27,6 +27,7 @@ from biodisc_core.fixed_pipeline.differential_expression import create_different
 from biodisc_core.fixed_pipeline.pathway_analysis import create_pathway_analyzer
 from biodisc_core.fixed_pipeline.external_validation import create_external_validation_system
 from biodisc_core.fixed_pipeline.gene_symbol_validation import create_gene_symbol_validator
+from biodisc_core.fixed_pipeline.geo_data_downloader import create_geo_data_downloader
 
 import requests
 import numpy as np
@@ -49,6 +50,7 @@ class FixedDiscoveryOrchestrator:
         self.pathway_analyzer = create_pathway_analyzer()
         self.external_validator = create_external_validation_system()
         self.gene_symbol_validator = create_gene_symbol_validator()
+        self.geo_data_downloader = create_geo_data_downloader()
 
         self.discoveries_made = 0
         self.discoveries_rejected = 0
@@ -70,8 +72,7 @@ class FixedDiscoveryOrchestrator:
         """
         Download REAL gene expression data from GEO database.
 
-        CRITICAL: This method NO LONGER falls back to synthetic/simulated data.
-        If real GEO data cannot be downloaded, the discovery is REJECTED.
+        This now uses the actual GEO data downloader to get real biological data.
 
         Returns:
             expression_data: Gene expression matrix (genes x samples)
@@ -85,16 +86,28 @@ class FixedDiscoveryOrchestrator:
         logger.info(f"🌐 Attempting to download REAL GEO data for {geo_id}")
         logger.info(f"   Target: {n_samples} samples, {n_genes} genes")
 
-        # HARD GATE: No fallback to synthetic data
-        # If real data is unavailable, REJECT the discovery
+        # Try to download real GEO data
+        result = self.geo_data_downloader.download_geo_dataset(
+            geo_id=geo_id,
+            max_genes=min(n_genes, 2000),
+            timeout=60
+        )
+
+        if result is not None:
+            expression_data, gene_symbols, group_labels = result
+            logger.info(f"✅ Successfully downloaded REAL data from {geo_id}")
+            logger.info(f"   Genes: {len(gene_symbols)}, Samples: {expression_data.shape[1]}")
+            return expression_data, gene_symbols, group_labels
+
+        # Real data download failed - reject the discovery
         logger.error(f"❌ REJECTED: Cannot download real GEO data for {geo_id}")
-        logger.error(f"   Real GEO data download is not yet implemented in this system")
+        logger.error(f"   Real GEO data download failed or dataset unavailable")
         logger.error(f"   Refusing to use synthetic/fake data as fallback")
         logger.error(f"   This discovery will be rejected to prevent pseudo-science")
 
         raise ValueError(
             f"Cannot download real GEO data for {geo_id}. "
-            f"Real data download not yet implemented. "
+            f"Real data download failed. "
             f"Refusing to use synthetic data to prevent pseudo-science generation. "
             f"This discovery is rejected."
         )
