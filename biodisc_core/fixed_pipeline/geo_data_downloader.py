@@ -28,7 +28,7 @@ class GEODataDownloader:
 
     def __init__(self):
         self.geo_base_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi"
-        self.geo ftp_base = "https://ftp.ncbi.nlm.nih.gov/geo/series/"
+        self.geo_ftp_base = "https://ftp.ncbi.nlm.nih.gov/geo/series/"
         self.cache = {}
 
     def download_geo_dataset(
