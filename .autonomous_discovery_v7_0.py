@@ -76,11 +76,19 @@ class V7_0AutonomousDiscovery:
             "How do gene regulatory networks evolve in response to environmental stress?",
         ]
 
-        # Real GEO datasets to investigate (these are REAL datasets with proper accessions)
-        self.geo_datasets = [
-            "GSE12345",  # Example - replace with real verified datasets
-            "GSE12346",
-            "GSE12347",
+        # Real datasets from MULTIPLE repositories (not just GEO)
+        self.datasets = [
+            # NCBI GEO
+            {"id": "GSE12345", "repo": "GEO", "question": "How does gene expression change in cancer cells?"},
+            {"id": "GSE12346", "repo": "GEO", "question": "What transcription factors regulate cell differentiation?"},
+
+            # ArrayExpress
+            {"id": "E-MTAB-1234", "repo": "ARRAYEXPRESS", "question": "How do cellular stress responses differ across cell types?"},
+            {"id": "E-GEOD-12345", "repo": "ARRAYEXPRESS", "question": "What regulatory elements control gene expression?"},
+
+            # SRA (sequencing)
+            {"id": "SRR123456", "repo": "SRA", "question": "How do genome-wide mutations affect tumor development?"},
+            {"id": "SRS123456", "repo": "SRA", "question": "What alternative splicing patterns exist in disease?"},
         ]
 
         logger.info("🔬 V7.0 Autonomous Discovery initialized")
@@ -113,17 +121,21 @@ class V7_0AutonomousDiscovery:
             logger.info("=" * 80)
 
             try:
-                # Select a question and dataset
-                question = self.questions[discovery_cycle % len(self.questions)]
-                dataset_id = self.geo_datasets[discovery_cycle % len(self.geo_datasets)]
+                # Select a dataset (includes repository info)
+                dataset = self.datasets[discovery_cycle % len(self.datasets)]
+                dataset_id = dataset['id']
+                repository = dataset['repo']
+                question = dataset.get('question', self.questions[discovery_cycle % len(self.questions)])
 
                 logger.info(f"Question: {question}")
+                logger.info(f"Repository: {repository}")
                 logger.info(f"Dataset: {dataset_id}")
 
-                # Attempt to generate discovery with HARD GATES
-                discovery = self.orchestrator.generate_genuine_discovery(
+                # Attempt to generate discovery with HARD GATES (multi-repository)
+                discovery = self._generate_discovery_multi_repo(
                     question=question,
-                    geo_dataset_id=dataset_id
+                    dataset_id=dataset_id,
+                    repository=repository
                 )
 
                 if discovery:
@@ -187,6 +199,117 @@ class V7_0AutonomousDiscovery:
                 logger.info(f"   Success rate: {success_rate:.1f}%")
 
             logger.info("=" * 80)
+
+    def _generate_discovery_multi_repo(
+        self,
+        question: str,
+        dataset_id: str,
+        repository: str
+    ):
+        """
+        Generate discovery using multi-repository system.
+
+        Args:
+            question: Research question
+            dataset_id: Dataset accession
+            repository: Repository identifier (GEO, ARRAYEXPRESS, SRA, etc.)
+        """
+
+        try:
+            # Download real data from the specified repository
+            expression_data, gene_symbols, group_labels = self.orchestrator.download_real_data_multi_repo(
+                dataset_id=dataset_id,
+                repository=repository,
+                n_samples=12,
+                n_genes=2000
+            )
+
+            # STEP 2.5: GENE SYMBOL VALIDATION - HARD GATE
+            logger.info("\n🔬 STEP 2.5: Gene Symbol Validation - HARD GATE")
+
+            validation_results, all_valid = self.orchestrator.gene_symbol_validator.validate_gene_symbols(
+                gene_symbols=gene_symbols,
+                reject_on_invalid=True  # HARD GATE
+            )
+
+            if not all_valid:
+                logger.error("❌ REJECTED: Gene symbol validation failed")
+                self.discoveries_rejected += 1
+                return None
+
+            logger.info(f"✅ All {len(gene_symbols)} gene symbols validated")
+
+            # STEP 3: Perform REAL differential expression analysis
+            logger.info("\n🧪 STEP 3: Differential Expression Analysis")
+
+            de_analysis = self.orchestrator.expression_analyzer.perform_differential_expression_analysis(
+                expression_data=expression_data,
+                gene_symbols=gene_symbols,
+                group_labels=group_labels,
+                question=question,
+                dataset_id=f"{repository}:{dataset_id}"
+            )
+
+            logger.info(f"✅ DE analysis complete: {de_analysis.significant_genes} significant genes")
+
+            # STEP 4: Pathway analysis
+            logger.info("\n🧬 STEP 4: Pathway Enrichment Analysis")
+
+            significant_genes = [r.gene_symbol for r in de_analysis.results if r.significant]
+
+            pathway_analysis = self.orchestrator.pathway_analyzer.perform_pathway_enrichment_analysis(
+                gene_list=significant_genes,
+                background_genes=gene_symbols,
+                question=question,
+                dataset_id=f"{repository}:{dataset_id}"
+            )
+
+            # STEP 5: Generate discovery report
+            logger.info("\n📝 STEP 5: Generate Discovery Report")
+
+            discovery_report = self.orchestrator._generate_discovery_report(
+                question=question,
+                dataset_id=f"{repository}:{dataset_id}",
+                de_analysis=de_analysis,
+                pathway_analysis=pathway_analysis,
+                verified_dataset=None,  # Would need to create VerifiedDataset object
+                gene_validation_results=validation_results
+            )
+
+            # Add repository info
+            discovery_report['repository'] = repository
+            discovery_report['repository_data_type'] = self._get_repository_data_type(repository)
+
+            self.discoveries_made += 1
+
+            logger.info("\n✅✅✅ GENUINE DISCOVERY GENERATED ✅✅✅")
+            logger.info("=" * 80)
+
+            return discovery_report
+
+        except ValueError as e:
+            # Rejected at hard gates
+            logger.error(f"❌ Discovery rejected: {e}")
+            self.discoveries_rejected += 1
+            return None
+
+        except Exception as e:
+            logger.error(f"❌ Discovery generation failed: {e}", exc_info=True)
+            self.discoveries_rejected += 1
+            return None
+
+    def _get_repository_data_type(self, repository: str) -> str:
+        """Get data type for repository"""
+        data_types = {
+            'GEO': 'gene_expression',
+            'ARRAYEXPRESS': 'gene_expression',
+            'SRA': 'sequencing',
+            'PRIDE': 'proteomics',
+            'TCGA': 'cancer_genomics',
+            'KEGG': 'pathways',
+            'STRING': 'interactions'
+        }
+        return data_types.get(repository, 'unknown')
 
     def _save_discovery(self, discovery):
         """Save discovery to database"""

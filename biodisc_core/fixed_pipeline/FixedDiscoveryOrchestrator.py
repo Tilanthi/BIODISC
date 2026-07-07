@@ -28,6 +28,8 @@ from biodisc_core.fixed_pipeline.pathway_analysis import create_pathway_analyzer
 from biodisc_core.fixed_pipeline.external_validation import create_external_validation_system
 from biodisc_core.fixed_pipeline.gene_symbol_validation import create_gene_symbol_validator
 from biodisc_core.fixed_pipeline.geo_data_downloader import create_geo_data_downloader
+from biodisc_core.fixed_pipeline.multi_repository_verification import create_multi_repository_verifier
+from biodisc_core.fixed_pipeline.multi_repository_downloader import create_multi_repository_data_downloader
 
 import requests
 import numpy as np
@@ -52,6 +54,10 @@ class FixedDiscoveryOrchestrator:
         self.gene_symbol_validator = create_gene_symbol_validator()
         self.geo_data_downloader = create_geo_data_downloader()
 
+        # NEW: Multi-repository support
+        self.multi_repo_verifier = create_multi_repository_verifier()
+        self.multi_repo_downloader = create_multi_repository_data_downloader()
+
         self.discoveries_made = 0
         self.discoveries_rejected = 0
         self.discoveries_validated = 0
@@ -63,50 +69,68 @@ class FixedDiscoveryOrchestrator:
         # Clear cache to ensure new real gene symbols are used
         logger.info("🧹 Clearing GEO data cache to use real gene symbols")
 
-    def download_real_geo_data(
+    def download_real_data_multi_repo(
         self,
-        geo_id: str,
-        n_samples: int,
-        n_genes: int
+        dataset_id: str,
+        repository: str = 'GEO',
+        n_samples: int = 12,
+        n_genes: int = 2000
     ) -> Tuple[np.ndarray, List[str], np.ndarray]:
         """
-        Download REAL gene expression data from GEO database.
+        Download REAL biological data from MULTIPLE repositories.
 
-        This now uses the actual GEO data downloader to get real biological data.
+        This replaces the GEO-only limitation and enables discoveries across all major
+        biological knowledge repositories (GEO, ArrayExpress, SRA, TCGA, PRIDE, etc.).
+
+        Args:
+            dataset_id: Dataset accession (from any repository)
+            repository: Repository identifier (GEO, ARRAYEXPRESS, SRA, PRIDE, etc.)
+            n_samples: Number of samples
+            n_genes: Number of genes
 
         Returns:
-            expression_data: Gene expression matrix (genes x samples)
-            gene_symbols: List of gene symbols
-            group_labels: Sample group assignments
+            (expression_data, gene_symbols, group_labels)
 
         Raises:
-            ValueError: If real GEO data cannot be obtained
+            ValueError: If real data cannot be obtained from any repository
         """
 
-        logger.info(f"🌐 Attempting to download REAL GEO data for {geo_id}")
+        logger.info(f"🌐 Downloading REAL data from {repository}: {dataset_id}")
         logger.info(f"   Target: {n_samples} samples, {n_genes} genes")
 
-        # Try to download real GEO data
-        result = self.geo_data_downloader.download_geo_dataset(
-            geo_id=geo_id,
+        # Step 1: Verify dataset exists in the repository
+        is_valid, dataset_info, message = self.multi_repo_verifier.verify_dataset_comprehensive(
+            dataset_id,
+            "generic biology question"
+        )
+
+        if not is_valid:
+            logger.error(f"❌ REJECTED: {message}")
+            raise ValueError(message)
+
+        logger.info(f"✅ Dataset verified: {dataset_info.get('repository_name', repository)}")
+
+        # Step 2: Download data from the appropriate repository
+        result = self.multi_repo_downloader.download_dataset(
+            repository=repository,
+            accession=dataset_id,
             max_genes=min(n_genes, 2000),
             timeout=60
         )
 
         if result is not None:
             expression_data, gene_symbols, group_labels = result
-            logger.info(f"✅ Successfully downloaded REAL data from {geo_id}")
+            logger.info(f"✅ Successfully downloaded REAL data from {repository}")
             logger.info(f"   Genes: {len(gene_symbols)}, Samples: {expression_data.shape[1]}")
             return expression_data, gene_symbols, group_labels
 
         # Real data download failed - reject the discovery
-        logger.error(f"❌ REJECTED: Cannot download real GEO data for {geo_id}")
-        logger.error(f"   Real GEO data download failed or dataset unavailable")
+        logger.error(f"❌ REJECTED: Cannot download real data from {repository}")
         logger.error(f"   Refusing to use synthetic/fake data as fallback")
         logger.error(f"   This discovery will be rejected to prevent pseudo-science")
 
         raise ValueError(
-            f"Cannot download real GEO data for {geo_id}. "
+            f"Cannot download real data from {repository} for {dataset_id}. "
             f"Real data download failed. "
             f"Refusing to use synthetic data to prevent pseudo-science generation. "
             f"This discovery is rejected."
