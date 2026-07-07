@@ -219,6 +219,11 @@ class RealDataAnalyzer:
 
         try:
             from Bio import Entrez
+            import signal
+
+            # Function to timeout GEO searches
+            def timeout_handler(signum, frame):
+                raise TimeoutError("GEO database query timed out")
 
             # Extract relevant search terms
             search_terms = self._extract_geo_search_terms(question)
@@ -230,10 +235,25 @@ class RealDataAnalyzer:
             geo_query = " AND ".join(search_terms[:3])
             logger.info(f"   GEO query: {geo_query}")
 
-            # Perform search
-            handle = Entrez.esearch(db="gds", term=geo_query, retmax=max_results)
-            record = Entrez.read(handle)
-            handle.close()
+            # Perform search with timeout protection
+            try:
+                # Set 30-second timeout for GEO queries
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(30)
+
+                handle = Entrez.esearch(db="gds", term=geo_query, retmax=max_results)
+                record = Entrez.read(handle)
+                handle.close()
+
+                # Cancel alarm if successful
+                signal.alarm(0)
+
+            except TimeoutError:
+                logger.error("❌ GEO search timed out after 30 seconds")
+                return []
+            except Exception as e:
+                logger.error(f"❌ GEO search failed: {e}")
+                return []
 
             geo_ids = record.get("IdList", [])
             if not geo_ids:
@@ -263,9 +283,14 @@ class RealDataAnalyzer:
 
                         # Now fetch the full record to get sample and feature counts
                         try:
+                            # Add timeout for individual dataset fetch
+                            signal.alarm(15)  # 15 second timeout per dataset
+
                             full_record_handle = Entrez.esummary(db="gds", id=gds_id, retmode='xml')
                             full_record = Entrez.read(full_record_handle)
                             full_record_handle.close()
+
+                            signal.alarm(0)  # Cancel timeout if successful
 
                             if full_record and len(full_record) > 0:
                                 dataset = full_record[0]

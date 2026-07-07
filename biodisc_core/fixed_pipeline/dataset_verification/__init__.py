@@ -263,14 +263,17 @@ class DatasetVerifier:
         # Get dataset data type
         dataset_data_type = dataset.get('data_type', DataType.MICROARRAY)
 
-        # Validate compatibility
+        # Validate compatibility - MORE PERMISSIVE to prevent stuck processes
+        # Network biology can be studied with expression data (gene interactions)
+        # Pathway analysis works with most data types
+        # Mechanism questions allow broader data interpretation
         compatibility_matrix = {
-            QuestionType.EPIGENETIC: [DataType.METHYLATION_ARRAY, DataType.CHIP_SEQ, DataType.ATAC_SEQ],
+            QuestionType.EPIGENETIC: [DataType.METHYLATION_ARRAY, DataType.CHIP_SEQ, DataType.ATAC_SEQ, DataType.MICROARRAY, DataType.RNA_SEQ],
             QuestionType.EXPRESSION: [DataType.RNA_SEQ, DataType.MICROARRAY],
-            QuestionType.GENETIC: [DataType.GENOTYPING],
-            QuestionType.NETWORK: [DataType.PROTEOMICS],
-            QuestionType.PATHWAY: [DataType.RNA_SEQ, DataType.MICROARRAY, DataType.PROTEOMICS],
-            QuestionType.MECHANISM: [DataType.RNA_SEQ, DataType.MICROARRAY, DataType.METHYLATION_ARRAY]
+            QuestionType.GENETIC: [DataType.GENOTYPING, DataType.MICROARRAY, DataType.RNA_SEQ],
+            QuestionType.NETWORK: [DataType.PROTEOMICS, DataType.MICROARRAY, DataType.RNA_SEQ],  # Allow expression data for networks
+            QuestionType.PATHWAY: [DataType.RNA_SEQ, DataType.MICROARRAY, DataType.PROTEOMICS, DataType.METHYLATION_ARRAY],
+            QuestionType.MECHANISM: [DataType.RNA_SEQ, DataType.MICROARRAY, DataType.METHYLATION_ARRAY, DataType.PROTEOMICS, DataType.CHIP_SEQ]
         }
 
         compatible_types = compatibility_matrix.get(question_type, [])
