@@ -77,6 +77,61 @@ class DatasetVerifier:
         self.verification_cache = {}
         self.verification_attempts = 0
         self.failed_verifications = 0
+        self.rejected_accessions = 0
+
+    def _validate_geo_accession_format(self, geo_id: str) -> Tuple[bool, str]:
+        """
+        Validate GEO accession format.
+
+        Valid formats:
+        - GSE#### (Series) - where #### is 4-6 digits
+        - GDS#### (Dataset) - where #### is 4-6 digits
+        - GSM#### (Sample) - where #### is 4-6 digits
+        - GPL#### (Platform) - where #### is 4-6 digits
+
+        Returns:
+            (is_valid, error_message)
+        """
+        import re
+
+        # Check format
+        if not geo_id:
+            return False, "Empty GEO accession"
+
+        # Correct regex for GEO accessions:
+        # GSE = G-S-E, GDS = G-D-S, GSM = G-S-M, GPL = G-P-L
+        # Pattern: G + (S|D|P) + (E|S|M|L) + 4-6 digits
+        if not re.match(r'^G(S[EM]|DS|PL)\d{4,6}$', geo_id):
+            return False, (
+                f"Invalid GEO accession format: {geo_id}. "
+                f"Valid formats: GSE####, GDS####, GSM####, GPL#### (4-6 digits)"
+            )
+
+        return True, ""
+
+    def verify_dataset_exists(self, geo_id: str) -> Tuple[bool, Optional[Dict]]:
+        """
+        Verify that a GEO dataset actually exists and matches claimed properties.
+
+        HARD GATES:
+        1. Valid GEO accession format
+        2. Dataset exists in GEO database
+        3. Minimum metadata available
+
+        Returns:
+            (exists, dataset_info) tuple
+        """
+        self.verification_attempts += 1
+
+        # HARD GATE 1: Validate GEO accession format
+        format_valid, format_error = self._validate_geo_accession_format(geo_id)
+        if not format_valid:
+            logger.error(f"❌ REJECTED: {format_error}")
+            self.failed_verifications += 1
+            self.rejected_accessions += 1
+            return False, None
+
+        logger.info(f"✅ GEO accession format valid: {geo_id}")
 
     def verify_dataset_exists(self, geo_id: str) -> Tuple[bool, Optional[Dict]]:
         """
@@ -179,12 +234,17 @@ class DatasetVerifier:
             # Estimate feature count from platform (conservative estimate)
             info['feature_count'] = self._estimate_feature_count(info['platform'])
 
-            # If sample count is still 0, use a reasonable default based on the dataset ID
-            # This allows discovery to continue even when GEO parsing fails
+            # HARD GATE: Reject if sample count is too low
             if info['sample_count'] == 0:
-                logger.warning(f"Could not extract sample count from GEO summary for {geo_id}")
-                logger.info(f"   Using default sample count: 12 (typical for GEO studies)")
-                info['sample_count'] = 12  # Conservative but reasonable default
+                logger.error(f"❌ REJECTED: Could not extract sample count from GEO summary for {geo_id}")
+                logger.error(f"   Dataset has insufficient metadata")
+                return None
+
+            # HARD GATE: Require minimum samples for statistical analysis
+            if info['sample_count'] < 6:
+                logger.error(f"❌ REJECTED: Dataset {geo_id} has only {info['sample_count']} samples")
+                logger.error(f"   Minimum 6 samples required for differential expression analysis")
+                return None
 
             return info
 

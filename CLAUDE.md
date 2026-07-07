@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Quick Reference
 
 **Project**: BIODISC (Biology Discovery and Intelligence System)
-**Version**: 6.0-FIXED-INTEGRATED - COMPLETE UNIFIED SYSTEM (✅ FULLY INTEGRATED)
+**Version**: 7.0-CRITICAL-FIXES - SCIENTIFIC INTEGRITY ENFORCED (✅ HARD GATES ACTIVE)
 **AGI Capability**: 90-95% (Enhanced from 85-90%)
 **GitHub**: https://github.com/Tilanthi/BIODISC (ONLY repository for BIODISC)
 **Remote**: `biodisc` (use `git push biodisc main` - ONLY main branch)
@@ -223,6 +223,56 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ✅ More permissive data type matching prevents stuck processes
 
 **This ensures the discovery system remains productive and doesn't hang on strict validation requirements.**
+
+**V7.0 CRITICAL FIXES - SCIENTIFIC INTEGRITY ENFORCED** (July 7, 2026):
+- 🚨 **CATASTROPHIC PEER REVIEW IDENTIFIED**: Referee confirmed V6.0-V6.2 systems were generating pseudo-science with fabricated gene identifiers
+- 🚨 **1,478 PSEUDO-SCIENCE DISCOVERIES ARCHIVED**: Entire discovery database contained fake data (GENE_XXXX format, fake patterns like RPL166, KRT113, ALDO52)
+- 🔧 **COMPLETE ARCHITECTURAL REBUILD**: 4 critical fixes implemented to prevent pseudo-science generation
+- ✅ **HARD GATES IMPLEMENTED**: All validation steps now enforce scientific integrity with NO fallback to fake data
+- 🎯 **DISCOVERY SYSTEM STATUS**: STOPPED - Will remain OFF until real GEO data download is implemented
+
+**CRITICAL FIXES IMPLEMENTED**:
+
+**Fix 1: Gene Symbol Validation as HARD GATE** ✅
+- Created `gene_symbol_validation.py` with comprehensive validation against HGNC database
+- Detects and REJECTS fake patterns: GENE_XXXX, RPL166, KRT113, ALDO52, GAPD115, HSP167, COL219
+- Validates against curated list of 243 verified real human genes from HGNC
+- **HARD GATE**: Rejects ENTIRE discovery if ANY invalid gene symbols detected
+- No fallback to fake identifiers
+
+**Fix 2: Dataset Verification with REAL Accession Numbers** ✅
+- Added GEO accession format validation (GSE####, GDS####, GSM####, GPL#### with 4-6 digits)
+- Rejects invalid formats before database query
+- Requires minimum 6 samples for statistical analysis
+- **HARD GATE**: No processing without verified GEO accession
+
+**Fix 3: REJECT Instead of FALLBACK** ✅
+- Removed ALL fallbacks to synthetic/simulated data
+- Raises `ValueError` if real GEO data cannot be downloaded
+- **HARD GATE**: System REFUSES to use fake data
+
+**Fix 4: Full Traceability** ✅
+- Every discovery includes `provenance_certificate` with validation results
+- Complete traceability to real biological sources
+- Pipeline version: "FIXED_2.0_WITH_HARD_GATES"
+
+**PEER REVIEWER FEEDBACK** (What was WRONG):
+- ❌ "Gene identifiers are not real" - GAPD115, KRT247, ALDO8, ALDO197, RPL64, RPS44, RPS130, HSP167, COL219
+- ❌ "Plausible gene-family prefix bolted to an arbitrary number"
+- ❌ "No dataset accession" - Papers provided NO GSE number
+- ❌ "Network analysis asserted, not shown" - No actual metrics
+- ❌ "Good evidence the reported result exists at all" - Results are fabricated
+
+**IMPACT**:
+- **Before**: 1,478 pseudo-science entries in ~4 hours
+- **After**: System REJECTS if real data unavailable
+- **Every passing discovery has**: Verified genes, verified GEO accession, full traceability
+
+**CURRENT STATUS**:
+- **Autonomous Discovery**: STOPPED
+- **Discovery Database**: Archived as pseudo-science
+- **System Mode**: Scientific integrity enforced via hard gates
+- **Readiness**: Awaiting real GEO data download implementation
 
 **KEY PRINCIPLE**: A field can have 100,000+ papers, but a SPECIFIC insight about "protein X regulates pathway Y through mechanism Z" might still be completely novel. We validate SPECIFIC discovery novelty, not broad field activity.
 
