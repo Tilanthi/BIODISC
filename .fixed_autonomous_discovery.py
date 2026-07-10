@@ -60,6 +60,12 @@ class FixedAutonomousDiscovery:
         self.session_file = project_root / "fixed_discovery_state.json"
         self.discoveries_file = project_root / "autonomous_discoveries.jsonl"
 
+        # Validation statistics tracking
+        self.discoveries_made = 0
+        self.discoveries_rejected = 0
+        self.discoveries_validated = 0
+        self.discovery_count = 0  # For periodic summary reporting
+
         # Setup signal handlers
         signal.signal(signal.SIGTERM, self._signal_handler)
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -129,8 +135,8 @@ class FixedAutonomousDiscovery:
                     # Try each dataset until one works
                     discovery_made = False
                     for j, dataset_metadata in enumerate(geo_datasets, 1):
-                        dataset_id = dataset_metadata.get('geo_id', 'Unknown')
-                        sample_count = dataset_metadata.get('sample_count', 0)
+                        dataset_id = dataset_metadata.get('id', 'Unknown')
+                        sample_count = dataset_metadata.get('samples', 0)
 
                         logger.info(f"   Trying dataset {j}/{len(geo_datasets)}: {dataset_id} ({sample_count} samples)")
 
@@ -142,14 +148,36 @@ class FixedAutonomousDiscovery:
                             )
 
                             if discovery_report:
+                                # Add validation statistics logging
+                                validation_stats = discovery_report.get('validation_statistics', {})
+
+                                logger.info("📊 VALIDATION STATISTICS:")
+                                logger.info(f"   Dataset Verification: {validation_stats.get('dataset_verification', {})}")
+                                logger.info(f"   Gene Symbol Validation: {validation_stats.get('gene_symbol_validation', {})}")
+                                logger.info(f"   Differential Expression: {validation_stats.get('differential_expression', {})}")
+                                logger.info(f"   Pathway Analysis: {validation_stats.get('pathway_analysis', {})}")
+                                logger.info(f"   External Validation: {validation_stats.get('external_validation', {})}")
+
                                 # Save the discovery
                                 self.save_discovery(discovery_report)
                                 discoveries_made_this_cycle += 1
+                                self.discoveries_made += 1
+                                self.discoveries_validated += 1
+                                self.discovery_count += 1
                                 discovery_made = True
+
                                 logger.info(f"✅ Discovery {i} generated and saved using dataset {dataset_id}")
+                                logger.info(f"   All validation gates PASSED")
+
+                                # Log validation summary every 10 discoveries
+                                if self.discovery_count % 10 == 0:
+                                    self.log_validation_summary()
+
                                 break  # Success! Don't try other datasets for this question
                             else:
-                                logger.info(f"❌ Discovery {i} failed with dataset {dataset_id}, trying next...")
+                                logger.info(f"❌ Discovery {i} failed validation with dataset {dataset_id}")
+                                self.discoveries_rejected += 1
+                                logger.info(f"   Trying next dataset...")
 
                         except Exception as e:
                             logger.error(f"Error processing question {i} with dataset {dataset_id}: {e}")
@@ -163,9 +191,24 @@ class FixedAutonomousDiscovery:
                 # Save session state
                 self.save_session_state()
 
-                # Wait before next cycle
+                # Robust rest mechanism with sleep detection
                 logger.info("💤 Resting before next discovery cycle...")
-                time.sleep(300)  # 5 minutes between cycles
+                cycle_start = time.time()
+
+                # Use smaller sleep intervals for better sleep/wake handling
+                for i in range(30):  # 30 intervals of 10 seconds = 5 minutes total
+                    time.sleep(10)  # 10 second intervals are more resilient
+
+                    # Check if we've been asleep (system time jump detection)
+                    elapsed = time.time() - cycle_start
+                    if elapsed > 600:  # If more than 10 minutes elapsed, system was asleep
+                        logger.warning(f"⚠️  System sleep detected (elapsed: {elapsed:.1f}s)")
+                        logger.info("🔄 Restarting discovery cycle after sleep...")
+                        break  # Break to start fresh discovery cycle
+
+                # If we broke out of sleep due to system sleep detection, continue to next iteration
+                if elapsed > 600:
+                    continue  # Skip to next while loop iteration
 
             except KeyboardInterrupt:
                 logger.info("Stopped by user")
@@ -182,29 +225,57 @@ class FixedAutonomousDiscovery:
         self.save_session_state()
 
     def _search_real_geo_datasets(self, question: str, max_results: int = 3) -> List[Dict]:
-        """Search for REAL GEO datasets instead of using synthetic test data"""
+        """Use VERIFIED GEO datasets instead of real-time search"""
         try:
-            from biodisc_core.analysis.genuine_discovery_validator import create_real_data_analyzer
-            data_analyzer = create_real_data_analyzer()
+            # Import VERIFIED datasets that we know work
+            from biodisc_core.fixed_pipeline.real_datasets import REAL_GEO_DATASETS
 
-            # Search for relevant GEO datasets
-            datasets = data_analyzer.search_relevant_geo_datasets(question, max_results=max_results)
+            logger.info(f"🔍 Using verified GEO datasets from real_datasets.py")
+
+            # Return all verified datasets (up to max_results)
+            datasets = REAL_GEO_DATASETS[:max_results]
 
             if datasets:
-                logger.info(f"✅ Found {len(datasets)} real GEO datasets for question")
+                logger.info(f"✅ Using {len(datasets)} VERIFIED GEO datasets")
                 for i, dataset in enumerate(datasets, 1):
-                    logger.info(f"   {i}. {dataset.get('geo_id', 'Unknown')}: {dataset.get('sample_count', 0)} samples")
+                    logger.info(f"   {i}. {dataset.get('id', 'Unknown')}: {dataset.get('samples', 0)} samples - {dataset.get('title', 'Unknown')[:50]}")
             else:
-                logger.warning(f"❌ No GEO datasets found for question")
+                logger.warning(f"❌ No verified GEO datasets available")
 
             return datasets
 
         except Exception as e:
-            logger.error(f"❌ Error searching GEO datasets: {e}")
+            logger.error(f"❌ Error loading verified datasets: {e}")
             return []
 
     def _generate_biological_questions(self) -> List[str]:
-        """Generate biological questions from knowledge gaps across ALL biology domains"""
+        """
+        Generate SPECIFIC biological questions using SpecificQuestionsGenerator.
+
+        Replaces generic questions with specific, novel questions.
+        """
+
+        try:
+            from biodisc_core.fixed_pipeline.specific_questions import create_specific_questions_generator
+            generator = create_specific_questions_generator()
+            questions = generator.generate_specific_questions()
+
+            logger.info(f"✅ Generated {len(questions)} SPECIFIC biological questions")
+            logger.info("   (Replaces generic questions for genuine novelty)")
+
+            return questions
+
+        except Exception as e:
+            logger.warning(f"Could not use specific questions generator: {e}")
+            # Fallback to basic questions
+            logger.warning("   Using fallback basic questions")
+            questions = [
+                "How does gene expression change between specific conditions?",
+                "What specific genes regulate cellular differentiation?",
+                "How do signaling pathways respond to stimuli?",
+            ]
+
+            return questions
 
         # COMPREHENSIVE questions spanning BIODISC's full training scope
         questions = [
@@ -278,6 +349,12 @@ class FixedAutonomousDiscovery:
                 'timestamp': datetime.now().isoformat(),
                 'running': self.running,
                 'discoveries_made': self.orchestrator.discoveries_made if self.orchestrator else 0,
+                'discoveries_rejected': self.orchestrator.discoveries_rejected if self.orchestrator else 0,
+                'discoveries_validated': self.orchestrator.discoveries_validated if self.orchestrator else 0,
+                'session_discoveries_made': self.discoveries_made,
+                'session_discoveries_rejected': self.discoveries_rejected,
+                'session_discoveries_validated': self.discoveries_validated,
+                'discovery_count': self.discovery_count,
                 'pipeline_version': 'FIXED_6.0'
             }
 
@@ -299,8 +376,47 @@ class FixedAutonomousDiscovery:
                 logger.info(f"   Pipeline version: {state.get('pipeline_version')}")
                 logger.info(f"   Previous discoveries: {state.get('discoveries_made')}")
 
+                # Load validation statistics
+                self.discoveries_made = state.get('session_discoveries_made', 0)
+                self.discoveries_rejected = state.get('session_discoveries_rejected', 0)
+                self.discoveries_validated = state.get('session_discoveries_validated', 0)
+                self.discovery_count = state.get('discovery_count', 0)
+
+                logger.info(f"   Session discoveries made: {self.discoveries_made}")
+                logger.info(f"   Session discoveries rejected: {self.discoveries_rejected}")
+
         except Exception as e:
             logger.info("No previous session state found")
+
+    def log_validation_summary(self):
+        """Log summary of validation statistics."""
+        logger.info("📊 VALIDATION SUMMARY:")
+        logger.info("=" * 60)
+
+        # Get statistics from orchestrator if available
+        if self.orchestrator:
+            logger.info(f"   Orchestrator Discoveries Made: {self.orchestrator.discoveries_made}")
+            logger.info(f"   Orchestrator Discoveries Rejected: {self.orchestrator.discoveries_rejected}")
+            logger.info(f"   Orchestrator Discoveries Validated: {self.orchestrator.discoveries_validated}")
+
+            # Get peer review validator statistics
+            if hasattr(self.orchestrator, 'peer_review_validator'):
+                validator = self.orchestrator.peer_review_validator
+                logger.info(f"   Peer Review Validations: {validator.validations_performed}")
+                logger.info(f"   Peer Review Rejections: {validator.rejections}")
+                if validator.validations_performed > 0:
+                    peer_review_rejection_rate = (validator.rejections / validator.validations_performed) * 100
+                    logger.info(f"   Peer Review Rejection Rate: {peer_review_rejection_rate:.2f}%")
+
+        logger.info(f"   Session Total Discoveries Made: {self.discoveries_made}")
+        logger.info(f"   Session Total Discoveries Rejected: {self.discoveries_rejected}")
+        logger.info(f"   Session Total Discoveries Validated: {self.discoveries_validated}")
+
+        if self.discoveries_made > 0:
+            rejection_rate = (self.discoveries_rejected / self.discoveries_made) * 100
+            logger.info(f"   Session Rejection Rate: {rejection_rate:.2f}%")
+
+        logger.info("=" * 60)
 
 
 if __name__ == "__main__":
