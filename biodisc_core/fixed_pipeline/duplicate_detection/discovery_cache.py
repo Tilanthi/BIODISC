@@ -1,6 +1,6 @@
 """Discovery cache for duplicate detection."""
 from collections import OrderedDict
-from typing import Dict, Set, Optional, Tuple
+from typing import Dict, Set, Optional, Tuple, Any
 from datetime import datetime, timedelta
 import logging
 
@@ -61,7 +61,7 @@ class DiscoveryCache:
         # Not a duplicate
         return False, ""
 
-    def add_discovery(self, fingerprint: 'DiscoveryFingerprint', discovery: Dict):
+    def add_discovery(self, fingerprint: 'DiscoveryFingerprint', discovery: Dict[str, Any]):
         """Add discovery to cache."""
 
         # LRU eviction if at capacity

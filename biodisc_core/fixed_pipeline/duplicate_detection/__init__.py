@@ -1,4 +1,5 @@
 """Duplicate detection system."""
+from typing import Dict, Tuple
 from .discovery_fingerprint import DiscoveryFingerprint
 from .discovery_cache import DiscoveryCache
 
@@ -9,7 +10,7 @@ class DuplicateDetector:
         self.cache = DiscoveryCache(max_size=max_cache_size)
         self.rejections = 0
 
-    def check_duplicate(self, discovery: Dict) -> tuple:
+    def check_duplicate(self, discovery: Dict) -> Tuple[bool, str]:
         """
         Check if discovery is a duplicate.
 
