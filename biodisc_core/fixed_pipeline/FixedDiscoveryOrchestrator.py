@@ -546,6 +546,9 @@ class FixedDiscoveryOrchestrator:
             self.duplicate_detector.register_discovery(discovery_report)
             self.discoveries_validated += 1
 
+            # Add 5-layer validation statistics to discovery report
+            discovery_report['comprehensive_validation_statistics'] = validation_stats
+
             logger.info("✅ DISCOVERY VALIDATED AND ACCEPTED")
             logger.info(f"   Validation: {validation_stats}")
 

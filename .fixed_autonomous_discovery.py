@@ -148,15 +148,16 @@ class FixedAutonomousDiscovery:
                             )
 
                             if discovery_report:
-                                # Add validation statistics logging
-                                validation_stats = discovery_report.get('validation_statistics', {})
+                                # Add comprehensive validation statistics logging
+                                # Note: These keys come from validate_discovery_comprehensive() 5-layer validation
+                                validation_stats = discovery_report.get('comprehensive_validation_statistics', {})
 
-                                logger.info("📊 VALIDATION STATISTICS:")
-                                logger.info(f"   Dataset Verification: {validation_stats.get('dataset_verification', {})}")
-                                logger.info(f"   Gene Symbol Validation: {validation_stats.get('gene_symbol_validation', {})}")
-                                logger.info(f"   Differential Expression: {validation_stats.get('differential_expression', {})}")
-                                logger.info(f"   Pathway Analysis: {validation_stats.get('pathway_analysis', {})}")
-                                logger.info(f"   External Validation: {validation_stats.get('external_validation', {})}")
+                                logger.info("📊 COMPREHENSIVE VALIDATION STATISTICS:")
+                                logger.info(f"   Duplicate Detection: {validation_stats.get('duplicate_detection', {})}")
+                                logger.info(f"   Dataset-Question Validation: {validation_stats.get('dataset_question_validation', {})}")
+                                logger.info(f"   Probe-Gene Mapping: {validation_stats.get('probe_gene_mapping', {})}")
+                                logger.info(f"   FDR Significance Gate: {validation_stats.get('fdr_significance_gate', {})}")
+                                logger.info(f"   Template Detection: {validation_stats.get('template_detection', {})}")
 
                                 # Save the discovery
                                 self.save_discovery(discovery_report)
