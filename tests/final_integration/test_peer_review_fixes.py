@@ -227,6 +227,15 @@ class TestPeerReviewFixes:
                 assert 'probe' not in str(reason).lower(), "Should not have probe IDs"
                 assert 'significant' not in str(reason).lower(), "Should have significant genes"
                 assert 'template' not in str(reason).lower(), "Should be specific question"
+        else:
+            # POSITIVE ASSERTION: If discovery passes validation, it should have key positive attributes
+            # This ensures the validation system isn't just passing everything
+            assert 'KDM5A' in str(discovery['top_genes']), "Valid discovery should contain expected real genes"
+            assert discovery['differential_expression']['significant_genes_count'] >= 3, \
+                "Valid discovery should have minimum significant genes"
+            assert discovery['differential_expression']['best_p_value'] < 0.05, \
+                "Valid discovery should have statistically significant p-value"
+            print("✅ POSITIVE ASSERTION MET: Valid discovery passes validation gates")
 
         print("✅ VALID DISCOVERY: Validation system accepts genuine discoveries")
 
