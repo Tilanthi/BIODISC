@@ -5,8 +5,9 @@ diverse high-performing inspirations from the archive, the scoring contract, and
 a stochastic "style" hint for candidate diversity. Deterministic given the rng.
 """
 import random
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
+from .meta_prompt import MetaPrompt
 from .program_db import ArchivedProgram
 
 
@@ -53,6 +54,7 @@ def build_evolution_prompt(
     inspirations: List[ArchivedProgram],
     generation: int,
     rng: random.Random,
+    meta_prompt: Optional[MetaPrompt] = None,
 ) -> Tuple[str, str]:
     """Return (system, user) prompt for one evolution step."""
     style = rng.choice(STYLE_HINTS)
@@ -62,6 +64,8 @@ def build_evolution_prompt(
     lines.append(f"Goal: improve aggregate fitness (currently {parent.aggregate:.3f}, "
                  f"AUROC {parent.auroc:.3f}, held-out replicate {parent.replicate_concordance:.3f}).")
     lines.append(f"Style hint for diversity: {style}")
+    if meta_prompt is not None:
+        lines.append(f"Co-evolved strategy guidance: {meta_prompt.text}")
     lines.append("")
     lines.append("=== CURRENT PROGRAM (parent) ===")
     lines.append(parent.source.strip("\n"))

@@ -22,6 +22,7 @@ from biodisc_core.fixed_pipeline.benchmark.truth_known_fixture import BenchmarkC
 from .program import compile_de_program, validate_program_source
 from .program_db import ArchivedProgram, ProgramDatabase
 from .prompt_sampler import build_evolution_prompt
+from .meta_prompt import MetaPromptArchive
 from .seeds import get_seed_program
 from .diff_applier import apply_diffs_or_full, DiffParseError, DiffApplyError
 
@@ -62,11 +63,13 @@ class EvolutionController:
         db: Optional[ProgramDatabase] = None,
         rng: Optional[random.Random] = None,
         db_seed: int = 0,
+        meta_archive: Optional[MetaPromptArchive] = None,
     ):
         self.benchmark = benchmark
         self.proposer = proposer
         self.rng = rng or random.Random(0)
         self.db = db or ProgramDatabase(seed=db_seed)
+        self.meta_archive = meta_archive or MetaPromptArchive(rng=self.rng)
         self.attempts: List[AttemptLog] = []
         self.seed_score = self._seed_archive()
 
@@ -85,7 +88,10 @@ class EvolutionController:
     def step(self, generation: int) -> AttemptLog:
         """One evolution attempt: sample -> propose -> apply -> gate -> score -> archive."""
         parent, inspirations = self.db.sample()
-        system, user = build_evolution_prompt(parent, inspirations, generation, self.rng)
+        meta_prompt = self.meta_archive.sample()
+        system, user = build_evolution_prompt(
+            parent, inspirations, generation, self.rng, meta_prompt=meta_prompt,
+        )
 
         try:
             raw = self.proposer(system, user)
@@ -116,6 +122,8 @@ class EvolutionController:
         accepted = score.aggregate > 0.0
         if accepted:
             self.db.add(child_source, score, generation, parent_id=parent.program_id)
+            # Credit this program's fitness back to the directive that guided it.
+            self.meta_archive.record(meta_prompt.id, score.aggregate)
         log = AttemptLog(generation, parent.program_id, accepted, score.aggregate)
         self.attempts.append(log)
         return log
