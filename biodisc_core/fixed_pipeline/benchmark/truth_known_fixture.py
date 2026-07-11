@@ -5,7 +5,7 @@ which genes are truly differentially expressed so a DE method can be scored
 against ground truth (AUROC). See package docstring.
 """
 from dataclasses import dataclass, field
-from typing import Set
+from typing import Iterable, Optional, Set
 
 import numpy as np
 
@@ -38,6 +38,7 @@ def make_de_benchmark(
     seed: int = 0,
     effect_size: float = 1.5,
     noise: str = NOISE_GAUSSIAN,
+    truth_indices: Optional[Iterable[int]] = None,
 ) -> BenchmarkCase:
     """Generate a truth-known DE benchmark deterministically from ``seed``.
 
@@ -52,14 +53,16 @@ def make_de_benchmark(
             (treatment group ~3x variance). The non-gaussian regimes are HARD:
             naive Student's t-test is suboptimal, leaving headroom for evolution
             to discover more robust statistics (Welch, rank-based, moderated).
+        truth_indices: optional fixed set of DE gene indices. When provided,
+            the SAME truth is used (only expression noise depends on ``seed``).
+            This lets two cohorts share ground truth with independent draws —
+            the basis of replication-pair scoring (Phase 3). n_de is ignored.
 
     Returns:
         BenchmarkCase with known ``truth_de_indices``.
     """
     if noise not in VALID_NOISES:
         raise ValueError(f"noise must be one of {VALID_NOISES}, got {noise!r}")
-    if n_de > n_genes:
-        raise ValueError(f"n_de ({n_de}) cannot exceed n_genes ({n_genes})")
     if n_samples < 4:
         raise ValueError("n_samples must be >= 4 (need >=2 per group)")
 
@@ -86,7 +89,15 @@ def make_de_benchmark(
             expression[:, mask] = rng.normal(0.0, scale, size=(n_genes, n_grp))
 
     # Choose which genes are truly DE, add the effect to the treatment group.
-    de_idx = rng.choice(n_genes, size=n_de, replace=False)
+    if truth_indices is not None:
+        de_idx = np.array(sorted(set(int(i) for i in truth_indices)), dtype=int)
+        if len(de_idx) == 0 or de_idx.max() >= n_genes or de_idx.min() < 0:
+            raise ValueError("truth_indices must be non-empty and within [0, n_genes)")
+        n_de = len(de_idx)
+    else:
+        if n_de > n_genes:
+            raise ValueError(f"n_de ({n_de}) cannot exceed n_genes ({n_genes})")
+        de_idx = rng.choice(n_genes, size=n_de, replace=False)
     expression[np.ix_(de_idx, treatment_mask)] += effect_size
 
     return BenchmarkCase(
