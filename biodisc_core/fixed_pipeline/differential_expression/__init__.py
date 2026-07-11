@@ -151,6 +151,16 @@ class DifferentialExpressionAnalyzer:
         if expression_data.shape[1] != len(group_labels):
             raise ValueError("Expression data columns must match group labels length")
 
+        # Auto log-transform RAW expression data. GEO Affymetrix series matrices
+        # are often un-logged signal intensities (values in the thousands); a
+        # direct t-test on raw intensities is badly underpowered (huge variance,
+        # non-Normal), yielding no significant genes. Detect raw scale by a large
+        # max value and apply log2(x+1) to bring it to log-scale. Already
+        # log-scaled / normalized data (small max) is left untouched.
+        if float(np.nanmax(expression_data)) > 100.0:
+            logger.info("   Expression appears raw (max > 100); applying log2(x+1) transform")
+            expression_data = np.log2(np.clip(expression_data, 0.0, None) + 1.0)
+
         # Perform t-tests for each gene
         results = []
         p_values = []

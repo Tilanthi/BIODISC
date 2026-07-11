@@ -52,13 +52,21 @@ class SignificanceValidator:
 
         self.validations += 1
 
-        # Extract key metrics
-        significant_genes = de_results.get('significant_genes_count', 0)
+        # Extract key metrics. Support both the discovery-report schema
+        # ('significant_genes', 'top_upregulated'/'top_downregulated') and legacy
+        # keys ('significant_genes_count', 'top_genes').
+        significant_genes = de_results.get(
+            'significant_genes', de_results.get('significant_genes_count', 0)
+        )
         total_genes = de_results.get('total_genes_tested', 0)
 
-        # Get FDR values
-        top_genes = de_results.get('top_genes', [])
-        fdr_values = [g.get('fdr_p_value', 1.0) for g in top_genes if 'fdr_p_value' in g]
+        # Gather FDR values from whichever top-gene lists are present.
+        fdr_values = []
+        for key in ('top_upregulated', 'top_downregulated', 'top_genes', 'results'):
+            for g in de_results.get(key, []) or []:
+                fdr = g.get('fdr_p_value') if isinstance(g, dict) else getattr(g, 'fdr_p_value', None)
+                if fdr is not None:
+                    fdr_values.append(fdr)
 
         best_fdr = min(fdr_values) if fdr_values else 1.0
 

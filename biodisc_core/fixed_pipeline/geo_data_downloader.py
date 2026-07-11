@@ -325,6 +325,32 @@ class GEODataDownloader:
                 logger.info("   No expression data extracted")
                 return None
 
+            # GPL probe -> gene-symbol mapping (real-data unlock). If the row IDs
+            # are Affymetrix/Illumina probes, map them to gene symbols via the
+            # platform GPL annotation so the downstream gene-symbol gate sees real
+            # symbols. SAFE FALLBACK: on any failure or poor mapping rate, return
+            # None (reject) rather than risk mis-mapping probes to wrong symbols.
+            from biodisc_core.fixed_pipeline.probe_gene_mapping.gpl_mapper import (
+                detect_probe_platform, extract_platform_id, load_gpl_symbol_map,
+                map_probes, MIN_MAPPING_RATE,
+            )
+            if detect_probe_platform(gene_symbols):
+                platform_id = extract_platform_id(text)
+                mapping = load_gpl_symbol_map(platform_id) if platform_id else {}
+                if not mapping:
+                    logger.info(f"   REJECTING: probe-based rows with no GPL mapping "
+                                f"(platform={platform_id}); refusing to publish probe IDs")
+                    return None
+                symbols, kept = map_probes(gene_symbols, mapping)
+                rate = len(symbols) / max(1, len(gene_symbols))
+                if rate < MIN_MAPPING_RATE:
+                    logger.info(f"   REJECTING: GPL mapping rate {rate:.2f} < {MIN_MAPPING_RATE}")
+                    return None
+                logger.info(f"   GPL mapped {len(symbols)}/{len(gene_symbols)} probes -> "
+                            f"gene symbols (rate {rate:.2f})")
+                gene_symbols = symbols
+                expression_data = [expression_data[i] for i in kept]
+
             # Pad all rows to have the same length
             padded_data = []
             for row in expression_data:

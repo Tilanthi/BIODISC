@@ -308,10 +308,17 @@ class MultiRepositoryVerifier:
         """Verify that dataset exists in the specific repository"""
 
         try:
-            # Try to query the repository API or database
+            # Query the repository. For GEO the default acc.cgi view returns
+            # HTML (no parseable metadata), which yields sample_count=0 and
+            # (with the P0.4 sample-count gate) rejects everything. Use the
+            # SOFT-text endpoint so !Series_sample_id / !Series_organism lines
+            # are returned and parsed correctly.
+            params = {'acc': accession, 'view': 'summary'}
+            if repo_config.repository_type == RepositoryType.GEO:
+                params = {'acc': accession, 'targ': 'self', 'form': 'text', 'view': 'full'}
             response = requests.get(
                 f"{repo_config.base_url}",
-                params={'acc': accession, 'view': 'summary'},
+                params=params,
                 timeout=30
             )
 

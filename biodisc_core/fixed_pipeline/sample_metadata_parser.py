@@ -105,12 +105,22 @@ def parse_groups_from_series_matrix(
 
     # Build candidate binary fields. Each candidate is (field, key, [values]).
     # Identifier fields (e.g. Sample_geo_accession) are unique per sample and are
-    # NEVER a valid experimental grouping — exclude them.
+    # NEVER a valid experimental grouping — exclude them. Likewise exclude
+    # TECHNICAL fields (dates, batch/plate/well, channel) that can be binary but
+    # are not biological case/control (otherwise the parser would group samples
+    # by submission date, producing a meaningless DE).
     IDENTIFIER_HINTS = ('accession', 'sample_id', 'geo_accession')
+    NON_BIOLOGICAL_HINTS = (
+        'submission_date', 'scan_date', 'extract_id', 'hyb_date', 'hybridization',
+        'array_id', 'array_batch', 'batch', 'plate', 'well', 'channel',
+        'label_protocol', 'scan_protocol', 'data_processing',
+    )
     candidates: List[tuple] = []
     for field, vectors in characteristics.items():
         field_l = field.lower()
         if any(h in field_l for h in IDENTIFIER_HINTS):
+            continue
+        if any(h in field_l for h in NON_BIOLOGICAL_HINTS):
             continue
         for vec in vectors:
             if len(vec) != sample_count:

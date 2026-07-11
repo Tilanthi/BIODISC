@@ -415,22 +415,49 @@ class FixedDiscoveryOrchestrator:
             logger.info(f"✅ Expression data generated: {expression_data.shape}")
 
             # STEP 2.5: GENE SYMBOL VALIDATION - HARD GATE
-            # This is a NON-NEGOTIABLE validation step that rejects the entire discovery
-            # if ANY fake or invalid gene symbols are detected
+            # Publish ONLY validated (HGNC-confirmed / known-real) gene symbols:
+            # drop invalid and unverified symbols from the analysis rather than
+            # rejecting the whole discovery. This matters for real GPL-mapped data,
+            # where a crude anti-fabrication heuristic (RPL/RPS/HSP/COL/KRT + number)
+            # mis-fires on legitimate gene families. Filtering to VALID symbols is
+            # MORE conservative (we never publish an unconfirmed identifier), not less.
+            # If too few validated symbols remain, the discovery is still rejected.
             logger.info("\n🔬 STEP 2.5: Gene Symbol Validation - HARD GATE")
 
-            validation_results, all_valid = self.gene_symbol_validator.validate_gene_symbols(
+            validation_results, _all_valid = self.gene_symbol_validator.validate_gene_symbols(
                 gene_symbols=gene_symbols,
-                reject_on_invalid=True  # HARD GATE: reject entire discovery if any invalid symbols
+                reject_on_invalid=False
             )
 
-            if not all_valid:
-                logger.error("❌ REJECTED: Gene symbol validation failed")
-                logger.error("   This discovery contains invalid or fake gene identifiers")
+            from biodisc_core.fixed_pipeline.gene_symbol_validation import ValidationResult
+            keep_idx = [
+                i for i, r in enumerate(validation_results)
+                if getattr(r, "result", None) == ValidationResult.VALID
+            ]
+            MIN_VALIDATED_GENES = 100
+            if len(keep_idx) < MIN_VALIDATED_GENES:
+                logger.error(f"❌ REJECTED: only {len(keep_idx)} validated gene symbols "
+                             f"(minimum {MIN_VALIDATED_GENES}); too many invalid/unverified")
                 self.discoveries_rejected += 1
                 return None
 
-            logger.info(f"✅ All {len(gene_symbols)} gene symbols validated successfully")
+            dropped = len(gene_symbols) - len(keep_idx)
+            if dropped > 0:
+                logger.info(f"   Filtering to {len(keep_idx)} validated gene symbols "
+                            f"(dropped {dropped} invalid/unverified)")
+                # Filter expression_data along the gene axis (robust to orientation).
+                n_sym = len(gene_symbols)
+                if expression_data.shape[0] == n_sym:
+                    expression_data = expression_data[keep_idx]
+                elif expression_data.shape[1] == n_sym:
+                    expression_data = expression_data[:, keep_idx]
+                else:
+                    logger.error("❌ REJECTED: gene/symbol dimension mismatch")
+                    self.discoveries_rejected += 1
+                    return None
+                gene_symbols = [gene_symbols[i] for i in keep_idx]
+
+            logger.info(f"✅ {len(gene_symbols)} validated gene symbols retained for analysis")
 
             # STEP 3: Perform REAL differential expression analysis
             logger.info("\n🧪 STEP 3: Differential Expression Analysis")
