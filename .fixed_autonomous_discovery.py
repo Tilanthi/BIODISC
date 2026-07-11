@@ -44,6 +44,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Phase B supervision: status/rejection logging + flagging gate + heartbeat yield.
+from biodisc_core.fixed_pipeline import discovery_status
+from biodisc_core.fixed_pipeline.discovery_gate import stamp_report
+
 
 class FixedAutonomousDiscovery:
     """
@@ -108,6 +112,14 @@ class FixedAutonomousDiscovery:
         # Main discovery loop
         while self.running:
             try:
+                # Yield to user tasks: if the assistant signalled activity
+                # recently, sleep and skip this cycle (user astronomy tasks win;
+                # discovery fills idle gaps).
+                if discovery_status.is_user_active():
+                    logger.info("👤 User task active — yielding (skipping discovery cycle)")
+                    time.sleep(60)
+                    continue
+
                 logger.info("🔄 Starting fixed discovery cycle...")
 
                 # Generate biological questions
@@ -130,6 +142,7 @@ class FixedAutonomousDiscovery:
 
                     if not geo_datasets:
                         logger.warning(f"❌ No GEO datasets found for question {i}, skipping...")
+                        discovery_status.record_rejection("no_datasets")
                         continue
 
                     # Try each dataset until one works
@@ -178,16 +191,19 @@ class FixedAutonomousDiscovery:
                             else:
                                 logger.info(f"❌ Discovery {i} failed validation with dataset {dataset_id}")
                                 self.discoveries_rejected += 1
+                                discovery_status.record_rejection("orchestrator_none")
                                 logger.info(f"   Trying next dataset...")
 
                         except Exception as e:
                             logger.error(f"Error processing question {i} with dataset {dataset_id}: {e}")
+                            discovery_status.record_rejection("exception")
                             continue
 
                     if not discovery_made:
                         logger.warning(f"❌ Question {i} failed with all available datasets")
 
                 logger.info(f"\n📊 Discovery cycle complete: {discoveries_made_this_cycle} discoveries")
+                discovery_status.record_cycle(discoveries_made_this_cycle)
 
                 # Save session state
                 self.save_session_state()
@@ -331,13 +347,21 @@ class FixedAutonomousDiscovery:
         return questions
 
     def save_discovery(self, discovery_report: Dict):
-        """Save discovery to file"""
+        """Save discovery to file, stamped with the flagging gate decision.
 
+        Phase B quality gate: a discovery is flagged is_genuine=True ONLY if it
+        has replicated; otherwise it is saved as candidate_unconfirmed. This
+        prevents the loop from asserting new knowledge from a single dataset.
+        """
         try:
+            report, decision = stamp_report(discovery_report)
             with open(self.discoveries_file, 'a') as f:
-                f.write(json.dumps(discovery_report) + '\n')
+                f.write(json.dumps(report) + '\n')
 
-            logger.info(f"💾 Discovery saved to {self.discoveries_file}")
+            discovery_status.record_validated_discovery(
+                report.get('discovery_id', report.get('discoveryId', '')))
+            logger.info(f"💾 Discovery saved [{decision.tier}] "
+                        f"(is_genuine={decision.is_genuine}) to {self.discoveries_file}")
 
         except Exception as e:
             logger.error(f"Failed to save discovery: {e}")
