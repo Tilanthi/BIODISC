@@ -16,7 +16,9 @@ LEGACY_FILE = REPO_ROOT / "biodisc_v6_0_fixed_integrated.py"
 
 def _make_genuine_discovery_ast() -> ast.FunctionDef:
     tree = ast.parse(LEGACY_FILE.read_text())
-    for node in tree.body:
+    # Walk the whole tree: make_genuine_discovery is a class method (nested in
+    # a ClassDef), not a top-level function.
+    for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name == "make_genuine_discovery":
             return node
     raise AssertionError("make_genuine_discovery not found in legacy file")
