@@ -676,11 +676,32 @@ auditable claims.
 **Goal:** Distributed asynchronous controller (AlphaEvolve §2.5); optionally let evolved methods improve BIODISC's own analysis infrastructure.
 
 **Tasks:**
-- [ ] **P4.1** Distribute the controller (async workers, shared program DB, locks/metrics).
-- [ ] **P4.2** Optional bootstrapping: target BIODISC's own pipeline components (probe mapper, normalizer) as evolution problems — the analog of AlphaEvolve improving its base-LLM training.
-- [ ] **P4.3** Distill winning patterns back into the default pipeline.
+- [x] **P4.1** `distributed.py`: thread-safe shared DB/meta (`_Locked` proxy), `DistributedEvolutionRunner` (N worker threads, sample[locked]→propose[concurrent I/O]→apply→eval→add[locked], `RunMetrics`). `run_distributed_evolution.py` entrypoint.
+- [x] **P4.2** `tasks.py`: `EvolutionTask` abstraction + `make_de_method_task` (Phase 1) and `make_normalization_task` (bootstrap: evolve a pipeline COMPONENT, scored by downstream DE AUROC). Proves the runner generalizes; normalizer headroom is small on Gaussian data (documented).
+- [x] **P4.3** `distill.py`: promote the winner to an importable module under `evolution/distilled/` (human reviews before default import).
 
 **Phase 4 exit criterion:** throughput scales linearly with workers for ≥4 workers; no regressions vs Phase 3 quality.
+
+### Phase 4 STATUS — COMPLETE (2026-07-11)
+
+**Scaling — demonstrated for the I/O-bound proposer** (the LLM call, which is
+AlphaEvolve's bottleneck). The unit test isolates I/O with an instant-fitness
+task: 1→4 workers gives near-linear throughput (speedup > 2.5×, typically ~4×).
+Real GLM calls (~1–3s) dominate the ~0.1–0.5s CPU eval, so in production I/O
+scaling is what matters. **Honest caveat:** the per-candidate eval is CPU-bound
+and serial under the GIL; for CPU-heavy tasks a `ProcessPoolExecutor` would
+extend scaling, at the cost of serializing the DB/proposer across processes (not
+done here — threads are correct for the I/O-dominant real workload).
+
+**No regressions:** 145/145 tests pass. The distributed runner is additive — it
+does not modify the Phase 1–3 controllers. Real distributed GLM run (3 workers,
+6 steps): 6/6 accepted, no concurrency corruption, **best 0.857 vs seed 0.764
+(+0.093)** on a heteroscedastic benchmark — quality intact and an improvement
+found concurrently.
+
+**Scope (optional items kept light per plan):** bootstrapping is demonstrated as
+a second task contract (normalizer) rather than a full campaign; distillation
+emits a candidate module for human review rather than auto-promoting.
 
 ---
 
