@@ -220,93 +220,29 @@ class V6FixedIntegratedSystem:
             return ["How does gene expression change in cancer cells?"]
 
     def make_genuine_discovery(self, question: str) -> Optional[Dict]:
-        """Make a genuine scientific discovery using FIXED pipeline"""
+        """DISABLED: this legacy path used SYNTHETIC data, which violates the
+        BIODISC "no synthetic data in the discovery path" rule.
 
-        logger.info("=" * 80)
-        logger.info("V6.0-FIXED: GENERATING GENUINE DISCOVERY")
-        logger.info("=" * 80)
-        logger.info(f"Question: {question}")
+        P0.3b (integrity follow-up): this method previously generated fake
+        expression data (GENE_#### identifiers, dataset_id=SYNTHETIC_<ts>) and
+        ran DE analysis on it, producing pseudo-scientific "discoveries". It is
+        NOT referenced by the active watchdog/loop (which uses
+        FixedDiscoveryOrchestrator with real GEO data), but it was a dormant
+        integrity landmine. It now refuses, mirroring the disabled
+        `_simulate_realistic_geo_data`.
 
-        try:
-            # Use FIXED pipeline for genuine discovery
-            # Generate synthetic data for testing (in production, use real GEO datasets)
-            import numpy as np
-
-            logger.info("🧬 Generating expression data...")
-            expression_data, gene_symbols, group_labels = self.expression_analyzer.generate_real_gene_expression_data(
-                n_genes=2000,
-                n_samples=50,
-                n_significant=50,
-                effect_size=1.5
-            )
-
-            logger.info(f"✅ Data generated: {expression_data.shape}")
-
-            # Perform real differential expression analysis
-            logger.info("🧪 Performing differential expression analysis...")
-            de_analysis = self.expression_analyzer.perform_differential_expression_analysis(
-                expression_data=expression_data,
-                gene_symbols=gene_symbols,
-                group_labels=group_labels,
-                question=question,
-                dataset_id=f"SYNTHETIC_{int(time.time())}"
-            )
-
-            logger.info(f"✅ DE analysis complete: {de_analysis.significant_genes} significant genes")
-
-            # Get top results
-            top_up = de_analysis.get_top_genes(n=10, direction="up")
-            top_down = de_analysis.get_top_genes(n=10, direction="down")
-
-            # Validate results
-            is_valid = self.expression_analyzer.validate_analysis_results(de_analysis)
-            if not is_valid:
-                logger.error("❌ DE analysis validation failed")
-                return None
-
-            # Create discovery report
-            discovery_report = {
-                'discovery_id': f"V6FIXED_DISCOVERY_{int(time.time())}",
-                'timestamp': time.time(),
-                'question': question,
-
-                # REAL RESULTS (not template text)
-                'differential_expression': {
-                    'total_genes_tested': de_analysis.total_genes_tested,
-                    'significant_genes': de_analysis.significant_genes,
-                    'upregulated_genes': de_analysis.upregulated_genes,
-                    'downregulated_genes': de_analysis.downregulated_genes,
-                    'method': de_analysis.method_used,
-                    'correction': de_analysis.correction_method,
-                    'top_upregulated': top_up,
-                    'top_downregulated': top_down
-                },
-
-                # V6.0 components
-                'v6_enhancements': {
-                    'graded_autonomy_applied': True,
-                    'epistemic_health_checked': True,
-                    'hybrid_reasoning_used': True,
-                    'domain_optimized': True
-                },
-
-                # Validation status
-                'validation_status': 'pending_external_review',
-
-                # Metadata
-                'pipeline_version': 'V6.0-FIXED-INTEGRATED',
-                'generation_timestamp': datetime.now().isoformat()
-            }
-
-            logger.info("✅ GENUINE DISCOVERY GENERATED")
-            logger.info(f"   Top upregulated gene: {top_up[0]['gene_symbol'] if top_up else 'N/A'}")
-            logger.info(f"   Best p-value: {min([r['p_value'] for r in top_up + top_down]) if (top_up or top_down) else 'N/A'}")
-
-            return discovery_report
-
-        except Exception as e:
-            logger.error(f"❌ Discovery generation failed: {e}", exc_info=True)
-            return None
+        For genuine discovery, use the real-data orchestrator:
+            FixedDiscoveryOrchestrator.generate_genuine_discovery(question, geo_id)
+        """
+        logger.error("❌ FATAL: biodisc_v6_0_fixed_integrated.make_genuine_discovery() is DISABLED")
+        logger.error("   It used SYNTHETIC data, which is forbidden in the discovery path.")
+        logger.error("   Use FixedDiscoveryOrchestrator.generate_genuine_discovery() with a real dataset id.")
+        raise RuntimeError(
+            "make_genuine_discovery() is DISABLED (P0.3b): it used synthetic data, "
+            "which is forbidden in the discovery path. Use "
+            "FixedDiscoveryOrchestrator.generate_genuine_discovery(question, geo_id) "
+            "with a real dataset instead."
+        )
 
     def save_discovery(self, discovery: Dict):
         """Save discovery to file"""
