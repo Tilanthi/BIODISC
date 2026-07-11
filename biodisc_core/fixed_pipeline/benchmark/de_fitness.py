@@ -95,6 +95,7 @@ def score_de_method(
             n_de=case.n_de,
             seed=case.seed + held_out_seed_offset,
             effect_size=case.effect_size,
+            noise=case.noise,
         )
         ho_scores = method(held_out.expression, held_out.labels)
         ho_scores = np.asarray(ho_scores, dtype=float).reshape(-1)
