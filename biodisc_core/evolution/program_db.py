@@ -185,6 +185,15 @@ class IslandModel:
             self.migrate()
         return result
 
+    def seed_all(self, source, score, generation) -> None:
+        """Seed EVERY island with the same incumbent so populations compete fairly.
+
+        Without this, hash-based assignment places the seed on only one island;
+        the others start empty and cannot compete in short runs.
+        """
+        for isl in self.islands:
+            isl.add(source, score, generation, parent_id=None)
+
     def migrate(self) -> int:
         """Copy each island's best into the next island (ring). Returns # copied."""
         bests = [isl.best() for isl in self.islands]

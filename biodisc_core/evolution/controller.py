@@ -94,7 +94,12 @@ class EvolutionController:
     def _seed_archive(self) -> DEMethodScore:
         seed_source = get_seed_program()
         score = self._evaluate(seed_source)
-        self.db.add(seed_source, score, generation=0, parent_id=None)
+        # Island models: seed every island so populations compete fairly;
+        # single archives: add once.
+        if hasattr(self.db, "seed_all"):
+            self.db.seed_all(seed_source, score, generation=0)
+        else:
+            self.db.add(seed_source, score, generation=0, parent_id=None)
         logger.info(f"seed fitness: aggregate={score.aggregate:.3f} "
                     f"(auroc={score.auroc:.3f}, replicate={score.replicate_concordance:.3f})")
         return score

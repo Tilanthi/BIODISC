@@ -21,6 +21,15 @@ from biodisc_core.fixed_pipeline.benchmark import make_de_benchmark
 
 from .controller import EvolutionController
 from .llm_ensemble import LLMEnsemble
+from .program_db import ProgramDatabase, IslandModel, method_family
+
+
+def _diversity_report(genealogy) -> str:
+    """Summarize behavioral diversity of archived programs (Phase 2 metric)."""
+    families = {method_family(p.source) for p in genealogy}
+    cells = {(p.bucket, p.family) for p in genealogy}
+    return (f"{len(genealogy)} programs, {len(families)} method families "
+            f"({sorted(families)}), {len(cells)} (complexity,family) niches")
 
 
 def main(argv=None) -> int:
@@ -36,6 +45,12 @@ def main(argv=None) -> int:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--model", default=None, help="override model id")
     parser.add_argument("--max-tokens", type=int, default=1024)
+    parser.add_argument("--islands", type=int, default=3,
+                        help="0 = single MAP-Elites archive; >0 = N islands with migration")
+    parser.add_argument("--migration-interval", type=int, default=5)
+    parser.add_argument("--cascade", action="store_true",
+                        help="enable the evaluation cascade (cheap screen -> full)")
+    parser.add_argument("--screen-floor", type=float, default=0.55)
     args = parser.parse_args(argv)
 
     case = make_de_benchmark(
@@ -45,13 +60,23 @@ def main(argv=None) -> int:
 
     models = [args.model] if args.model else None
     ensemble = LLMEnsemble(models=models, max_tokens=args.max_tokens)
+    db = (
+        IslandModel(n_islands=args.islands, migration_interval=args.migration_interval,
+                    complexity_per_bucket=25)
+        if args.islands > 0
+        else ProgramDatabase(complexity_per_bucket=25)
+    )
     print(f"[run_evolution] model={ensemble.last_model or ensemble.models} "
           f"benchmark=noise:{args.noise} n_samples:{args.n_samples} "
           f"effect:{args.effect_size}")
-    print(f"[run_evolution] generations={args.generations} attempts/gen={args.attempts}")
+    print(f"[run_evolution] generations={args.generations} attempts/gen={args.attempts} "
+          f"islands={args.islands or 'single'} cascade={args.cascade}")
 
     rng = random.Random(123)
-    ctrl = EvolutionController(case, ensemble.propose, rng=rng)
+    ctrl = EvolutionController(
+        case, ensemble.propose, db=db, rng=rng,
+        use_cascade=args.cascade, screen_floor=args.screen_floor,
+    )
     print(f"[run_evolution] seed aggregate = {ctrl.seed_score.aggregate:.4f} "
           f"(auroc={ctrl.seed_score.auroc:.3f}, "
           f"replicate={ctrl.seed_score.replicate_concordance:.3f})")
@@ -67,7 +92,11 @@ def main(argv=None) -> int:
           f"(auroc={result.best_score.auroc:.3f}, "
           f"replicate={result.best_score.replicate_concordance:.3f})")
     print(f"improvement      = {result.improvement:+.4f}")
-    print(f"genealogy: {len(result.genealogy)} archived programs")
+    print(f"diversity        = {_diversity_report(result.genealogy)}")
+    best_meta = ctrl.meta_archive.best()
+    if best_meta is not None:
+        print(f"best meta-prompt = {best_meta.text!r} (mean agg {best_meta.mean_aggregate:.3f}, "
+              f"n={best_meta.n_uses})")
 
     # Persist artifacts.
     stamp = datetime.now().strftime("%Y%m%dT%H%M%SZ")

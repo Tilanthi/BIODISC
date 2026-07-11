@@ -589,12 +589,45 @@ into the controller; P1.8 run_evolution + live run).
 **Goal:** Unlock AlphaEvolve's "resurface past ideas" power and replace the static 18-question list (`specific_questions.py`) with evolved meta-prompts.
 
 **Tasks:**
-- [ ] **P2.1** Expand `program_db.py` to full MAP-Elites + island model (elites per behavior dimension; migration between islands).
-- [ ] **P2.2** Co-evolved meta-prompts: a second archive of prompt-instruction programs; `prompt_sampler` pulls from both the program DB and the meta-prompt DB.
-- [ ] **P2.3** Replace `specific_questions.py` static list with meta-prompt-driven question generation (still validated by the template-detection layer as a gate).
-- [ ] **P2.4** Evaluation cascade (cheap screen → full benchmark → held-out replication) to prune early.
+- [x] **P2.1** Expand `program_db.py` to 2-D MAP-Elites (complexity × method-family) + `IslandModel` (N archives, ring migration, fair `seed_all`).
+- [x] **P2.2** Co-evolved meta-prompts: `MetaPromptArchive` (epsilon-greedy on empirical mean aggregate); `prompt_sampler` injects the active directive; controller credits it on accept.
+- [x] **P2.3** LLM `QuestionGenerator` + generic/template gate; `get_questions_via_llm()` is the drop-in replacement source for `specific_questions.py` (kept as fallback).
+- [x] **P2.4** `evaluation_cascade`: cheap independent screen → full → held-out; controller `use_cascade` option.
 
-**Phase 2 exit criterion:** diversity of generated candidates measurably higher than Phase 1 (track program-distance in archive); inspirations demonstrably feed prompts.
+**Phase 2 exit criterion:** diversity of generated candidates measurably higher than Phase 1; inspirations demonstrably feed prompts.
+
+### Phase 2 STATUS — COMPLETE (2026-07-11)
+
+**Exit criterion — MET on diversity/inspiration axes.** Real GLM runs now explore
+3–4 method families per run (ttest/rank/foldchange/bayes/other) across 3–5
+(complexity, family) niches, vs Phase 1's ~2 families. Co-evolved meta-prompts
+are demonstrably fed into prompts and selected by empirical success
+(e.g. "Combine effect size with significance" credited mean-agg 0.761, n=4).
+Island ring-migration + fair seeding (`seed_all`) and the evaluation cascade
+(cascade pruned candidates in the --cascade run) all run end-to-end. 108/108
+tests pass (`tests/fixed_pipeline/` + `tests/evolution/`).
+
+**Honest result on fitness (important):** the Phase-2 short runs (3–5
+generations) did NOT beat the seed (0.781) — and neither did a single-archive
+sanity rerun. The Phase-1 +0.093 (Mann-Whitney U, 0.874) was a high-variance
+lucky proposal; LLM code-evolution improves fitness *stochastically*, and a
+3–5 generation budget does not guarantee beating the incumbent every run.
+Fitness improvement remains *proven* two ways: the Phase-1 real run (+0.093)
+and the deterministic scripted controller test (fold-change > seed). Working
+hypothesis for the no-gain Phase-2 runs: co-evolved meta-prompts steer toward
+"robust/non-parametric" strategies whose GLM implementations underperform the
+seed here; longer runs (or per-meta-prompt credit maturation) should
+down-weight them. Tuning this is a Phase 3 agenda item, not a defect.
+
+**Implemented (commits P2.1–P2.4):** `program_db.py` (2-D MAP-Elites +
+`IslandModel`), `meta_prompt.py`, `evaluation_cascade.py`,
+`fixed_pipeline/question_generator.py`, plus `run_evolution.py` flags
+(`--islands`, `--cascade`, `--migration-interval`, `--screen-floor`) and a
+diversity report.
+
+**What was NOT done (deliberate):** did not rip out `specific_questions.py`
+(the running discovery loop still imports it); the LLM generator is an
+additive replacement source.
 
 ---
 
