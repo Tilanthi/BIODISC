@@ -64,18 +64,32 @@ class EvolutionController:
         rng: Optional[random.Random] = None,
         db_seed: int = 0,
         meta_archive: Optional[MetaPromptArchive] = None,
+        use_cascade: bool = False,
+        screen_floor: float = 0.55,
     ):
         self.benchmark = benchmark
         self.proposer = proposer
         self.rng = rng or random.Random(0)
         self.db = db or ProgramDatabase(seed=db_seed)
         self.meta_archive = meta_archive or MetaPromptArchive(rng=self.rng)
+        self.use_cascade = use_cascade
+        self.screen_floor = screen_floor
         self.attempts: List[AttemptLog] = []
         self.seed_score = self._seed_archive()
 
     def _evaluate(self, source: str) -> DEMethodScore:
         fn = compile_de_program(source)
         return score_de_method(fn, self.benchmark)
+
+    def _evaluate_child(self, source: str) -> Optional[DEMethodScore]:
+        """Evaluate a candidate; with the cascade enabled, cheap-screen first.
+
+        Returns None when the candidate is pruned at the screen stage.
+        """
+        if not self.use_cascade:
+            return self._evaluate(source)
+        from .evaluation_cascade import cascade_evaluate
+        return cascade_evaluate(source, self.benchmark, screen_floor=self.screen_floor)
 
     def _seed_archive(self) -> DEMethodScore:
         seed_source = get_seed_program()
@@ -113,9 +127,15 @@ class EvolutionController:
             return log
 
         try:
-            score = self._evaluate(child_source)
+            score = self._evaluate_child(child_source)
         except Exception as exc:
             log = AttemptLog(generation, parent.program_id, False, None, f"compile/eval: {exc}")
+            self.attempts.append(log)
+            return log
+
+        if score is None:
+            log = AttemptLog(generation, parent.program_id, False, None,
+                             f"cascade pruned (screen < {self.screen_floor})")
             self.attempts.append(log)
             return log
 
