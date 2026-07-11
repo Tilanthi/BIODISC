@@ -232,6 +232,11 @@ class GeneSymbolValidator:
                 gene_id=symbol
             )
 
+        # CHECK FOR VALID PROBE IDs (before fake pattern detection)
+        probe_validation = self._validate_probe_id(symbol)
+        if probe_validation:
+            return probe_validation
+
         # DETECT FAKE PATTERNS
         fake_pattern = self._detect_fake_pattern(symbol)
         if fake_pattern:
@@ -321,6 +326,85 @@ class GeneSymbolValidator:
             if re.match(r'^COL\d+$', symbol):
                 return f"Fake COL gene: {symbol} (real COL genes use COL#A# format like COL1A1)"
 
+        # Pattern 8: GENE_XXXX format (fake placeholder)
+        if symbol.startswith("GENE_") and len(symbol) > 5:
+            try:
+                number = symbol.split("_")[1]
+                if number.isdigit():
+                    return f"Fake gene placeholder: {symbol} (GENE_XXXX format is fake)"
+            except:
+                pass
+
+        return None
+
+    def _validate_probe_id(self, symbol: str) -> Optional[GeneSymbolValidation]:
+        """
+        Validate probe IDs from known microarray platforms.
+
+        These are legitimate identifiers used in real biological datasets,
+        even though they're not standard gene symbols.
+
+        Valid probe ID formats:
+        - Illumina: ILMN_######## (8 digits)
+        - Affymetrix numeric: Single numbers like '3', '4', '5'
+        - Control probes: Control_*, AFFX-*
+        - Ensembl genes: ENSG#########
+        """
+        # Illumina probe IDs (ILMN_ followed by 6-8 digits).
+        # P0.1 (Defect A): probe IDs are NOT gene symbols. They previously passed
+        # the HARD GATE as VALID, leaking ILMN_ identifiers into discoveries.
+        # They must be rejected here; probes must be resolved to gene symbols
+        # upstream (probe_gene_mapping) or the discovery rejected.
+        if symbol.startswith("ILMN_") and len(symbol) >= 12:
+            try:
+                number = symbol[5:]
+                if number.isdigit() and 6 <= len(number) <= 8:
+                    return GeneSymbolValidation(
+                        symbol=symbol,
+                        result=ValidationResult.INVALID,
+                        source="ILLUMINA_PROBE",
+                        gene_id=f"Probe_{symbol}",
+                        gene_name="Illumina Probe ID",
+                        error="Illumina probe ID is not a gene symbol; resolve to gene symbol before analysis"
+                    )
+            except:
+                pass
+
+        # Affymetrix numeric probe IDs (simple numbers). No real gene symbol is
+        # purely numeric — these are probe identifiers and must be rejected.
+        if symbol.isdigit():
+            return GeneSymbolValidation(
+                symbol=symbol,
+                result=ValidationResult.INVALID,
+                source="AFFYMETRIX_PROBE",
+                gene_id=f"Probe_{symbol}",
+                gene_name="Affymetrix Probe ID",
+                error="Numeric Affymetrix probe ID is not a gene symbol; resolve to gene symbol before analysis"
+            )
+
+        # Control probes. These should be filtered out of datasets entirely; if
+        # they reach validation they must be rejected, never accepted as genes.
+        if symbol.startswith("Control_") or symbol.startswith("AFFX-"):
+            return GeneSymbolValidation(
+                symbol=symbol,
+                result=ValidationResult.INVALID,
+                source="CONTROL_PROBE",
+                gene_id=f"Probe_{symbol}",
+                gene_name="Control Probe",
+                error="Control probe is not a gene symbol; filter control probes before analysis"
+            )
+
+        # Ensembl gene IDs
+        if symbol.startswith("ENSG") and len(symbol) >= 15:
+            return GeneSymbolValidation(
+                symbol=symbol,
+                result=ValidationResult.VALID,
+                source="ENSEMBL",
+                gene_id=symbol,
+                gene_name="Ensembl Gene ID"
+            )
+
+        # Not a recognized probe format
         return None
 
     def _query_hgnc(self, symbol: str, timeout: int = 10) -> Optional[GeneSymbolValidation]:
