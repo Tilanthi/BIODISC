@@ -34,6 +34,11 @@ import re
 logger = logging.getLogger(__name__)
 
 
+def create_multi_repository_downloader() -> MultiRepositoryDataDownloader:
+    """Factory function to create multi-repository downloader"""
+    return MultiRepositoryDataDownloader()
+
+
 class MultiRepositoryDataDownloader:
     """
     Downloads biological data from multiple repositories.
@@ -115,36 +120,51 @@ class MultiRepositoryDataDownloader:
         max_genes: int,
         timeout: int
     ) -> Optional[Tuple[np.ndarray, List[str], np.ndarray]]:
-        """Download from ArrayExpress (EBI)"""
+        """Download from ArrayExpress (EBI) with proper API integration"""
 
         logger.info(f"   Downloading from ArrayExpress: {accession}")
 
         try:
-            # ArrayExpress API endpoint
-            url = f"https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/{accession}"
+            # ArrayExpress v3 API
+            api_url = f"https://www.ebi.ac.uk/arrayexpress/api/v3/experiments/{accession}"
 
-            response = requests.get(url, timeout=timeout)
+            response = requests.get(api_url, timeout=timeout, headers={'Accept': 'application/json'})
 
             if response.status_code != 200:
-                logger.warning(f"   Status {response.status_code} from ArrayExpress")
+                logger.warning(f"   Status {response.status_code} from ArrayExpress API")
                 return None
 
-            data = response.json()
+            try:
+                data = response.json()
+            except:
+                logger.warning(f"   Could not parse JSON response from ArrayExpress")
+                return None
 
-            # Extract sample data
-            if 'files' in data and len(data['files']) > 0:
-                # Process matrix files if available
+            logger.info(f"   Retrieved ArrayExpress metadata for {accession}")
+
+            # Look for processed matrix files
+            if 'files' in data and isinstance(data['files'], list):
                 for file_info in data['files']:
-                    if file_info.get('kind', '').lower() == 'processed matrix':
-                        matrix_url = file_info.get('url')
-                        if matrix_url:
-                            return self._parse_expression_matrix(matrix_url, max_genes, accession)
+                    if isinstance(file_info, dict):
+                        kind = file_info.get('kind', '').lower()
+                        if 'matrix' in kind or 'processed' in kind:
+                            matrix_url = file_info.get('url', '')
+                            if matrix_url and matrix_url.startswith('http'):
+                                logger.info(f"   Found matrix file, downloading...")
+                                return self._parse_expression_matrix(matrix_url, max_genes, accession)
 
-            # Fallback: Extract from individual samples
-            return self._extract_from_arrayexpress_samples(accession, max_genes)
+            # Try to extract from individual samples if no matrix found
+            if 'samples' in data and isinstance(data['samples'], list):
+                logger.info(f"   Found {len(data['samples'])} samples, extracting from samples")
+                return self._extract_from_arrayexpress_samples(data, max_genes)
+
+            logger.info(f"   No suitable data format found in {accession}")
+            return None
 
         except Exception as e:
             logger.warning(f"   Error downloading from ArrayExpress: {e}")
+            import traceback
+            logger.warning(f"   Traceback: {traceback.format_exc()[:200]}")
             return None
 
     def _download_from_sra(
@@ -330,10 +350,23 @@ class MultiRepositoryDataDownloader:
 
         # Convert to numpy arrays
         expression_matrix = np.array(expression_data).T  # Transpose: samples x genes
-
-        # Create simple group labels (alternating)
         n_samples = expression_matrix.shape[0]
-        group_labels = np.array([0] * (n_samples // 2) + [1] * (n_samples - n_samples // 2))
+
+        # P0.3 (Defect C): derive REAL group labels from !Sample_* metadata.
+        # Never fabricate the case/control split — a fabricated split makes all
+        # differential-expression results statistical noise. If the experimental
+        # design cannot be recovered, reject the dataset (return None).
+        from biodisc_core.fixed_pipeline.sample_metadata_parser import (
+            parse_groups_from_series_matrix,
+        )
+        assignment = parse_groups_from_series_matrix(text)
+        if assignment is None or len(assignment.labels) != n_samples:
+            logger.warning(
+                f"   REJECTING {accession}: cannot determine real group labels "
+                f"from sample metadata; refusing to fabricate case/control split"
+            )
+            return None
+        group_labels = assignment.labels
 
         logger.info(f"   Parsed {len(gene_symbols)} genes, {n_samples} samples")
 
@@ -341,14 +374,113 @@ class MultiRepositoryDataDownloader:
 
     def _extract_from_arrayexpress_samples(
         self,
-        accession: str,
+        arrayexpress_metadata: dict,
         max_genes: int
     ) -> Optional[Tuple[np.ndarray, List[str], np.ndarray]]:
-        """Extract data from individual ArrayExpress samples"""
+        """
+        Extract data from individual ArrayExpress samples.
 
-        # This would iterate through samples and compile data
-        logger.info(f"   Sample-based extraction not yet implemented for ArrayExpress")
-        return None
+        This is a fallback when no processed matrix is available.
+        """
+
+        logger.info(f"   Extracting data from {len(arrayexpress_metadata.get('samples', []))} samples")
+
+        try:
+            samples = arrayexpress_metadata.get('samples', [])
+
+            if not samples or len(samples) < 2:
+                logger.info(f"   Insufficient samples: {len(samples)}")
+                return None
+
+            # Collect data from each sample
+            all_gene_data = {}
+            gene_set = set()
+
+            for i, sample in enumerate(samples[:10]):  # Limit to first 10 samples
+                sample_id = sample.get('accession', '')
+                if not sample_id:
+                    continue
+
+                logger.info(f"   Processing sample {i+1}: {sample_id}")
+
+                # Try to get sample data from ArrayExpress files API
+                file_url = f"https://www.ebi.ac.uk/arrayexpress/files/{sample_id}/{sample_id}.processed"
+
+                try:
+                    response = requests.get(file_url, timeout=30)
+
+                    if response.status_code == 200 and len(response.content) > 1000:
+                        # Parse the sample file
+                        sample_data = self._parse_arrayexpress_sample_file(response.content)
+
+                        if sample_data:
+                            # Merge data
+                            for gene, expr in sample_data.items():
+                                all_gene_data[gene] = all_gene_data.get(gene, []) + [expr]
+                                gene_set.add(gene)
+                except:
+                    logger.info(f"   Could not download sample {sample_id}")
+                    continue
+
+            if not all_gene_data:
+                logger.info("   No data extracted from samples")
+                return None
+
+            # Compile into expression matrix
+            gene_symbols = sorted(list(gene_set))[:max_genes]
+            expression_data = []
+
+            for gene in gene_symbols:
+                expr_values = all_gene_data.get(gene, [])
+                if len(expr_values) >= 2:  # Need at least 2 samples
+                    expression_data.append(expr_values)
+
+            if not expression_data:
+                logger.info("   No genes with sufficient data")
+                return None
+
+            # Convert to numpy array
+            expression_matrix = np.array(expression_data, dtype=float).T
+            n_samples = expression_matrix.shape[0]
+
+            # P0.3 (Defect C): ArrayExpress per-sample extraction does not expose
+            # a recoverable case/control design here. Never fabricate the split.
+            # Reject until real ArrayExpress characteristic parsing is wired in.
+            logger.warning(
+                "   REJECTING ArrayExpress dataset: group labels cannot be "
+                "determined from per-sample extraction; refusing to fabricate "
+                "case/control split"
+            )
+            return None
+
+        except Exception as e:
+            logger.info(f"   Error extracting from samples: {e}")
+            return None
+
+    def _parse_arrayexpress_sample_file(self, content: bytes) -> Optional[dict]:
+        """Parse an individual ArrayExpress sample file"""
+
+        try:
+            # Parse the sample file to extract gene expression data
+            # This would need to handle different file formats
+            text = content.decode('utf-8', errors='ignore')
+
+            data = {}
+            for line in text.split('\n'):
+                parts = line.split('\t')
+                if len(parts) >= 2:
+                    gene = parts[0].strip()
+                    try:
+                        value = float(parts[1].strip())
+                        data[gene] = value
+                    except:
+                        continue
+
+            return data if data else None
+
+        except Exception as e:
+            logger.info(f"   Error parsing sample file: {e}")
+            return None
 
 
 def create_multi_repository_data_downloader() -> MultiRepositoryDataDownloader:
