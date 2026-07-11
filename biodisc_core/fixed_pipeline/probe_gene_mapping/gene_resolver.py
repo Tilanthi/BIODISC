@@ -78,10 +78,13 @@ class GeneResolver:
 
         for probe_id in identifiers:
             if parser.is_probe_id(probe_id):
-                # In real implementation, would query platform annotation
-                # For now, mark as unmapped
+                # P0.2 (Defect B): do NOT fabricate gene names. Unmapped probes
+                # are recorded as None and listed in unmapped_probes so the gate
+                # rejects. Real resolution via platform (GPL) annotation should be
+                # attempted in PlatformParser.load_gpl_annotation() before this
+                # fallback; until then None is the honest representation.
                 unmapped_probes.append(probe_id)
-                resolved_genes.append(f"UNKNOWN_GENE_{probe_id}")
+                resolved_genes.append(None)
             else:
                 # Already a gene symbol
                 resolved_genes.append(probe_id)
