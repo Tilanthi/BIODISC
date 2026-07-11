@@ -280,6 +280,20 @@ class MultiRepositoryVerifier:
         if not exists:
             return False, None, f"Dataset {accession} not found in {repo_config.name}"
 
+        # P0.4 (Defect D): enforce a minimum sample count WHERE MEASURABLE.
+        # sample_count is an int only for repositories where we parse it (GEO);
+        # None means "could not be determined" and must NOT cause a hard reject
+        # (otherwise non-GEO repositories would all be blocked).
+        MIN_SAMPLES = 6
+        sample_count = dataset_info.get('sample_count') if dataset_info else None
+        if isinstance(sample_count, int) and sample_count < MIN_SAMPLES:
+            self.insufficient_sample_rejections = getattr(
+                self, 'insufficient_sample_rejections', 0) + 1
+            msg = (f"{accession} has only {sample_count} samples "
+                   f"(minimum {MIN_SAMPLES} required for valid differential analysis)")
+            logger.warning(f"⚠️  REJECTED: {msg}")
+            return False, dataset_info, msg
+
         self.successful_verifications += 1
 
         logger.info(f"✅ Dataset {accession} verified in {repo_config.name}")
@@ -322,20 +336,47 @@ class MultiRepositoryVerifier:
         repo_config: RepositoryConfig,
         accession: str
     ) -> Optional[Dict]:
-        """Parse repository response to extract dataset information"""
+        """Parse repository response to extract dataset information.
 
-        # This would be implemented differently for each repository
-        # For now, return basic info
-
-        return {
+        P0.5 (Defect E): for GEO series (GSE*) parse real title/organism and
+        count samples from the SOFT summary text instead of returning a stub
+        ("Dataset from <repo>"). For other repositories a generic record is
+        returned with ``sample_count=None`` (unknown) so callers do not mistake
+        absence of information for "zero samples".
+        """
+        base = {
             'accession': accession,
             'repository': repo_config.repository_type.value,
             'repository_name': repo_config.name,
             'title': f'Dataset from {repo_config.name}',
             'description': f'Verified dataset from {repo_config.description}',
             'data_types': repo_config.data_types,
-            'source': repo_config.base_url
+            'source': repo_config.base_url,
+            'organism': '',
+            'sample_count': None,
         }
+
+        # GEO series: parse !Series_* metadata from the SOFT summary text.
+        if accession.startswith('GSE') and response_text:
+            title = ''
+            organism = ''
+            n_samples = 0
+            for raw in response_text.split('\n'):
+                line = raw.strip()
+                if line.startswith('!Series_title') and '=' in line:
+                    title = line.split('=', 1)[1].strip().strip('"').strip("'")
+                elif (line.startswith('!Series_organism')
+                      or line.startswith('!Series_sample_organism')) and '=' in line:
+                    organism = line.split('=', 1)[1].strip().strip('"').strip("'")
+                elif (line.startswith('!Series_sample_id')
+                      or line.startswith('!Series_geo_accession')):
+                    n_samples += 1
+            if title:
+                base['title'] = title
+            base['organism'] = organism
+            base['sample_count'] = n_samples
+
+        return base
 
     def get_supported_repositories(self) -> List[Dict]:
         """Get list of all supported repositories"""
