@@ -88,12 +88,10 @@ def apply_diffs(source: str, diffs: List[DiffBlock]) -> str:
     return current
 
 
-_FULL_PROGRAM_RE = re.compile(r"^\s*def\s+score\s*\(", re.MULTILINE)
-
-
-def apply_diffs_or_full(source: str, text: str) -> str:
+def apply_diffs_or_full(source: str, text: str, entry_name: str = "score") -> str:
     """Apply parsed diffs; fall back to using ``text`` verbatim if it is a full
-    program (contains ``def score(``). Raises if neither applies.
+    program defining ``entry_name`` (default ``def score(```; discovery programs
+    use ``entry_name="discover"``). Raises if neither applies.
 
     This mirrors AlphaEvolve: short edits use diffs, full rewrites emit the
     entire code block.
@@ -107,21 +105,28 @@ def apply_diffs_or_full(source: str, text: str) -> str:
         # Strip a leading language fence line like ```python if present.
         if stripped.startswith("python\n"):
             stripped = stripped[len("python\n"):]
-        if _FULL_PROGRAM_RE.search(stripped) and validate_score_program(stripped):
+        full_re = re.compile(rf"^\s*def\s+{re.escape(entry_name)}\s*\(", re.MULTILINE)
+        if full_re.search(stripped) and validate_program_entry(stripped, entry_name):
             return stripped
         raise DiffParseError(
-            "text is neither valid diff blocks nor a full program defining `score`"
+            f"text is neither valid diff blocks nor a full program defining "
+            f"`{entry_name}`"
         )
 
 
-def validate_score_program(source: str) -> bool:
-    """True if source parses and defines a top-level ``score`` function."""
+def validate_program_entry(source: str, entry_name: str = "score") -> bool:
+    """True if source parses and defines a top-level function named ``entry_name``."""
     import ast
     try:
         tree = ast.parse(source)
     except SyntaxError:
         return False
     return any(
-        isinstance(node, ast.FunctionDef) and node.name == "score"
+        isinstance(node, ast.FunctionDef) and node.name == entry_name
         for node in tree.body
     )
+
+
+def validate_score_program(source: str) -> bool:
+    """Backwards-compatible alias for validate_program_entry(source, 'score')."""
+    return validate_program_entry(source, "score")
