@@ -28,10 +28,14 @@ def test_make_genuine_discovery_raises_and_uses_no_synthetic_data():
     fn = _make_genuine_discovery_ast()
     body = ast.unparse(fn)
     assert "raise RuntimeError" in body, "make_genuine_discovery must refuse"
-    assert "generate_real_gene_expression_data" not in body, (
+    # The synthetic generator must no longer be called.
+    assert "generate_real_gene_expression_data(" not in body, (
         "must not call the synthetic generator"
     )
-    assert "SYNTHETIC" not in body, "must not emit SYNTHETIC dataset ids"
+    # The SYNTHETIC dataset id must no longer be constructed (precise: the
+    # f-string build, not docstring prose that mentions the old behavior).
+    assert 'f"SYNTHETIC_' not in body, "must not build SYNTHETIC dataset ids"
+    assert "f'SYNTHETIC_" not in body, "must not build SYNTHETIC dataset ids"
 
 
 def test_make_genuine_discovery_is_not_in_try_except_swallow():
