@@ -160,6 +160,9 @@ class DifferentialExpressionAnalyzer:
         if float(np.nanmax(expression_data)) > 100.0:
             logger.info("   Expression appears raw (max > 100); applying log2(x+1) transform")
             expression_data = np.log2(np.clip(expression_data, 0.0, None) + 1.0)
+            _log_transformed = True
+        else:
+            _log_transformed = False
 
         # Perform t-tests for each gene
         results = []
@@ -193,9 +196,15 @@ class DifferentialExpressionAnalyzer:
             mean1 = np.mean(group1_values)
             mean2 = np.mean(group2_values)
 
-            # Calculate log2 fold change
-            # Add small pseudocount to avoid log(0)
-            log2fc = np.log2((mean2 + 1e-6) / (mean1 + 1e-6))
+            # Calculate log2 fold change. If the data was auto log-transformed
+            # above it is already in log2 space, so the difference of means IS
+            # the log2 fold change (applying log2(ratio) again would be a
+            # meaningless log-of-logs). On raw data, compute log2(mean2/mean1).
+            if _log_transformed:
+                log2fc = mean2 - mean1
+            else:
+                # Add small pseudocount to avoid log(0)
+                log2fc = np.log2((mean2 + 1e-6) / (mean1 + 1e-6))
 
             # Perform t-test
             t_stat, p_value = stats.ttest_ind(group2_values, group1_values)
