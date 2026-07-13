@@ -201,10 +201,30 @@ class GEODataDownloader:
 
             logger.info(f"   Attempting to download: {matrix_url}")
 
-            response = requests.get(matrix_url, timeout=timeout, stream=True)
+            # The matrix file can be very large (hundreds of MB; ~2 GB for big
+            # studies like GSE13159 with 2096 samples). The shared `timeout`
+            # (default 60 s) is fine for the tiny metadata / directory-listing
+            # calls, but it fires intermittently between byte chunks on a large
+            # streamed download, causing spurious "Cannot download real data"
+            # failures that waste discovery cycles. Use a dedicated (connect,
+            # read) timeout with a generous read window for the matrix only, and
+            # retry once on transient resets. Connect still fails fast (15 s).
+            MATRIX_TIMEOUT = (15, 180)
+            response = None
+            for attempt in range(2):
+                try:
+                    response = requests.get(matrix_url, timeout=MATRIX_TIMEOUT, stream=True)
+                    break
+                except requests.exceptions.RequestException as e:
+                    if attempt == 0:
+                        logger.info(f"   Matrix download transient error, retrying: {e}")
+                        time.sleep(3)
+                    else:
+                        logger.info(f"   Matrix download failed after retry: {e}")
+                        return None
 
-            if response.status_code != 200:
-                logger.info(f"   Matrix file not available (status {response.status_code})")
+            if response is None or response.status_code != 200:
+                logger.info(f"   Matrix file not available (status {getattr(response, 'status_code', None)})")
                 return None
 
             # Parse the matrix file

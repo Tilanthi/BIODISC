@@ -25,8 +25,13 @@ class BiologicalRelevanceValidator:
         self.validations = 0
         self.rejections = 0
 
-        # Minimum scores
-        self.MIN_SCORE = 6.0  # Must have at least moderate relevance
+        # Minimum relevance score. A genuinely relevant pair (no organism /
+        # tissue / disease conflict) earns a 5.0 base; sparse dataset metadata
+        # (organism='Unknown', generic title) cannot yield the entity-match
+        # bonuses, so 6.0 was unreachable and every relevant pair was rejected.
+        # 5.0 lets relevance clear the gate while real mismatches (which score
+        # ~0-0.5 because is_relevant=False) still fail.
+        self.MIN_SCORE = 5.0  # Relevant pair passes; mismatched pair fails
 
         logger.info("🎯 BiologicalRelevanceValidator initialized")
         logger.info(f"   Minimum relevance score: {self.MIN_SCORE}/10")
@@ -80,16 +85,30 @@ class BiologicalRelevanceValidator:
         # Make decision
         final_decision = is_relevant and score >= self.MIN_SCORE
 
+        # Honest reason: distinguish a genuine mismatch from a low-score pass.
+        # check_relevance() returns the success phrase "Biological relevance
+        # confirmed" as its reason even when is_relevant=True, so reusing it as
+        # the rejection reason produced the misleading "REJECTED: Biological
+        # relevance confirmed" log line.
         if not final_decision:
             self.rejections += 1
-            logger.warning(f"❌ REJECTED: {mismatch_reason} (score: {score}/10)")
+            if not is_relevant:
+                reason = mismatch_reason  # genuine organism/tissue/disease conflict
+            else:
+                reason = (
+                    f"Relevant but insufficient relevance signals "
+                    f"(score {score:.1f}/10 < {self.MIN_SCORE}; add organism/"
+                    f"tissue/disease metadata)"
+                )
+            logger.warning(f"❌ REJECTED: {reason} (score: {score}/10)")
         else:
-            logger.info(f"✅ ACCEPTED: Biological relevance confirmed (score: {score}/10)")
+            reason = "Biological relevance confirmed"
+            logger.info(f"✅ ACCEPTED: {reason} (score: {score}/10)")
 
         return RelevanceValidationResult(
             is_relevant=final_decision,
             score=score,
-            reason=mismatch_reason if not final_decision else "Biological relevance confirmed",
+            reason=reason,
             question_entities=question_entities,
             dataset_entities=dataset_entities,
             mismatches=mismatches

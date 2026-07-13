@@ -95,17 +95,15 @@ class QuestionClassifier:
 
         question_lower = question.lower()
 
-        # Check for saturated field patterns first
-        for pattern in self.SATURATED_PATTERNS:
-            if re.search(pattern, question_lower, re.IGNORECASE):
-                logger.warning(f"⚠️  SATURATED FIELD detected: {pattern}")
-                return QuestionClassification(
-                    question_type=QuestionType.SATURATED_FIELD,
-                    specificity_score=2.0,
-                    template_patterns=[pattern],
-                    confidence=0.9,
-                    reason=f"Question addresses well-established saturated field ({pattern})"
-                )
+        # NOTE: The SATURATED_PATTERNS early-return was removed. It conflated
+        # field activity with specific-question novelty: any question mentioning
+        # a well-studied pair (BRCA1/PARP, TP53/cancer, ...) was force-classified
+        # as SATURATED_FIELD regardless of how specific and mechanistic the
+        # question was. That made Layer 5 reject the system's OWN curated
+        # specific questions (specific_questions.py #1 is the BRCA1/PARP
+        # question), zeroing discovery throughput. Classification now falls
+        # through to the specificity-based logic below, which still rejects
+        # genuinely generic template questions.
 
         # Check for template patterns
         matched_templates = []

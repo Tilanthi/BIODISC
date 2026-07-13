@@ -63,36 +63,15 @@ class NoveltyEstimator:
 
         self.estimations += 1
 
-        question_lower = question.lower()
-
-        # Check if classified as saturated field (highest priority)
-        if classification.question_type.name == "SATURATED_FIELD":
-            # Use saturated field estimates
-            novelty_range = self.PAPER_COUNT_RANGES['saturated']
-            saturation = "saturated"
-            novelty_score = 1.0
-            estimated_papers = 5000  # Conservative estimate for saturated fields
-
-            logger.warning(f"⚠️  SATURATED FIELD DETECTED (~{estimated_papers} papers)")
-            return NoveltyEstimate(
-                novelty_score=novelty_score,
-                literature_saturation=saturation,
-                estimated_paper_count=estimated_papers,
-                confidence=classification.confidence,
-                reason=f"Saturated field with {estimated_papers}+ existing papers"
-            )
-
-        # Check against known saturated fields
-        for field, paper_count in self.SATURATED_FIELDS.items():
-            if field.lower() in question_lower:
-                logger.warning(f"⚠️  SATURATED FIELD: {field} (~{paper_count} papers)")
-                return NoveltyEstimate(
-                    novelty_score=1.0,  # Very low novelty
-                    literature_saturation="saturated",
-                    estimated_paper_count=paper_count,
-                    confidence=0.95,
-                    reason=f"Well-established field with {paper_count}+ existing papers"
-                )
+        # NOTE: The two saturation blacklist paths (a SATURATED_FIELD
+        # classification branch and a SATURATED_FIELDS substring dict) were
+        # removed. They hard-zeroed novelty for any question touching a busy
+        # field (BRCA1/PARP, TP53/cancer, ...) which conflates field activity
+        # with specific-question novelty and rejected the system's own curated
+        # specific questions. Novelty is now driven by question type and
+        # specificity below. (Genuinely generic template questions still score
+        # low and are rejected by the MIN_NOVELTY_SCORE gate.) A real novelty
+        # check should be literature-similarity based, not a keyword blacklist.
 
         # Estimate based on question type and specificity
         if classification.question_type.name == "SPECIFIC_MECHANISTIC":

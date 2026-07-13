@@ -232,7 +232,11 @@ class PeerReviewValidator:
             issues.append("Missing sample count in metadata")
             score = min(score, 6.0)
 
-        if not dataset.get("geo_dataset_id") or dataset.get("geo_dataset_id") == "Unknown":
+        # The discovery report stores the accession under "geo_id"; older code
+        # read "geo_dataset_id" (always absent), so every discovery was wrongly
+        # flagged "Missing dataset accession" and data_quality was capped at 6.
+        accession = dataset.get("geo_id") or dataset.get("geo_dataset_id")
+        if not accession or accession == "Unknown":
             issues.append("Missing dataset accession number")
             score = min(score, 6.0)
 
@@ -245,8 +249,11 @@ class PeerReviewValidator:
 
         dataset = discovery.get("dataset", {})
 
-        # Check for essential reproducibility information
-        if not dataset.get("geo_dataset_id"):
+        # Check for essential reproducibility information.
+        # Accession lives under "geo_id" in the report (see _generate_discovery_report);
+        # fall back to "geo_dataset_id" for any legacy callers.
+        accession = dataset.get("geo_id") or dataset.get("geo_dataset_id")
+        if not accession:
             issues.append("❌ CRITICAL: No dataset accession - cannot reproduce")
             score = 2.0
         else:
