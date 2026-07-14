@@ -31,8 +31,10 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Repo root: biodisc_core/fixed_pipeline/discovery_store.py -> up 3 parents.
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+# Repo root: biodisc_core/fixed_pipeline/discovery_store.py -> up 2 parents.
+# (parents[2] = BIODISC; parents[3] would be SWARM — a bug that wrote the store
+# one directory too high. Guarded by test_discovery_chokepoint_default_path.)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 VERIFIED_STORE = PROJECT_ROOT / "autonomous_discoveries.jsonl"
 CANDIDATE_QUARANTINE = PROJECT_ROOT / "autonomous_discoveries_candidates.jsonl"

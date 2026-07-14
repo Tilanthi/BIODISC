@@ -143,8 +143,26 @@ class ReplicationGate:
         disc_labels = [groups[i] for i in disc_idx]
         held_labels = [groups[i] for i in held_idx]
 
-        disc_de = analyze_fn(disc_X, gene_symbols, disc_labels, question, dataset_id)
-        held_de = analyze_fn(held_X, gene_symbols, held_labels, question, dataset_id)
+        # Each split DE is run independently; a failure on either split means
+        # replication cannot be established (the discovery stays a candidate).
+        # We catch per-split so a degenerate split degrades gracefully instead
+        # of propagating (e.g. numpy "nonzero on 0d" on an edge-case split).
+        try:
+            disc_de = analyze_fn(disc_X, gene_symbols, disc_labels, question, dataset_id)
+        except Exception as e:  # noqa: BLE001
+            logger.warning("replication: discovery-split DE failed: %s", e)
+            return ReplicationVerdict(
+                False, 0.0, 0, 0, len(disc_idx), len(held_idx), method,
+                f"discovery-split DE failed ({type(e).__name__}); not replicated",
+            )
+        try:
+            held_de = analyze_fn(held_X, gene_symbols, held_labels, question, dataset_id)
+        except Exception as e:  # noqa: BLE001
+            logger.warning("replication: held-out-split DE failed: %s", e)
+            return ReplicationVerdict(
+                False, 0.0, 0, 0, len(disc_idx), len(held_idx), method,
+                f"held-out-split DE failed ({type(e).__name__}); not replicated",
+            )
 
         # Discovery top genes: most significant (lowest FDR) among significant ones.
         disc_sig = [r for r in disc_de.results if getattr(r, "significant", False)]

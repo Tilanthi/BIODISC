@@ -20,6 +20,7 @@ import os
 import signal
 import logging
 import time
+import random
 from pathlib import Path
 from datetime import datetime
 import threading
@@ -255,15 +256,24 @@ class FixedAutonomousDiscovery:
         self.save_session_state()
 
     def _search_real_geo_datasets(self, question: str, max_results: int = 3) -> List[Dict]:
-        """Use VERIFIED GEO datasets instead of real-time search"""
+        """Use VERIFIED GEO datasets, ROTATED per call for cycle diversity.
+
+        The verified pool is small (3 datasets that pass the gates). Returning
+        the same first-N every call made the loop re-run one dataset repeatedly,
+        producing identical DE profiles that the duplicate-statistical-profile
+        gate correctly rejects. Shuffling the pool each call spreads the work
+        across all verified datasets so each is exercised.
+        """
         try:
             # Import VERIFIED datasets that we know work
             from biodisc_core.fixed_pipeline.real_datasets import REAL_GEO_DATASETS
 
-            logger.info(f"🔍 Using verified GEO datasets from real_datasets.py")
+            logger.info(f"🔍 Using verified GEO datasets from real_datasets.py (rotated)")
 
-            # Return all verified datasets (up to max_results)
-            datasets = REAL_GEO_DATASETS[:max_results]
+            # Rotate/shuffle so different datasets are tried across calls.
+            datasets = list(REAL_GEO_DATASETS)
+            random.shuffle(datasets)
+            datasets = datasets[:max_results]
 
             if datasets:
                 logger.info(f"✅ Using {len(datasets)} VERIFIED GEO datasets")
@@ -288,9 +298,13 @@ class FixedAutonomousDiscovery:
         try:
             from biodisc_core.fixed_pipeline.specific_questions import create_specific_questions_generator
             generator = create_specific_questions_generator()
-            questions = generator.generate_specific_questions()
+            # Use the diverse + dataset-aligned, shuffled pool so each cycle
+            # varies which question is attempted first (reduces duplicate-
+            # statistical-profile rejections from re-running one combo).
+            questions = generator.generate_question_pool()
 
-            logger.info(f"✅ Generated {len(questions)} SPECIFIC biological questions")
+            logger.info(f"✅ Generated {len(questions)} biological questions "
+                        f"(diverse + dataset-aligned, shuffled)")
             logger.info("   (Replaces generic questions for genuine novelty)")
 
             return questions

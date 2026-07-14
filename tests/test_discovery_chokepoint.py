@@ -134,5 +134,20 @@ def test_fictional_astra_style_record_cannot_be_stored(tmp_path):
         append_verified(fictional, verification=None, store_dir=tmp_path)
 
 
+def test_store_paths_resolve_to_biodisc_repo_not_parent():
+    """Regression: PROJECT_ROOT must be BIODISC (parents[2]), not SWARM (parents[3]).
+    A parents[3] off-by-one once wrote the store one directory too high; the
+    store_dir override in other tests masked it, so this checks the DEFAULT path."""
+    from biodisc_core.fixed_pipeline import discovery_store
+    repo_root = Path(__file__).resolve().parents[1]  # tests/ -> BIODISC
+    assert discovery_store.PROJECT_ROOT == repo_root, (
+        f"PROJECT_ROOT is {discovery_store.PROJECT_ROOT}, expected {repo_root} "
+        "(store would be written to the wrong directory)")
+    assert discovery_store.VERIFIED_STORE.parent == repo_root
+    assert discovery_store.CANDIDATE_QUARANTINE.parent == repo_root
+    assert discovery_store.VERIFIED_STORE.name == "autonomous_discoveries.jsonl"
+    assert discovery_store.CANDIDATE_QUARANTINE.name == "autonomous_discoveries_candidates.jsonl"
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))

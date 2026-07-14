@@ -28,7 +28,8 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+# Repo root: biodisc_core/fixed_pipeline/verdict_log.py -> up 2 parents (= BIODISC).
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 VERDICT_LOG = PROJECT_ROOT / "discovery_verdicts.jsonl"
 
 

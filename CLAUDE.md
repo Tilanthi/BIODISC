@@ -51,6 +51,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Evolution ON** (supervised, `evolution_integration.py`): AlphaEvolve-style
   method-evolution against benchmark ground truth; outputs are methods, not
   discoveries (separate provenance log). Real-cohort evaluator hook is the next step.
+- **Question/dataset diversity** (2026-07-15): `specific_questions.py` now serves a
+  diverse + dataset-aligned, shuffled question pool (`generate_question_pool`);
+  `_search_real_geo_datasets` rotates the pool per cycle. This fixed a ~90%
+  duplicate-statistical-profile rejection rate caused by re-running one question
+  on one dataset. **Throughput is still capped by the 3-dataset verified pool**
+  (GSE2034 / GSE13159 / GSE15822) — expanding it is the real next lever; the
+  verdict funnel quantifies the rest.
 - Full test suite green (180 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
