@@ -47,6 +47,11 @@ logger = logging.getLogger(__name__)
 # Phase B supervision: status/rejection logging + flagging gate + heartbeat yield.
 from biodisc_core.fixed_pipeline import discovery_status
 from biodisc_core.fixed_pipeline.discovery_gate import stamp_report
+# Verification-first layer: write chokepoint + funnel instrumentation.
+from biodisc_core.fixed_pipeline.discovery_store import (
+    append_verified, build_verification_block, UnverifiedDiscoveryError,
+)
+from biodisc_core.fixed_pipeline.verdict_log import log_verdict, print_funnel
 
 
 class FixedAutonomousDiscovery:
@@ -143,6 +148,8 @@ class FixedAutonomousDiscovery:
                     if not geo_datasets:
                         logger.warning(f"❌ No GEO datasets found for question {i}, skipping...")
                         discovery_status.record_rejection("no_datasets")
+                        log_verdict({"question": question, "outcome": "rejected",
+                                     "both_pass": False, "reason": "no_datasets"})
                         continue
 
                     # Try each dataset until one works
@@ -192,11 +199,17 @@ class FixedAutonomousDiscovery:
                                 logger.info(f"❌ Discovery {i} failed validation with dataset {dataset_id}")
                                 self.discoveries_rejected += 1
                                 discovery_status.record_rejection("orchestrator_none")
+                                log_verdict({"question": question, "dataset_id": dataset_id,
+                                             "outcome": "rejected", "both_pass": False,
+                                             "reason": "generation_failed_before_or_at_validation"})
                                 logger.info(f"   Trying next dataset...")
 
                         except Exception as e:
                             logger.error(f"Error processing question {i} with dataset {dataset_id}: {e}")
                             discovery_status.record_rejection("exception")
+                            log_verdict({"question": question, "dataset_id": dataset_id,
+                                         "outcome": "rejected", "both_pass": False,
+                                         "reason": f"exception: {type(e).__name__}"})
                             continue
 
                     if not discovery_made:
@@ -347,21 +360,28 @@ class FixedAutonomousDiscovery:
         return questions
 
     def save_discovery(self, discovery_report: Dict):
-        """Save discovery to file, stamped with the flagging gate decision.
+        """Save a discovery through the write CHOKEPOINT (the single legal write path).
 
-        Phase B quality gate: a discovery is flagged is_genuine=True ONLY if it
-        has replicated; otherwise it is saved as candidate_unconfirmed. This
-        prevents the loop from asserting new knowledge from a single dataset.
+        The chokepoint requires a machine verification block — fiction (an
+        unverified/hallucinated record) is structurally impossible to store.
+        The flagging tier (genuine vs candidate_unconfirmed) routes the record to
+        the verified store or the candidate quarantine. Genuine requires
+        replication; single-cohort findings are quarantined, never asserted as
+        new knowledge.
         """
         try:
-            report, decision = stamp_report(discovery_report)
-            with open(self.discoveries_file, 'a') as f:
-                f.write(json.dumps(report) + '\n')
+            stamped, decision = stamp_report(discovery_report)
+            verification = build_verification_block(stamped)
+            try:
+                target = append_verified(stamped, verification)
+            except UnverifiedDiscoveryError as e:
+                logger.error(f"❌ CHOKEPOINT refused write (fiction prevented): {e}")
+                return
 
             discovery_status.record_validated_discovery(
-                report.get('discovery_id', report.get('discoveryId', '')))
-            logger.info(f"💾 Discovery saved [{decision.tier}] "
-                        f"(is_genuine={decision.is_genuine}) to {self.discoveries_file}")
+                stamped.get('discovery_id', stamped.get('discoveryId', '')))
+            logger.info(f"💾 Discovery stored via chokepoint [{decision.tier}] "
+                        f"(is_genuine={decision.is_genuine}) -> {target}")
 
         except Exception as e:
             logger.error(f"Failed to save discovery: {e}")
@@ -440,6 +460,9 @@ class FixedAutonomousDiscovery:
         if self.discoveries_made > 0:
             rejection_rate = (self.discoveries_rejected / self.discoveries_made) * 100
             logger.info(f"   Session Rejection Rate: {rejection_rate:.2f}%")
+
+        # Surface the discovery funnel: where candidates actually die.
+        logger.info(print_funnel())
 
         logger.info("=" * 60)
 

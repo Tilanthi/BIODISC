@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add project to path
 project_root = Path(__file__).parent.parent.parent.parent
@@ -38,6 +38,20 @@ from biodisc_core.fixed_pipeline.dataset_question_validation import create_datas
 from biodisc_core.fixed_pipeline.probe_gene_mapping import create_probe_gene_mapper
 from biodisc_core.fixed_pipeline.fdr_significance_gate import create_significance_validator
 from biodisc_core.fixed_pipeline.template_detection import create_template_detector
+
+# Verification-first layer (chokepoint + funnel + real Gate-2 + replication anchor).
+# These implement the ASTRA/AlphaEvolve disciplines: fiction prevention (chokepoint),
+# measure-where-candidates-die (verdict log), literature novelty (Gate-2), and
+# held-out replication (is_genuine anchor).
+from biodisc_core.fixed_pipeline.discovery_store import (
+    append_verified, UnverifiedDiscoveryError,
+)
+from biodisc_core.fixed_pipeline.verdict_log import log_verdict, print_funnel
+from biodisc_core.fixed_pipeline.literature_gate import create_literature_novelty_gate
+from biodisc_core.fixed_pipeline.replication_gate import (
+    create_replication_gate, to_report_dict as replication_to_report_dict,
+)
+from biodisc_core.fixed_pipeline.discovery_gate import stamp_report
 
 import requests
 import numpy as np
@@ -73,6 +87,10 @@ class FixedDiscoveryOrchestrator:
         self.probe_gene_mapper = create_probe_gene_mapper()
         self.significance_validator = create_significance_validator()
         self.template_detector = create_template_detector()
+
+        # Verification-first layer: real PubMed Gate-2 + held-out replication anchor.
+        self.literature_gate = create_literature_novelty_gate()
+        self.replication_gate = create_replication_gate()
 
         logger.info("✅ 5-LAYER VALIDATION SYSTEM INITIALIZED")
         logger.info("   1. Duplicate Detection")
@@ -178,16 +196,99 @@ class FixedDiscoveryOrchestrator:
             logger.info(f"✅ LAYER 5 PASSED: Specific question (novelty: {novelty.novelty_score}/10)")
         validation_stats['template_detection'] = self.template_detector.get_statistics()
 
+        # LAYER 6: Literature Novelty (Gate-2) — REAL PubMed similarity check.
+        # Replaces the keyword-heuristic novelty_estimator. 'known' => the claim is
+        # entailed by the literature (textbook/established) => reject. 'novel' =>
+        # not entailed => pass. 'retrieval_failed' => PubMed unreachable => NON-
+        # blocking (proceed as candidate, never genuine); never cached (§7.4).
+        logger.info("📚 LAYER 6: LITERATURE NOVELTY (PubMed Gate-2)")
+        claim_text = self._build_claim_text(discovery_report)
+        try:
+            lit_verdict = self.literature_gate.assess(claim_text, question=question)
+        except Exception as e:  # noqa: BLE001 - Gate-2 must never crash validation
+            logger.warning(f"⚠️  LAYER 6 ERROR (non-fatal): {e}")
+            lit_verdict = None
+        if lit_verdict is not None:
+            validation_stats['literature_novelty'] = {
+                'status': lit_verdict.status,
+                'max_similarity': lit_verdict.max_similarity,
+                'n_papers_checked': lit_verdict.n_papers_checked,
+                'evidence_pmids': lit_verdict.evidence_pmids,
+            }
+            if lit_verdict.status == "known":
+                passes_all_gates = False
+                rejection_reasons.append(
+                    f"LITERATURE KNOWN: claim entailed by PubMed "
+                    f"(similarity {lit_verdict.max_similarity:.2f}; "
+                    f"PMIDs {lit_verdict.evidence_pmids[:3]})"
+                )
+                logger.error(f"❌ LAYER 6 FAILED: claim already established in literature")
+            elif lit_verdict.status == "novel":
+                logger.info(f"✅ LAYER 6 PASSED: not entailed by literature "
+                            f"(max similarity {lit_verdict.max_similarity:.2f}, "
+                            f"{lit_verdict.n_papers_checked} papers checked)")
+            else:  # retrieval_failed
+                logger.warning(f"⚠️  LAYER 6 INCONCLUSIVE: PubMed retrieval failed "
+                               f"(non-blocking) — {lit_verdict.reason}")
+        else:
+            validation_stats['literature_novelty'] = {'status': 'not_assessed'}
+
         # Final decision
         logger.info("=" * 80)
         if passes_all_gates:
-            logger.info("✅ ALL 5 LAYERS PASSED - DISCOVERY VALIDATED")
+            logger.info("✅ ALL LAYERS PASSED - DISCOVERY VALIDATED")
         else:
             logger.error("❌ DISCOVERY REJECTED - FAILED VALIDATION GATES")
             for reason in rejection_reasons:
                 logger.error(f"   - {reason}")
 
+        # Funnel instrumentation: one structured verdict per candidate, pass OR fail.
+        # Written inside the process (independent of captured stdout) so the
+        # supervisor can see WHERE candidates die. See verdict_log.verdict_summary.
+        replication = discovery_report.get('replication') or {}
+        if not passes_all_gates:
+            outcome = "rejected"
+        elif replication.get('replicated'):
+            outcome = "stored"
+        else:
+            outcome = "quarantined"
+        log_verdict({
+            "question": question,
+            "dataset_id": discovery_report.get('dataset_id', ''),
+            "claim": claim_text[:200],
+            "gate1_pass": significance_result.passes_significance_gate,
+            "gate1_n_sig": (de_results.get('significant_genes')
+                            if isinstance(de_results, dict) else None),
+            "subgate_duplicate": not is_duplicate,
+            "subgate_dataset_question": relevance_result.is_relevant,
+            "subgate_probe_gene": gene_result.success,
+            "subgate_template": question_valid,
+            "gate2_status": lit_verdict.status if lit_verdict else "not_assessed",
+            "gate2_max_similarity": lit_verdict.max_similarity if lit_verdict else None,
+            "gate2_n_papers": lit_verdict.n_papers_checked if lit_verdict else 0,
+            "replication_status": ("replicated" if replication.get('replicated')
+                                   else ("single_cohort" if replication else "not_attempted")),
+            "both_pass": passes_all_gates,
+            "outcome": outcome,
+            "reason": "; ".join(rejection_reasons),
+        })
+
         return passes_all_gates, rejection_reasons, validation_stats
+
+    def _build_claim_text(self, discovery_report: Dict) -> str:
+        """Build a concise claim string for the literature-novelty gate."""
+        parts = [discovery_report.get('question', '')]
+        de = discovery_report.get('differential_expression', {})
+        for g in de.get('top_upregulated', [])[:6]:
+            parts.append(g.get('gene_symbol', '') if isinstance(g, dict) else str(g))
+        for g in de.get('top_downregulated', [])[:6]:
+            parts.append(g.get('gene_symbol', '') if isinstance(g, dict) else str(g))
+        pw = discovery_report.get('pathway_analysis', {})
+        for p in pw.get('top_pathways', [])[:3]:
+            parts.append(p.get('pathway_name', '') if isinstance(p, dict) else str(p))
+        ds = discovery_report.get('dataset', {})
+        parts.append(f"in {ds.get('organism', '')} {ds.get('data_type', '')}")
+        return " ".join(p for p in parts if p)
 
     def download_real_data_multi_repo(
         self,
@@ -478,6 +579,28 @@ class FixedDiscoveryOrchestrator:
                 logger.error("❌ DE analysis validation failed")
                 return None
 
+            # STEP 3.5: Held-out replication anchor (the is_genuine gate).
+            # Re-runs DE on a stratified discovery/held-out sample split and sets
+            # report['replication'], consumed by the flagging gate. Datasets too
+            # small to split remain single-cohort candidates (no overclaiming).
+            # This is the BIODISC analogue of ASTRA's train/test discipline: the
+            # headline statistic must come from HELD-OUT data.
+            logger.info("\n🧪 STEP 3.5: Held-out Replication Anchor")
+            replication_verdict = None
+            try:
+                replication_verdict = self.replication_gate.assess(
+                    expression_data=expression_data,
+                    gene_symbols=gene_symbols,
+                    group_labels=group_labels,
+                    analyze_fn=self.expression_analyzer.perform_differential_expression_analysis,
+                    question=question,
+                    dataset_id=geo_dataset_id,
+                )
+                logger.info(f"   Replication: {replication_verdict.reason} "
+                            f"(replicated={replication_verdict.replicated})")
+            except Exception as e:
+                logger.warning(f"   Replication assessment failed (non-fatal): {e}")
+
             # STEP 4: Perform pathway analysis
             logger.info("\n🧬 STEP 4: Pathway Enrichment Analysis")
 
@@ -546,6 +669,10 @@ class FixedDiscoveryOrchestrator:
                 verified_dataset=verified_dataset,
                 gene_validation_results=validation_results
             )
+
+            # Attach the replication anchor so the flagging gate can decide is_genuine.
+            if replication_verdict is not None:
+                discovery_report['replication'] = replication_to_report_dict(replication_verdict)
 
             self.discoveries_made += 1
 
@@ -750,17 +877,32 @@ class FixedDiscoveryOrchestrator:
                 logger.info(f"   Data Quality: {peer_review_result.data_quality:.1f}/10")
                 logger.info(f"   Reproducibility: {peer_review_result.reproducibility_score:.1f}/10")
 
-            # Step 2: Save to file (only if passed peer review)
-            with open(output_file, 'a') as f:
-                f.write(json.dumps(discovery_report) + '\n')
+            # Step 2: Save via the CHOKEPOINT — the single write path that
+            # requires a machine verification block. Fiction (an unverified or
+            # hallucinated record) is structurally impossible to store. The
+            # flagging tier (genuine vs candidate_unconfirmed) routes the record
+            # to the verified store or the candidate quarantine.
+            stamped, decision = stamp_report(discovery_report)
+            verification = self._build_verification_block(
+                discovery_report, peer_decision=peer_review_result.decision.value)
+            try:
+                target = append_verified(stamped, verification)
+            except UnverifiedDiscoveryError as e:
+                logger.error(f"❌ CHOKEPOINT refused write (fiction prevented): {e}")
+                return False
 
-            logger.info(f"💾 Discovery saved to {output_file}")
+            logger.info(f"💾 Discovery stored via chokepoint [{decision.tier}] -> {target}")
             self.discoveries_made += 1
             return True
 
         except Exception as e:
             logger.error(f"Failed to save discovery: {e}")
             return False
+
+    def _build_verification_block(self, discovery_report: Dict, peer_decision: str = "") -> dict:
+        """Objective machine-verification block required by the write chokepoint."""
+        from biodisc_core.fixed_pipeline.discovery_store import build_verification_block
+        return build_verification_block(discovery_report, peer_decision=peer_decision)
 
     def get_statistics(self) -> Dict:
         """Get pipeline statistics"""

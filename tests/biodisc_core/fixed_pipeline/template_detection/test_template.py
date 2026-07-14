@@ -19,30 +19,43 @@ def test_specific_mechanistic_question():
     assert novelty.novelty_score >= 7.0
 
 def test_template_question():
-    """Test rejection of generic template question."""
+    """A specific question in a busy field is NOT rejected by the keyword gate.
+
+    The saturated-field keyword blacklist was deliberately removed (the V5.4
+    field-activity-vs-novelty fix): broad field activity is not specific-question
+    novelty, and the old blacklist was rejecting the system's own curated
+    specific questions. This specific BRCA1/PARP question is correctly classified
+    SPECIFIC and accepted here. Restating an already-known result is now caught
+    by the REAL PubMed literature-novelty gate (orchestrator Layer 6), not a
+    keyword heuristic.
+    """
     detector = create_template_detector()
 
-    question = "How does BRCA1 mutation affect response to PARP inhibitors?"  # Exact template from peer review
+    question = "How does BRCA1 mutation affect response to PARP inhibitors?"
     is_valid, classification, novelty = detector.validate_question(question)
 
-    # Should be REJECTED - template question in saturated field
-    assert not is_valid
-    assert classification.question_type in [
-        QuestionType.GENERIC_TEMPLATE,
-        QuestionType.SATURATED_FIELD
-    ]
-    assert novelty.novelty_score < 5.0
+    # Specific question in a busy field -> ACCEPTED by the keyword template gate.
+    assert is_valid
+    assert classification.question_type == QuestionType.SPECIFIC_QUESTIONS
+    assert novelty.novelty_score >= 5.0
 
 def test_saturated_field_detection():
-    """Test detection of saturated field (BRCA1-PARP)."""
+    """The saturated-field keyword blacklist is gone (V5.4 fix).
+
+    A specific question is now classified SPECIFIC with medium (not 'saturated')
+    estimated literature saturation. Genuine textbook / already-known rejection
+    is the job of the literature-novelty gate at the orchestrator level
+    (FixedDiscoveryOrchestrator Layer 6), not this keyword estimator.
+    """
     detector = create_template_detector()
 
     question = "How does BRCA1 mutation status affect response to PARP inhibitors in triple-negative breast cancer?"
     is_valid, classification, novelty = detector.validate_question(question)
 
-    # Should detect as saturated field
-    assert not is_valid or novelty.literature_saturation in ["high", "saturated"]
-    assert novelty.estimated_paper_count >= 4000  # BRCA1-PARP is very saturated
+    # Specific question -> medium (not saturated) keyword saturation.
+    assert is_valid
+    assert classification.question_type == QuestionType.SPECIFIC_QUESTIONS
+    assert novelty.literature_saturation in ("low", "medium")
 
 def test_specific_questions_with_moderate_novelty():
     """Test acceptance of specific but not highly mechanistic question."""

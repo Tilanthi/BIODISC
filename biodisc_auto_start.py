@@ -1,129 +1,90 @@
 #!/usr/bin/env python3
 """
-Auto-start Autonomous Discovery for BIODISC
+Auto-start Autonomous Discovery for BIODISC.
 
-This module ensures that autonomous discovery is always running when BIODISC is active.
-It can be imported and called at session start.
+Ensures the CANONICAL always-on discovery path is running:
+    discovery_watchdog.py -> .fixed_autonomous_discovery.py
+(the fixed real-data pipeline, whose every write passes the machine-verification
+chokepoint). Can be imported and called at session start.
 
 Usage:
     from biodisc_auto_start import ensure_autonomous_discovery
+    ensure_autonomous_discovery()  # Starts the watchdog if not already running
 
-    ensure_autonomous_discovery()  # Starts if not running
+HISTORY: this module previously generated and launched the legacy V73 loop
+(`.autonomous_discovery_auto.py`), which wrote to autonomous_discoveries.jsonl
+directly, bypassing the verification chokepoint. That legacy loop is retired
+(ASTRA §11: never run a legacy loop alongside the new one). This module now
+delegates to the single canonical watchdog.
 """
-
 import os
 import sys
 from pathlib import Path
 
 # Add BIODISC to path
-biodisc_path = Path(__file__).parent
+biodisc_path = Path(__file__).resolve().parent
 sys.path.insert(0, str(biodisc_path))
 
 PID_FILE = biodisc_path / ".autonomous_discovery.pid"
+WATCHDOG = biodisc_path / "discovery_watchdog.py"
+
+
+def _process_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+        return True
+    except (OSError, ValueError):
+        return False
 
 
 def ensure_autonomous_discovery():
-    """
-    Ensure autonomous discovery is running.
+    """Start the canonical discovery watchdog if it is not already running.
 
-    This function checks if autonomous discovery is already running,
-    and starts it if not. Safe to call multiple times.
-
-    Returns:
-        bool: True if autonomous discovery is running, False otherwise
+    The watchdog itself guards against duplicate discovery processes, so calling
+    this when discovery is already running is a safe no-op. Returns True if a
+    watchdog process is running after the call.
     """
-    # Check if already running
+    # If a PID file references a live process, assume discovery is already supervised.
     if PID_FILE.exists():
         try:
             with open(PID_FILE, 'r') as f:
                 pid = int(f.read().strip())
-
-            # Check if process is still alive
-            os.kill(pid, 0)
-            print(f"✓ Autonomous discovery already running (PID {pid})")
-            return True
+            if _process_alive(pid):
+                print(f"✓ Autonomous discovery already running (PID {pid})")
+                return True
+            PID_FILE.unlink(missing_ok=True)
         except (OSError, ValueError):
-            # Process is dead or PID file is invalid
             PID_FILE.unlink(missing_ok=True)
 
-    # Not running, start it
+    if not WATCHDOG.exists():
+        print(f"✗ Canonical watchdog not found: {WATCHDOG}")
+        return False
+
     try:
         import subprocess
-
-        launcher_script = f"""
-import sys
-import os
-import time
-from pathlib import Path
-
-sys.path.insert(0, '{biodisc_path}')
-
-try:
-    from biodisc_core.reasoning.v73_autonomous_discovery import get_autonomous_discovery_system, AutonomousDiscoveryConfig
-
-    config = AutonomousDiscoveryConfig(
-        max_cpu_percent=15.0,
-        max_hours_per_week=168.0,  # 24x7 - run continuously when computer is on
-        idle_timeout_minutes=1,  # Reduced from 2 for faster discovery
-        min_confidence_to_store=0.65,  # 65% confidence - appropriate for bioscience
-        min_evidence_count=1,  # 1 evidence source - more flexible for bioscience
-        bioscience_mode=True,  # Enable bioscience-aware validation
-        questions_per_cycle=10,  # Increased from 3 for faster discovery
-        cycle_interval_seconds=2,  # Reduced for faster discovery cycles
-        log_all_discoveries=True,
-        discovery_log_path=str('{biodisc_path / "autonomous_discoveries.jsonl"}')
-    )
-
-    system = get_autonomous_discovery_system(config)
-    system.start()
-
-    print("✓ Autonomous discovery started in background")
-
-    # Keep process alive
-    try:
-        while True:
-            time.sleep(60)
-            status = system.get_status()
-            if not status.get('running', False):
-                break
-    except KeyboardInterrupt:
-        system.stop()
-        raise
-
-except Exception as e:
-    print(f"Error: {{e}}")
-    sys.exit(1)
-"""
-
-        launcher_path = biodisc_path / ".autonomous_discovery_auto.py"
-        with open(launcher_path, 'w') as f:
-            f.write(launcher_script)
-
-        # Start in background
-        log_file = open(biodisc_path / "autonomous_discovery.log", 'a')
+        log_dir = biodisc_path / "logs"
+        log_dir.mkdir(exist_ok=True)
+        log_file = open(log_dir / "discovery_watchdog.log", 'a')
         process = subprocess.Popen(
-            [sys.executable, str(launcher_path)],
+            [sys.executable, str(WATCHDOG)],
             stdout=log_file,
             stderr=subprocess.STDOUT,
             start_new_session=True,
-            cwd=str(biodisc_path)
+            cwd=str(biodisc_path),
         )
 
-        # Save PID
         with open(PID_FILE, 'w') as f:
             f.write(str(process.pid))
 
-        # Wait a moment to verify it started successfully
         import time
         time.sleep(2)
 
         if process.poll() is None:
-            print(f"✓ Autonomous discovery started (PID {process.pid})")
-            print("  Running continuously in background...")
-            print("  Discoveries will be automatically stored to memory palace")
+            print(f"✓ Canonical discovery watchdog started (PID {process.pid})")
+            print("  -> .fixed_autonomous_discovery.py (writes verified through the chokepoint)")
             return True
         else:
-            print("✗ Failed to start autonomous discovery")
+            print("✗ Failed to start discovery watchdog")
             PID_FILE.unlink(missing_ok=True)
             return False
 
@@ -133,23 +94,20 @@ except Exception as e:
 
 
 def stop_autonomous_discovery():
-    """Stop autonomous discovery if running"""
+    """Stop the supervised discovery process referenced by the PID file."""
     if PID_FILE.exists():
         try:
             import signal
+            import time
             with open(PID_FILE, 'r') as f:
                 pid = int(f.read().strip())
-
             os.kill(pid, signal.SIGTERM)
-            import time
             time.sleep(1)
-
             try:
                 os.kill(pid, 0)
                 os.kill(pid, signal.SIGKILL)
             except OSError:
                 pass
-
             PID_FILE.unlink(missing_ok=True)
             print("✓ Autonomous discovery stopped")
             return True
@@ -161,16 +119,16 @@ def stop_autonomous_discovery():
 
 
 def get_autonomous_discovery_status():
-    """Get status of autonomous discovery"""
+    """Get status of the supervised discovery process."""
     if PID_FILE.exists():
         try:
             with open(PID_FILE, 'r') as f:
                 pid = int(f.read().strip())
-            os.kill(pid, 0)  # Check if alive
-            return {"running": True, "pid": pid}
+            if _process_alive(pid):
+                return {"running": True, "pid": pid}
+            PID_FILE.unlink(missing_ok=True)
         except (OSError, ValueError):
             PID_FILE.unlink(missing_ok=True)
-
     return {"running": False, "pid": None}
 
 
@@ -179,7 +137,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--stop', action='store_true', help='Stop autonomous discovery')
     parser.add_argument('--status', action='store_true', help='Show status')
-
     args = parser.parse_args()
 
     if args.stop:

@@ -1,43 +1,24 @@
+#!/usr/bin/env python3
+"""RETIRED (2026-07-14) — legacy V73 discovery loop. Do not run.
 
+This file previously ran the V73 autonomous orchestrator and wrote discoveries
+directly to autonomous_discoveries.jsonl, BYPASSING the machine-verification
+chokepoint — a fiction surface. It is retired per the single-always-on-path
+consolidation (ASTRA §11: never run a legacy loop alongside the new one).
+
+The canonical always-on path is now:
+    launchd -> discovery_watchdog.py -> .fixed_autonomous_discovery.py
+whose every write passes the write chokepoint (discovery_store.append_verified).
+
+(biodisc_auto_start.py previously regenerated this file at runtime; it no longer
+does — it launches the canonical watchdog instead.)
+"""
 import sys
-import os
-import time
-from pathlib import Path
 
-sys.path.insert(0, '/Users/gjw255/astrodata/SWARM/BIODISC')
-
-try:
-    from biodisc_core.reasoning.v73_autonomous_discovery import get_autonomous_discovery_system, AutonomousDiscoveryConfig
-
-    config = AutonomousDiscoveryConfig(
-        max_cpu_percent=15.0,
-        max_hours_per_week=168.0,  # 24x7 - run continuously when computer is on
-        idle_timeout_minutes=1,  # Reduced from 2 for faster discovery
-        min_confidence_to_store=0.65,  # 65% confidence - appropriate for bioscience
-        min_evidence_count=1,  # 1 evidence source - more flexible for bioscience
-        bioscience_mode=True,  # Enable bioscience-aware validation
-        questions_per_cycle=10,  # Increased from 3 for faster discovery
-        cycle_interval_seconds=2,  # Reduced for faster discovery cycles
-        log_all_discoveries=True,
-        discovery_log_path=str('/Users/gjw255/astrodata/SWARM/BIODISC/autonomous_discoveries.jsonl')
+if __name__ == "__main__":
+    sys.stderr.write(
+        "DEPRECATED: .autonomous_discovery_auto.py is a retired legacy loop.\n"
+        "Canonical path: python discovery_watchdog.py  (-> .fixed_autonomous_discovery.py)\n"
+        "Refusing to run.\n"
     )
-
-    system = get_autonomous_discovery_system(config)
-    system.start()
-
-    print("✓ Autonomous discovery started in background")
-
-    # Keep process alive
-    try:
-        while True:
-            time.sleep(60)
-            status = system.get_status()
-            if not status.get('running', False):
-                break
-    except KeyboardInterrupt:
-        system.stop()
-        raise
-
-except Exception as e:
-    print(f"Error: {e}")
-    sys.exit(1)
+    sys.exit(2)

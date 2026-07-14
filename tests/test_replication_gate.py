@@ -1,0 +1,101 @@
+"""Tests for the held-out replication anchor (live-loop Gate for is_genuine).
+
+Network-free: a mock analyze_fn returns a synthetic DE result so we can verify
+the split + same-direction replication logic.
+"""
+import sys
+from pathlib import Path
+from types import SimpleNamespace as NS
+
+import numpy as np
+import pytest
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from biodisc_core.fixed_pipeline.replication_gate import (  # noqa: E402
+    ReplicationGate, create_replication_gate, to_report_dict,
+)
+
+
+def _results(gene_symbols, sig_set, lfc_by_gene):
+    return NS(results=[
+        NS(gene_symbol=g, significant=(g in sig_set),
+           fdr_p_value=1e-4 if g in sig_set else 0.5,
+           log2_fold_change=lfc_by_gene.get(g, 0.0))
+        for g in gene_symbols
+    ])
+
+
+def test_too_few_samples_is_not_replicated():
+    gate = create_replication_gate()
+    X = np.random.rand(5, 4)  # 4 samples
+    labels = ["a", "a", "b", "b"]
+    v = gate.assess(X, ["G1", "G2", "G3", "G4", "G5"], labels,
+                    analyze_fn=lambda *a, **k: _results([], {}, {}), dataset_id="DS1")
+    assert v.replicated is False
+    assert "too few samples" in v.reason
+
+
+def test_true_effect_replicates():
+    """When genes truly differ by group, the held-out split confirms them."""
+    rng = np.random.default_rng(7)
+    n_genes, n_per, n_groups = 30, 10, 2
+    # 6 genes have a real effect (shifted means by group)
+    effect_genes = {f"G{i}" for i in range(6)}
+    genes = [f"G{i}" for i in range(n_genes)]
+    X = np.zeros((n_genes, n_per * n_groups))
+    labels = []
+    for g in range(n_groups):
+        shift = 2.0 if g == 1 else 0.0
+        for j in range(n_per):
+            labels.append(g)
+            X[:, g * n_per + j] = rng.normal(shift if True else 0, 1.0, n_genes) * 0.3
+            for i in range(n_genes):
+                base = rng.normal(0, 1)
+                X[i, g * n_per + j] = base + (shift if i < 6 else 0.0)
+
+    def analyze_fn(ex, syms, labs, q, ds):
+        means_a = ex[:, [k for k, l in enumerate(labs) if l == labs[0]]].mean(axis=1)
+        means_b = ex[:, [k for k, l in enumerate(labs) if l != labs[0]]].mean(axis=1)
+        lfc = means_b - means_a
+        # significant if effect size large
+        sig = {genes[i] for i in range(n_genes) if abs(lfc[i]) > 0.8}
+        return _results(syms, sig, {genes[i]: lfc[i] for i in range(n_genes)})
+
+    gate = create_replication_gate(top_n=10, min_fraction=0.4, min_replicated=3)
+    v = gate.assess(X, genes, labels, analyze_fn=analyze_fn, dataset_id="DS_TRUE")
+    assert v.replicated is True
+    assert v.n_replicated >= 3
+    d = to_report_dict(v)
+    assert d["replicated"] is True
+
+
+def test_no_effect_does_not_replicate():
+    rng = np.random.default_rng(11)
+    n_genes, n_per, n_groups = 30, 10, 2
+    genes = [f"G{i}" for i in range(n_genes)]
+    X = rng.normal(0, 1, (n_genes, n_per * n_groups))
+    labels = [g for g in range(n_groups) for _ in range(n_per)]
+
+    def analyze_fn(ex, syms, labs, q, ds):
+        # random ~3 false positives
+        sig = set(rng.choice(genes, size=3, replace=False))
+        lfc = rng.normal(0, 0.3, n_genes)
+        return _results(syms, sig, {genes[i]: lfc[i] for i in range(n_genes)})
+
+    gate = create_replication_gate(top_n=10, min_fraction=0.4, min_replicated=3)
+    v = gate.assess(X, genes, labels, analyze_fn=analyze_fn, dataset_id="DS_NULL")
+    assert v.replicated is False
+
+
+def test_to_report_dict_shape():
+    gate = create_replication_gate()
+    v = gate.assess(np.zeros((3, 3)), ["G1"], ["a", "b", "a"],
+                    analyze_fn=lambda *a, **k: _results([], {}, {}), dataset_id="X")
+    d = to_report_dict(v)
+    assert set(["replicated", "replication_fraction", "method", "reason"]).issubset(d.keys())
+
+
+if __name__ == "__main__":
+    sys.exit(pytest.main([__file__, "-v"]))
