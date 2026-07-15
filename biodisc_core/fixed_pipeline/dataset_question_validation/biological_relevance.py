@@ -146,21 +146,22 @@ class BiologicalRelevanceValidator:
         if is_relevant:
             score += 5.0
 
-        # Organism match (critical): +3 points
-        q_orgs = q_entities.get('organisms', set())
-        d_orgs = d_entities.get('organisms', set())
+        # Organism match (critical): +3 points — compare on canonical IDs so
+        # 'mouse' matches 'mus musculus' (normalize via the shared mapper).
+        q_orgs = self.mapper.normalize_organisms(q_entities.get('organisms', set()))
+        d_orgs = self.mapper.normalize_organisms(d_entities.get('organisms', set()))
         if q_orgs and d_orgs and q_orgs.intersection(d_orgs):
             score += 3.0
 
         # Tissue match (important): +2 points
-        q_tissues = q_entities.get('tissues', set())
-        d_tissues = d_entities.get('tissues', set())
+        q_tissues = self.mapper.normalize_tissues(q_entities.get('tissues', set()))
+        d_tissues = self.mapper.normalize_tissues(d_entities.get('tissues', set()))
         if q_tissues and d_tissues and q_tissues.intersection(d_tissues):
             score += 2.0
 
         # Disease match (important): +2 points
-        q_diseases = q_entities.get('diseases', set())
-        d_diseases = d_entities.get('diseases', set())
+        q_diseases = self.mapper.normalize_diseases(q_entities.get('diseases', set()))
+        d_diseases = self.mapper.normalize_diseases(d_entities.get('diseases', set()))
         if q_diseases and d_diseases and q_diseases.intersection(d_diseases):
             score += 2.0
 

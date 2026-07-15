@@ -58,7 +58,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   on one dataset. **Throughput is still capped by the 3-dataset verified pool**
   (GSE2034 / GSE13159 / GSE15822) — expanding it is the real next lever; the
   verdict funnel quantifies the rest.
-- Full test suite green (180 tests). See `docs/peer_review_fixes_implementation.md`.
+- **Stability fixes** (2026-07-15, V8.0.2): (1) `geo_data_downloader` streamed
+  matrix downloads are now hard-bounded by total wall-clock (10 min) + size
+  (600 MB) via `_read_stream_bounded` — a stalled mid-stream read can no longer
+  hang the loop for hours (the recurring stall). (2) Watchdog stall threshold
+  lowered 6 h → 30 min (SIGTERM→SIGKILL escalation already present) so any
+  residual hang is recovered promptly. (3) Organism normalization: the dataset-
+  question validator now compares on canonical NCBITaxon IDs, so `mouse` matches
+  `mus musculus` (was a false mismatch that rejected the entire GSE15822 mouse
+  dataset). Same for tissue synonyms (`breast`↔`mammary`).
+- Full test suite green (184 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science

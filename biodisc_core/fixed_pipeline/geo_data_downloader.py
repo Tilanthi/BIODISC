@@ -227,11 +227,51 @@ class GEODataDownloader:
                 logger.info(f"   Matrix file not available (status {getattr(response, 'status_code', None)})")
                 return None
 
-            # Parse the matrix file
-            return self._parse_geo_matrix(response.content, max_genes)
+            # Read the streamed body with a hard TOTAL deadline + size cap. A
+            # plain ``response.content`` read can hang indefinitely on a stalled
+            # mid-stream connection (the per-chunk read timeout does not always
+            # fire on half-open sockets) — this is what stalled the discovery
+            # loop for hours. Bounding total wall-clock + bytes guarantees the
+            # call always returns.
+            content = self._read_stream_bounded(
+                response, max_seconds=600, max_bytes=600 * 1024 * 1024)
+            if content is None:
+                return None
+            return self._parse_geo_matrix(content, max_genes)
 
         except Exception as e:
             logger.info(f"   Could not download matrix: {e}")
+            return None
+
+    def _read_stream_bounded(
+        self,
+        response,
+        max_seconds: int = 600,
+        max_bytes: int = 600 * 1024 * 1024,
+    ) -> Optional[bytes]:
+        """Read a streamed response with a hard total-time and total-size bound."""
+        start = time.monotonic()
+        chunks = []
+        total = 0
+        try:
+            for chunk in response.iter_content(chunk_size=1024 * 1024):
+                if not chunk:
+                    continue
+                total += len(chunk)
+                if total > max_bytes:
+                    logger.warning(
+                        f"   Matrix exceeds {max_bytes // (1024 * 1024)} MB cap, aborting download")
+                    return None
+                if time.monotonic() - start > max_seconds:
+                    logger.warning(
+                        f"   Matrix download exceeded {max_seconds}s deadline, aborting")
+                    return None
+                chunks.append(chunk)
+            logger.info(f"   Streamed {total // (1024 * 1024)} MB in "
+                        f"{time.monotonic() - start:.0f}s")
+            return b"".join(chunks)
+        except requests.exceptions.RequestException as e:
+            logger.info(f"   Matrix stream read failed: {e}")
             return None
 
     def _parse_geo_matrix(

@@ -77,6 +77,21 @@ class OntologyMapper:
 
         logger.info("🗺️  OntologyMapper initialized with tissue/disease/organism mappings")
 
+    # -- normalization to canonical ontology IDs --------------------------------
+    # extract_entities() returns the raw matched keys (e.g. 'mouse', 'mus
+    # musculus'). Comparing those by string misses genuine matches (a
+    # 'mouse'-liver question on a 'mus musculus' dataset was rejected as an
+    # organism mismatch). Normalizing to the canonical ID makes common-name and
+    # Latin-name (and synonym) forms compare equal.
+    def normalize_organisms(self, organisms: Set[str]) -> Set[str]:
+        return {self.organism_map.get(o, o) for o in organisms}
+
+    def normalize_tissues(self, tissues: Set[str]) -> Set[str]:
+        return {self.tissue_map.get(t, t) for t in tissues}
+
+    def normalize_diseases(self, diseases: Set[str]) -> Set[str]:
+        return {self.disease_map.get(d, d) for d in diseases}
+
     def extract_entities(self, text: str) -> Dict[str, Set[str]]:
         """
         Extract biological entities from text.
@@ -126,25 +141,26 @@ class OntologyMapper:
             (is_relevant, reason)
         """
 
-        # Check organism match (critical)
-        q_orgs = question_entities.get('organisms', set())
-        d_orgs = dataset_entities.get('organisms', set())
+        # Check organism match (critical) — compare on canonical IDs so
+        # 'mouse' matches 'mus musculus', 'human' matches 'homo sapiens', etc.
+        q_orgs = self.normalize_organisms(question_entities.get('organisms', set()))
+        d_orgs = self.normalize_organisms(dataset_entities.get('organisms', set()))
 
         if q_orgs and d_orgs:
             if not q_orgs.intersection(d_orgs):
                 return False, f"Organism mismatch: question mentions {q_orgs} but dataset is {d_orgs}"
 
         # Check tissue match (important)
-        q_tissues = question_entities.get('tissues', set())
-        d_tissues = dataset_entities.get('tissues', set())
+        q_tissues = self.normalize_tissues(question_entities.get('tissues', set()))
+        d_tissues = self.normalize_tissues(dataset_entities.get('tissues', set()))
 
         if q_tissues and d_tissues:
             if not q_tissues.intersection(d_tissues):
                 return False, f"Tissue mismatch: question mentions {q_tissues} but dataset is {d_tissues}"
 
         # Check disease match (important)
-        q_diseases = question_entities.get('diseases', set())
-        d_diseases = dataset_entities.get('diseases', set())
+        q_diseases = self.normalize_diseases(question_entities.get('diseases', set()))
+        d_diseases = self.normalize_diseases(dataset_entities.get('diseases', set()))
 
         if q_diseases and d_diseases:
             if not q_diseases.intersection(d_diseases):

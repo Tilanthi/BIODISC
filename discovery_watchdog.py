@@ -47,9 +47,13 @@ DISCOVERY_PROCESS_NAME = "fixed_autonomous_discovery.py"
 MAX_IDLE_TIME = 900  # legacy fallback (discoveries-file timestamp), minutes->seconds
 CHECK_INTERVAL = 60   # Check every minute
 # Phase B: stall = no validated discovery AND no recent loop activity for this long.
-# Conservative (hours, not minutes) so a correctly-resting loop is never thrashed.
-STALL_THRESHOLD = 6 * 3600      # 6 hours
-STALL_THRESHOLD_USER_ACTIVE = 24 * 3600  # extend tolerance while the user is active
+# A healthy loop is active every few minutes; 30 min of silence means it is hung
+# (the recurring blocking-IO stall). The watchdog escalates SIGTERM->SIGKILL, so
+# this recovers a hung loop within ~30 min instead of the old 6 h. Downloads are
+# also hard-bounded (geo_data_downloader._read_stream_bounded), so genuine hangs
+# are now rare AND promptly recovered.
+STALL_THRESHOLD = 30 * 60               # 30 minutes
+STALL_THRESHOLD_USER_ACTIVE = 3 * 3600  # 3 hours (was 24 h) — still tolerant while active
 _LAST_CHECK_TIME = time.time()  # for watchdog sleep/wake detection
 
 
