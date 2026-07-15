@@ -24,6 +24,28 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INDEX_FILE = PROJECT_ROOT / "capability_index.json"
 EFFECTIVENESS_FILE = PROJECT_ROOT / "rsi_effectiveness.txt"
+GENUINE_STORE = PROJECT_ROOT / "autonomous_discoveries.jsonl"
+CANDIDATE_STORE = PROJECT_ROOT / "autonomous_discoveries_candidates.jsonl"
+
+
+def _count_store(path: Path, tier: Optional[str] = None) -> int:
+    """Count store entries (optionally by flagging tier). Authoritative — the
+    stores are chokepoint-gated, unlike the verdict log whose 'stored' outcome
+    has proven an unreliable genuine signal."""
+    if not path.exists():
+        return 0
+    n = 0
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            d = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if tier is None or (d.get("flagging") or {}).get("tier") == tier:
+            n += 1
+    return n
 
 # Weights — replication is heaviest because it IS the discovery criterion.
 W_REPLICATION = 0.5
@@ -40,16 +62,21 @@ def _read_effectiveness() -> Optional[float]:
 
 
 def compute_capability_index(verdict_summary: Optional[dict] = None,
-                             effectiveness: Optional[float] = None) -> dict:
+                             effectiveness: Optional[float] = None,
+                             genuine: Optional[int] = None,
+                             quarantined: Optional[int] = None) -> dict:
     """Compute a dated capability index. Designed to go DOWN on bad news.
 
     Dimensions (each 0-1 unless noted):
       replication_rate  (w=0.5): genuine / (genuine + quarantined) — the bridge
                                   from candidate to finding. Today 0. THE headline driver.
-      gate_pass_rate    (w=0.3): (stored + quarantined) / total candidates — the
+      gate_pass_rate    (w=0.3): (genuine + quarantined) / total candidates — the
                                   fraction that survive all gates (pipeline quality).
       rsi_effectiveness (w=0.2): 0-100 roll-up of whether applied fixes worked (or 0
                                   if none measurable). Whether the system is improving.
+
+    ``genuine``/``quarantined`` default to the chokepoint-gated stores (authoritative);
+    tests inject them directly for determinism.
     """
     if verdict_summary is None:
         from biodisc_core.fixed_pipeline.verdict_log import verdict_summary as _vs
@@ -58,8 +85,13 @@ def compute_capability_index(verdict_summary: Optional[dict] = None,
         effectiveness = _read_effectiveness()
 
     buckets = verdict_summary.get("buckets", {}) or {}
-    stored = buckets.get("stored", 0)
-    quarantined = buckets.get("quarantined", 0)
+    # Authoritative counts come from the chokepoint-gated STORES, not the verdict
+    # log (whose 'stored' outcome has proven an unreliable genuine signal).
+    if genuine is None:
+        genuine = _count_store(GENUINE_STORE, tier="genuine")
+    if quarantined is None:
+        quarantined = _count_store(CANDIDATE_STORE)
+    stored = genuine
     total = max(1, verdict_summary.get("total_candidates", 0))
 
     replication_rate = stored / max(1, stored + quarantined)  # 0 when no genuine findings
@@ -89,8 +121,9 @@ def compute_capability_index(verdict_summary: Optional[dict] = None,
             "rsi_measured": rsi_measured,
         },
         "note": ("Compass needle, not a benchmark. 100 = formula saturation, not "
-                 "'solved biology'. replication_rate is the load-bearing dimension; "
-                 "it is 0 until a candidate replicates on held-out data."),
+                 "'solved biology'. genuine/quarantined counted from the chokepoint-"
+                 "gated stores (authoritative); replication_rate is the load-bearing "
+                 "dimension."),
     }
 
 
