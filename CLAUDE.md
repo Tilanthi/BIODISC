@@ -108,7 +108,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   in the DE analyzer). Regression-tested with the *real* DE analyzer. The 18 quarantined
   candidates are now eligible for genuine-tier promotion once a candidate's top genes
   replicate on the held-out split.
-- Full test suite green (203 tests). See `docs/peer_review_fixes_implementation.md`.
+- **Discovery-performance phases** (2026-07-15, V8.0.6–V8.0.9):
+  - *1.5 replication criterion* — the gate now tests the top-N genes by p-value for
+    direction+significance replication in the held-out split, instead of requiring
+    FDR-significance in the (underpowered) discovery split (which dead-ended every candidate).
+  - *Phase 2 metric isolation* — diagnosis showed the "significance-failure bottleneck" was
+    **test pollution** (synthetic GSE11223/GSE99999 verdicts, zero on real datasets). `log_verdict`
+    honors a `BIODISC_VERDICT_LOG` override; `tests/conftest.py` redirects test verdicts to tmp.
+    The funnel/miner now read clean production data.
+  - *Phase 4 capability index* — `capability_index.py`: a dated composite (replication_rate 0.5,
+    gate_pass_rate 0.3, rsi_effectiveness 0.2) **designed to ingest inputs that lower its headline**.
+    Today it reads **2.5/100** — honestly near-zero because replication (the load-bearing dimension)
+    is 0. The watchdog runs the RSI miner + index hourly (the loop now turns on its own).
+  - *Phase 3 dataset preflight* — `dataset_preflight.py`: verifies a candidate GEO dataset through
+    download → probe/gene mapping → binary design → differential signal before it's ever added to
+    `real_datasets.py` (the enabler for lifting the 3-dataset pool ceiling; `--add` appends only on pass).
+- Full test suite green (210 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science
