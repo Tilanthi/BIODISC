@@ -25,7 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Project**: BIODISC (Biology Discovery and Intelligence System)
 **Version**: 8.0 - VERIFICATION-FIRST (✅ CHOKEPOINT + REAL GATE-2 + REPLICATION)
-**Capability**: not a fixed % — measured by the capability index (`capability_index.json`), the RSI effectiveness roll-up, and the discovery verdict funnel; 0% replication to date (genuine = nominal-p<0.05 + same-direction replication on a held-out split)
+**Capability**: not a fixed % — measured by the capability index (`capability_index.json`), the RSI effectiveness roll-up, and the discovery verdict funnel. **1 genuine discovery to date** (internally replicated; genuine = nominal-p<0.05 + same-direction replication on a held-out split). Index honestly low (~4/100) because replication_rate ≈ 0.04 — the trend is the signal.
 **GitHub**: https://github.com/Tilanthi/BIODISC (ONLY repository for BIODISC)
 **Remote**: `biodisc` (use `git push biodisc main` - ONLY main branch)
 
@@ -134,6 +134,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   discovery. `genuine`-tier records are stamped `method=internal_held_out_split_nominal_p`
   for auditability. This is the change that lets a coherent candidate actually reach
   the genuine tier.
+- **🎯 FIRST GENUINE DISCOVERY** (2026-07-15, post-V8.0.11): `DISCOVERY_1784146695` —
+  *"Which lipid-metabolism genes are differentially expressed in mouse liver under high-fat vs
+  standard diet?"* (GSE15822). Cleared every gate: FDR-significant, real PubMed Gate-2 = "novel",
+  and **internally replicated (10/15 top genes, fraction 0.67, nominal-p + same-direction on the
+  held-out split)**. The first finding to reach the `genuine` tier — genuine-discovery yield moved
+  from 0 → 1. (Internally replicated, not independently replicated; GSE42568 now enables the latter.)
 - Full test suite green (211 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
