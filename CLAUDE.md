@@ -25,7 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Project**: BIODISC (Biology Discovery and Intelligence System)
 **Version**: 8.0 - VERIFICATION-FIRST (✅ CHOKEPOINT + REAL GATE-2 + REPLICATION)
-**AGI Capability**: 90-95%
+**Capability**: not a fixed % — measured by the RSI effectiveness roll-up (`rsi_effectiveness.txt`) and the discovery verdict funnel; 0% replication to date (no finding has reached the genuine/replicated tier)
 **GitHub**: https://github.com/Tilanthi/BIODISC (ONLY repository for BIODISC)
 **Remote**: `biodisc` (use `git push biodisc main` - ONLY main branch)
 
