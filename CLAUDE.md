@@ -120,9 +120,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     gate_pass_rate 0.3, rsi_effectiveness 0.2) **designed to ingest inputs that lower its headline**.
     Today it reads **2.5/100** — honestly near-zero because replication (the load-bearing dimension)
     is 0. The watchdog runs the RSI miner + index hourly (the loop now turns on its own).
-  - *Phase 3 dataset preflight* — `dataset_preflight.py`: verifies a candidate GEO dataset through
-    download → probe/gene mapping → binary design → differential signal before it's ever added to
-    `real_datasets.py` (the enabler for lifting the 3-dataset pool ceiling; `--add` appends only on pass).
+  - *Phase 3 dataset preflight + pool expansion* — `dataset_preflight.py` verifies a candidate GEO
+    dataset through download → probe/gene mapping → binary design → differential signal; `--add`
+    persists passing datasets to a `real_datasets_extra.json` sidecar (survives restart). **Pool
+    expanded 3 → 6**: GSE42568 (breast, also an independent cohort for GSE2034), GSE15471 (pancreatic),
+    GSE19188 (lung) — all GPL570 tumor-vs-normal, all passed preflight (362/1401/1226 sig genes).
 - Full test suite green (210 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):

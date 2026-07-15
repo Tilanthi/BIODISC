@@ -18,6 +18,8 @@ REPOSITORIES COVERED:
 - TCGA: The Cancer Genome Atlas
 """
 
+from pathlib import Path
+
 # REAL GEO DATASETS curated for the integrity gates.
 # Each entry is a microarray series with: a parseable BINARY case/control design
 # (in !Sample_characteristics_ch1), a GPL platform whose probe->gene-symbol
@@ -26,7 +28,7 @@ REPOSITORIES COVERED:
 # labels -> gene-symbol gate -> significance gate. The old entries (GSE14729
 # no-matrix; GSE15208 a non-binary time-course; GSE11223/GSE9340 non-mappable
 # row IDs) were removed because they correctly fail the gates.
-REAL_GEO_DATASETS = [
+_REAL_GEO_DATASETS_BASE = [
     {
         "id": "GSE2034",
         "repo": "GEO",
@@ -57,7 +59,62 @@ REAL_GEO_DATASETS = [
         "question": "How does a high-fat diet alter hepatic gene expression compared to a standard diet?",
         "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE15822",
     },
+    # Added 2026-07-15 via dataset_preflight (V8.0.10): each cleared download ->
+    # probe/gene mapping -> binary design -> differential signal. Same GPL570
+    # platform as GSE2034/GSE13159 (mapping rate ~1.0), tumor-vs-normal designs
+    # with strong DE signal. GSE42568 also serves as an independent breast-cancer
+    # cohort for GSE2034.
+    {
+        "id": "GSE42568",
+        "repo": "GEO",
+        "title": "Breast cancer tumors vs normal breast (Affymetrix HG-U133 Plus 2.0)",
+        "organism": "Homo sapiens",
+        "samples": 121,
+        "data_type": "gene_expression",
+        "question": "Which genes are differentially expressed between breast cancer tumors and normal breast tissue?",
+        "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE42568",
+    },
+    {
+        "id": "GSE15471",
+        "repo": "GEO",
+        "title": "Pancreatic ductal adenocarcinoma vs normal pancreas (Affymetrix HG-U133 Plus 2.0)",
+        "organism": "Homo sapiens",
+        "samples": 78,
+        "data_type": "gene_expression",
+        "question": "Which genes are differentially expressed between pancreatic ductal adenocarcinoma tumors and normal pancreatic tissue?",
+        "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE15471",
+    },
+    {
+        "id": "GSE19188",
+        "repo": "GEO",
+        "title": "Lung adenocarcinoma tumors vs normal lung (Affymetrix HG-U133 Plus 2.0)",
+        "organism": "Homo sapiens",
+        "samples": 156,
+        "data_type": "gene_expression",
+        "question": "Which genes are differentially expressed between lung adenocarcinoma tumors and normal lung tissue?",
+        "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE19188",
+    },
 ]
+
+
+def _load_extra_datasets() -> list:
+    """Load datasets added at runtime via ``dataset_preflight --add`` (JSON sidecar).
+
+    The sidecar lives next to this module so additions survive process restarts
+    (the discovery loop reads REAL_GEO_DATASETS at import). Entries are only ever
+    appended by a *passing* preflight, so every dataset here has cleared the gates.
+    """
+    import json as _json
+    p = Path(__file__).parent / "real_datasets_extra.json"
+    if not p.exists():
+        return []
+    try:
+        return _json.loads(p.read_text())
+    except Exception:
+        return []
+
+
+REAL_GEO_DATASETS = list(_REAL_GEO_DATASETS_BASE) + _load_extra_datasets()
 
 # REAL ARRAYEXPRESS DATASETS (verified to exist)
 REAL_ARRAYEXPRESS_DATASETS = [

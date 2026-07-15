@@ -121,16 +121,28 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 1
     print(f"\n✅ {args.geo_id} PASSES preflight.")
     if args.add:
-        from biodisc_core.fixed_pipeline import real_datasets
+        import json as _json
+        from pathlib import Path as _Path
+        from biodisc_core.fixed_pipeline import real_datasets as _rd
         title, question = args.add
-        real_datasets.REAL_GEO_DATASETS.append({
+        sidecar = _Path(_rd.__file__).parent / "real_datasets_extra.json"
+        extras = []
+        if sidecar.exists():
+            try:
+                extras = _json.loads(sidecar.read_text())
+            except Exception:
+                extras = []
+        extras = [e for e in extras if e.get("id") != args.geo_id]  # dedupe by id
+        extras.append({
             "id": args.geo_id, "repo": "GEO", "title": title,
             "organism": "Homo sapiens", "samples": res.n_samples,
             "data_type": "gene_expression", "question": question,
             "url": f"https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc={args.geo_id}",
         })
-        logger.info("added %s to REAL_GEO_DATASETS (preflight passed)", args.geo_id)
-        print(f"➕ appended {args.geo_id} to REAL_GEO_DATASETS (restart the loop to use it).")
+        sidecar.write_text(_json.dumps(extras, indent=2))
+        logger.info("persisted %s to real_datasets_extra.json (preflight passed)", args.geo_id)
+        print(f"➕ persisted {args.geo_id} to real_datasets_extra.json "
+              f"(restart the loop to use it; survives restart).")
     return 0
 
 
