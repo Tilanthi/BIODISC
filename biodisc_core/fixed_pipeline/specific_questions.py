@@ -193,6 +193,50 @@ class SpecificQuestionsGenerator:
         }
 
 
+def rank_datasets_for_question(question: str, datasets: List[Dict], mapper=None) -> List[tuple]:
+    """Rank datasets by biological relevance to ``question`` (most relevant first).
+
+    Returns a list of ``(relevance_score, dataset)`` sorted by score descending.
+    Relevance = weighted overlap of organism / tissue / disease entities between
+    the question and each dataset's title + curated question + organism, compared
+    on canonical ontology IDs (so ``mouse`` matches ``mus musculus``,
+    ``breast`` matches ``mammary``). Weights: organism 5, tissue 3, disease 2.
+
+    This is the question<->dataset PINNING fix: a mouse-liver question is served
+    the mus_musculus liver dataset first, a breast-cancer question the breast
+    dataset, a leukemia question the bone-marrow/PB dataset. Previously every
+    question was tried against a randomly-rotated dataset subset, producing
+    incoherent pairings (e.g. a breast-cancer question run against a mouse
+    high-fat-diet liver dataset) that nonetheless cleared the gates.
+    """
+    if mapper is None:
+        from biodisc_core.fixed_pipeline.dataset_question_validation.ontology_mapper import OntologyMapper
+        mapper = OntologyMapper()
+    q = mapper.extract_entities(question)
+    qo = mapper.normalize_organisms(q.get("organisms", set()))
+    qt = mapper.normalize_tissues(q.get("tissues", set()))
+    qd = mapper.normalize_diseases(q.get("diseases", set()))
+
+    scored = []
+    for idx, ds in enumerate(datasets):
+        ds_text = f"{ds.get('title', '')} {ds.get('question', '')} {ds.get('organism', '')}"
+        d = mapper.extract_entities(ds_text)
+        do = mapper.normalize_organisms(d.get("organisms", set()))
+        dt = mapper.normalize_tissues(d.get("tissues", set()))
+        dd = mapper.normalize_diseases(d.get("diseases", set()))
+        rel = 0
+        if qo and do and (qo & do):
+            rel += 5
+        if qt and dt and (qt & dt):
+            rel += 3
+        if qd and dd and (qd & dd):
+            rel += 2
+        scored.append((rel, idx, ds))
+    # sort by score desc, then original index for stable, deterministic ordering
+    scored.sort(key=lambda x: (-x[0], x[1]))
+    return [(rel, ds) for (rel, _, ds) in scored]
+
+
 def create_specific_questions_generator() -> SpecificQuestionsGenerator:
     """Factory function to create specific questions generator"""
     return SpecificQuestionsGenerator()

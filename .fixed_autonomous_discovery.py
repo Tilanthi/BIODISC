@@ -70,6 +70,13 @@ class FixedAutonomousDiscovery:
         self.session_file = project_root / "fixed_discovery_state.json"
         self.discoveries_file = project_root / "autonomous_discoveries.jsonl"
 
+        # Shared ontology mapper for question<->dataset relevance pinning.
+        try:
+            from biodisc_core.fixed_pipeline.dataset_question_validation.ontology_mapper import OntologyMapper
+            self._ontology_mapper = OntologyMapper()
+        except Exception:
+            self._ontology_mapper = None
+
         # Validation statistics tracking
         self.discoveries_made = 0
         self.discoveries_rejected = 0
@@ -256,27 +263,37 @@ class FixedAutonomousDiscovery:
         self.save_session_state()
 
     def _search_real_geo_datasets(self, question: str, max_results: int = 3) -> List[Dict]:
-        """Use VERIFIED GEO datasets, ROTATED per call for cycle diversity.
+        """Serve the biologically most-relevant VERIFIED datasets for a question first.
 
-        The verified pool is small (3 datasets that pass the gates). Returning
-        the same first-N every call made the loop re-run one dataset repeatedly,
-        producing identical DE profiles that the duplicate-statistical-profile
-        gate correctly rejects. Shuffling the pool each call spreads the work
-        across all verified datasets so each is exercised.
+        Uses ``rank_datasets_for_question`` (organism/tissue/disease entity
+        overlap, normalized to canonical IDs) so each question is PINNED to its
+        matching dataset: a mouse-liver question -> the mus_musculus liver
+        dataset, a breast-cancer question -> the breast dataset, a leukemia
+        question -> the bone-marrow/PB dataset. Falls back to rotation only when
+        NO dataset shares any entity with the question (so an unmatched question
+        is still tried, not starved). This fixes the loose pairing that produced
+        incoherent discoveries (e.g. a breast-cancer question on a mouse
+        high-fat-diet liver dataset).
         """
         try:
-            # Import VERIFIED datasets that we know work
             from biodisc_core.fixed_pipeline.real_datasets import REAL_GEO_DATASETS
+            from biodisc_core.fixed_pipeline.specific_questions import rank_datasets_for_question
 
-            logger.info(f"🔍 Using verified GEO datasets from real_datasets.py (rotated)")
+            ranked = rank_datasets_for_question(
+                question, REAL_GEO_DATASETS, mapper=self._ontology_mapper)
 
-            # Rotate/shuffle so different datasets are tried across calls.
-            datasets = list(REAL_GEO_DATASETS)
-            random.shuffle(datasets)
-            datasets = datasets[:max_results]
+            if ranked and ranked[0][0] > 0:
+                datasets = [ds for _, ds in ranked[:max_results]]
+                scores = [s for s, _ in ranked[:max_results]]
+                logger.info(f"🔍 Pinned datasets by relevance to question (scores {scores})")
+            else:
+                pool = list(REAL_GEO_DATASETS)
+                random.shuffle(pool)
+                datasets = pool[:max_results]
+                logger.info(f"🔍 No dataset matched question entities -> rotation fallback")
 
             if datasets:
-                logger.info(f"✅ Using {len(datasets)} VERIFIED GEO datasets")
+                logger.info(f"✅ Using {len(datasets)} VERIFIED GEO dataset(s)")
                 for i, dataset in enumerate(datasets, 1):
                     logger.info(f"   {i}. {dataset.get('id', 'Unknown')}: {dataset.get('samples', 0)} samples - {dataset.get('title', 'Unknown')[:50]}")
             else:
