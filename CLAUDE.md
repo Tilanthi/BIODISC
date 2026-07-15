@@ -78,7 +78,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   liver dataset) that were clearing the entity-sparse validator and producing junk
   candidates. Tradeoff: lower raw throughput (questions with no matching data don't run),
   but every candidate produced is a coherent question↔dataset pairing.
-- Full test suite green (189 tests). See `docs/peer_review_fixes_implementation.md`.
+- **RSI miner — a measured self-improvement loop** (2026-07-15, V8.0.4):
+  `biodisc_core/fixed_pipeline/rsi_miner.py` (dependency-free, stdlib only) closes the
+  loop the verdict log opened. It (1) MINES `discovery_verdicts.jsonl`, clustering
+  rejections into failure themes (significance_failed, duplicate_profile,
+  organism_mismatch, no_datasets, …) with per-day recurrence; (2) PROPOSES a concrete,
+  **human-gated** fix per theme (`rsi_proposals.md` — propose-only, never auto-applies);
+  (3) MEASURES whether an applied fix (recorded in `rsi_proposals_applied.jsonl`)
+  actually reduced its failure class (before/after per-day recurrence → effectiveness
+  0–100); (4) rolls up to `rsi_effectiveness.txt` — a number a capability index is
+  designed to ingest *even when it lowers the headline*. Dogfooded live: the question↔dataset
+  pinning fix scored 21.4/100 (duplicate rejections 10→4, "improving, not solved"). Run:
+  `python -m biodisc_core.fixed_pipeline.rsi_miner`.
+- Full test suite green (198 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science
