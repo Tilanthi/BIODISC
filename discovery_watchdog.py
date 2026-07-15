@@ -172,6 +172,23 @@ def check_and_restart():
     return None
 
 
+# How many check intervals between metric refreshes (~hourly at CHECK_INTERVAL=60s).
+METRICS_EVERY = 60
+
+
+def run_metrics():
+    """Refresh the RSI miner + capability index. Non-fatal: a failure here must
+    never stop the watchdog from keeping discovery alive."""
+    try:
+        from biodisc_core.fixed_pipeline.rsi_miner import run as rsi_run
+        from biodisc_core.fixed_pipeline.capability_index import run as ci_run
+        rsi_run()
+        ci_run()
+        logger.info("📊 hourly metrics refreshed (RSI miner + capability index)")
+    except Exception as e:  # noqa: BLE001
+        logger.warning("metrics refresh failed (non-fatal): %s", e)
+
+
 def main():
     """Main watchdog loop"""
     logger.info("🐕 BIODISC Discovery Watchdog Started")
@@ -188,9 +205,13 @@ def main():
         start_discovery_system()
 
     # Main monitoring loop
+    ticks = 0
     while True:
         try:
             check_and_restart()
+            ticks += 1
+            if ticks % METRICS_EVERY == 0:
+                run_metrics()  # hourly: turn the RSI loop + refresh the capability index
             time.sleep(CHECK_INTERVAL)
         except KeyboardInterrupt:
             logger.info("🛑 Watchdog stopped by user")
