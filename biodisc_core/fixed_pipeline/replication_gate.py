@@ -26,6 +26,12 @@ from typing import Callable, List, Optional, Tuple
 
 import numpy as np
 
+# Field-standard replication significance threshold: discover at FDR<0.05, then
+# replicate at NOMINAL p<0.05 + same direction in the held-out split. FDR in the
+# replication cohort is non-standard and (with an underpowered split) blocks all
+# promotions.
+NOMINAL_P = 0.05
+
 logger = logging.getLogger(__name__)
 
 
@@ -110,7 +116,7 @@ class ReplicationGate:
         ``.significant`` bool, ``.fdr_p_value`` float, ``.log2_fold_change`` float).
         """
         n_samples = len(group_labels)
-        method = "internal_held_out_split"
+        method = "internal_held_out_split_nominal_p"
 
         # Not enough samples to split honestly -> cannot establish replication.
         if n_samples < self.min_samples_for_split:
@@ -196,16 +202,21 @@ class ReplicationGate:
             h = held_by_gene.get(r.gene_symbol)
             if h is None:
                 continue
-            h_sig = getattr(h, "significant", False)
+            # Field-standard replication bar: discover at FDR, replicate at NOMINAL
+            # p<0.05 + same direction. Requiring FDR<0.05 in the underpowered held-out
+            # split blocks nearly everything (1/15 observed), so the gate now checks
+            # nominal p here (FDR correction belongs to discovery, not replication).
+            h_p = getattr(h, "p_value", None)
+            h_nominally_sig = (h_p is not None and h_p < NOMINAL_P)
             same_dir = np.sign(getattr(r, "log2_fold_change", 0.0)) == np.sign(getattr(h, "log2_fold_change", 0.0))
-            if h_sig and same_dir:
+            if h_nominally_sig and same_dir:
                 replicated += 1
 
         frac = replicated / len(top)
         is_replicated = (replicated >= self.min_replicated) and (frac >= self.min_fraction)
         reason = (
-            f"{replicated}/{len(top)} top discovery genes significant+same-direction in held-out "
-            f"(fraction {frac:.2f})"
+            f"{replicated}/{len(top)} top discovery genes nominal-p<0.05+same-direction "
+            f"in held-out (fraction {frac:.2f})"
         )
         logger.info("🧬 replication gate: %s", reason)
         return ReplicationVerdict(

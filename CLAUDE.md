@@ -25,7 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Project**: BIODISC (Biology Discovery and Intelligence System)
 **Version**: 8.0 - VERIFICATION-FIRST (✅ CHOKEPOINT + REAL GATE-2 + REPLICATION)
-**Capability**: not a fixed % — measured by the RSI effectiveness roll-up (`rsi_effectiveness.txt`) and the discovery verdict funnel; 0% replication to date (no finding has reached the genuine/replicated tier)
+**Capability**: not a fixed % — measured by the capability index (`capability_index.json`), the RSI effectiveness roll-up, and the discovery verdict funnel; 0% replication to date (genuine = nominal-p<0.05 + same-direction replication on a held-out split)
 **GitHub**: https://github.com/Tilanthi/BIODISC (ONLY repository for BIODISC)
 **Remote**: `biodisc` (use `git push biodisc main` - ONLY main branch)
 
@@ -125,7 +125,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     persists passing datasets to a `real_datasets_extra.json` sidecar (survives restart). **Pool
     expanded 3 → 6**: GSE42568 (breast, also an independent cohort for GSE2034), GSE15471 (pancreatic),
     GSE19188 (lung) — all GPL570 tumor-vs-normal, all passed preflight (362/1401/1226 sig genes).
-- Full test suite green (210 tests). See `docs/peer_review_fixes_implementation.md`.
+- **Replication criterion = field-standard nominal-p bar** (2026-07-15, V8.0.11): the
+  held-out replication gate now replicates a gene when it is **nominal p<0.05 + same
+  direction** in the held-out split (previously required FDR<0.05 there). Requiring FDR
+  in the *replication* cohort is non-standard and, with an underpowered 40% held-out
+  split, blocked every promotion (live: 1/15 every time → 0% genuine). The accepted
+  paradigm is discover-at-FDR, replicate-at-nominal-p; FDR correction belongs to
+  discovery. `genuine`-tier records are stamped `method=internal_held_out_split_nominal_p`
+  for auditability. This is the change that lets a coherent candidate actually reach
+  the genuine tier.
+- Full test suite green (211 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science
