@@ -170,14 +170,24 @@ class ReplicationGate:
                 f"held-out-split DE failed ({type(e).__name__}); not replicated",
             )
 
-        # Discovery top genes: most significant (lowest FDR) among significant ones.
-        disc_sig = [r for r in disc_de.results if getattr(r, "significant", False)]
-        disc_sig.sort(key=lambda r: getattr(r, "fdr_p_value", float("inf")))
-        top = disc_sig[: self.top_n]
+        # Discovery "top" genes: rank by p-value (most differentially expressed
+        # first), NOT by split-significance. The discovery split is underpowered
+        # (fewer samples than the full data), so requiring FDR<0.05 THERE would
+        # dead-end almost every real candidate on "no significant genes".
+        # Replication asks the right question: do the most-DE genes (by p-value)
+        # replicate in direction + significance in the HELD-OUT split?
+        def _pval(r):
+            for k in ("p_value", "fdr_p_value"):
+                v = getattr(r, k, None)
+                if v is not None:
+                    return v
+            return float("inf")
+        ranked = sorted(disc_de.results, key=_pval)
+        top = ranked[: self.top_n]
         if not top:
             return ReplicationVerdict(
                 False, 0.0, 0, 0, len(disc_idx), len(held_idx), method,
-                "no significant genes in discovery split",
+                "no DE results from discovery split",
             )
 
         held_by_gene = {r.gene_symbol: r for r in held_de.results}

@@ -130,5 +130,33 @@ def test_replication_computes_with_the_real_de_analyzer():
     assert v.n_tested > 0  # it actually ran both split DEs and compared top genes
 
 
+def test_replication_uses_top_by_pvalue_when_discovery_split_underpowered():
+    """The discovery split has fewer samples than the full data, so requiring
+    FDR-significance THERE dead-ends on 'no significant genes in discovery split'
+    for nearly every real candidate. The gate must instead test the top-N genes
+    by p-value for direction+significance replication in the held-out split."""
+    genes = ["G1", "G2", "G3", "G4", "G5"]
+    disc = NS(results=[
+        NS(gene_symbol=g, significant=False, p_value=0.001 + i * 0.01,
+           fdr_p_value=0.06, log2_fold_change=1.0)
+        for i, g in enumerate(genes)])  # none FDR-significant, but ordered p-values
+    held = NS(results=[
+        NS(gene_symbol=g, significant=(g in {"G1", "G2", "G3"}),
+           p_value=0.001, fdr_p_value=0.001 if g in {"G1", "G2", "G3"} else 0.5,
+           log2_fold_change=1.0) for g in genes])  # G1-G3 replicate
+
+    calls = {"n": 0}
+    def analyze_fn(ex, syms, labs, q, ds):
+        calls["n"] += 1
+        return disc if calls["n"] == 1 else held
+
+    gate = create_replication_gate(top_n=3, min_fraction=0.4, min_replicated=2)
+    v = gate.assess(np.zeros((5, 8)), genes, np.array([0, 0, 0, 0, 1, 1, 1, 1]),
+                    analyze_fn=analyze_fn, dataset_id="X_UNDERPOWERED")
+    assert "no significant genes in discovery split" not in v.reason, v.reason
+    assert v.replicated is True
+    assert v.n_replicated >= 2
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
