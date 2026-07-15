@@ -21,6 +21,7 @@ DIFFERENT fix. See :func:`verdict_summary`.
 """
 import json
 import logging
+import os
 from collections import Counter
 from pathlib import Path
 from datetime import datetime, timezone
@@ -31,6 +32,20 @@ logger = logging.getLogger(__name__)
 # Repo root: biodisc_core/fixed_pipeline/verdict_log.py -> up 2 parents (= BIODISC).
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 VERDICT_LOG = PROJECT_ROOT / "discovery_verdicts.jsonl"
+
+
+def _verdict_log_path(log_file: Optional[Path] = None) -> Path:
+    """Resolve the verdict-log path, honoring the BIODISC_VERDICT_LOG override.
+
+    Tests set BIODISC_VERDICT_LOG to a tmp path (via conftest) so
+    validate_discovery_comprehensive — which calls log_verdict unconditionally —
+    does not pollute the production discovery_verdicts.jsonl with synthetic
+    verdicts. Production reads default to VERDICT_LOG.
+    """
+    if log_file is not None:
+        return log_file
+    env = os.environ.get("BIODISC_VERDICT_LOG")
+    return Path(env) if env else VERDICT_LOG
 
 
 def log_verdict(verdict: dict, *, log_file: Optional[Path] = None) -> None:
@@ -46,7 +61,7 @@ def log_verdict(verdict: dict, *, log_file: Optional[Path] = None) -> None:
         reason
     """
     try:
-        target = log_file or VERDICT_LOG
+        target = _verdict_log_path(log_file)
         target.parent.mkdir(parents=True, exist_ok=True)
         line = dict(verdict)
         line.setdefault("logged_at", datetime.now(timezone.utc).isoformat(timespec="seconds"))
