@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import json
 import time
+import uuid
 from datetime import datetime, timezone
 
 # Add project to path
@@ -130,6 +131,22 @@ class FixedDiscoveryOrchestrator:
         passes_all_gates = True
         rejection_reasons = []
         validation_stats = {}
+
+        # COVERAGE FIX: write a PROVISIONAL verdict at the start of validation,
+        # stamped with a unique token. The final verdict (same token) is written at
+        # the end. If this cycle is killed mid-validation (e.g. watchdog SIGKILL),
+        # the provisional remains so the failure is COUNTED by the miner instead of
+        # silently disappearing — readers dedupe by token, and an orphaned
+        # provisional becomes a visible `abandoned_mid_validation` failure.
+        _vtok = uuid.uuid4().hex[:12]
+        log_verdict({
+            "vtok": _vtok,
+            "outcome": "in_progress",
+            "question": discovery_report.get('question', ''),
+            "dataset_id": discovery_report.get('dataset_id', ''),
+            "discovery_id": discovery_report.get('discovery_id', ''),
+            "both_pass": False,
+        })
 
         # LAYER 1: Duplicate Detection
         logger.info("🔍 LAYER 1: DUPLICATE DETECTION")
@@ -271,6 +288,7 @@ class FixedDiscoveryOrchestrator:
             "both_pass": passes_all_gates,
             "outcome": outcome,
             "reason": "; ".join(rejection_reasons),
+            "vtok": _vtok,  # matches the provisional -> readers dedupe to this final record
         })
 
         return passes_all_gates, rejection_reasons, validation_stats

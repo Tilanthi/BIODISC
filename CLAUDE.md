@@ -90,7 +90,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   designed to ingest *even when it lowers the headline*. Dogfooded live: the question↔dataset
   pinning fix scored 21.4/100 (duplicate rejections 10→4, "improving, not solved"). Run:
   `python -m biodisc_core.fixed_pipeline.rsi_miner`.
-- Full test suite green (198 tests). See `docs/peer_review_fixes_implementation.md`.
+- **Verdict-logging coverage fix** (2026-07-15, V8.0.4b): `validate_discovery_comprehensive`
+  now writes a PROVISIONAL verdict (`outcome=in_progress`, unique `vtok`) at the *start* of
+  validation and the FINAL verdict (same `vtok`) at the end. `verdict_log.read_verdicts_dedup`
+  collapses each pair to one record, and an orphaned provisional — a cycle killed
+  mid-validation (watchdog SIGKILL) that never wrote its final — surfaces as a visible
+  `abandoned_mid_validation` failure (its own funnel bucket + miner theme) instead of
+  silently vanishing. This closes the blind spot where the miner undercounted exactly the
+  failures it most needed to see. Verified live: 13 provisional+final pairs collapsed on
+  the real log. (Coarse live-loop verdicts and legacy entries have no `vtok` and pass through.)
+- Full test suite green (202 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science

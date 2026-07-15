@@ -72,12 +72,49 @@ def _read_verdicts(log_file: Optional[Path] = None) -> list:
     return out
 
 
+def read_verdicts_dedup(log_file: Optional[Path] = None) -> list:
+    """One record per candidate, deduped by validation token (``vtok``).
+
+    The orchestrator writes a PROVISIONAL verdict (outcome ``in_progress``) at the
+    start of validation and the FINAL verdict (same ``vtok``) at the end. This
+    returns one record per ``vtok``: the final if it exists, else the provisional
+    rewritten as ``rejected`` / ``abandoned_mid_validation`` — so a cycle killed
+    mid-validation (no final ever written) still shows up as a counted failure
+    instead of silently vanishing. Records without a ``vtok`` (coarse live-loop
+    verdicts, legacy entries) pass through unchanged.
+    """
+    raw = _read_verdicts(log_file)
+    no_tok, by_tok = [], {}
+    for v in raw:
+        tok = v.get("vtok")
+        if tok is None:
+            no_tok.append(v)
+        else:
+            by_tok.setdefault(tok, []).append(v)
+
+    out = list(no_tok)
+    for tok, group in by_tok.items():
+        group.sort(key=lambda g: g.get("logged_at") or "")
+        finals = [g for g in group if (g.get("outcome") or "") != "in_progress"]
+        if finals:
+            out.append(finals[-1])
+        else:
+            abandoned = dict(group[-1])
+            abandoned["outcome"] = "rejected"
+            abandoned["reason"] = ("abandoned_mid_validation: no final verdict "
+                                   "(process likely killed mid-validation)")
+            out.append(abandoned)
+    return out
+
+
 def _outcome_bucket(v: dict) -> str:
     """Bucket a single verdict into where it died (or survived)."""
     outcome = v.get("outcome")
     if outcome in ("stored", "quarantined", "rejected"):
         # Rejected candidates: attribute to the first gate that failed.
         if outcome == "rejected":
+            if "abandoned_mid_validation" in (v.get("reason") or ""):
+                return "abandoned_mid_validation"
             if v.get("gate1_pass") is False:
                 return "died_gate1_significance"
             if v.get("gate2_status") == "known":
@@ -90,12 +127,14 @@ def _outcome_bucket(v: dict) -> str:
                     return f"died_subgate_{sg.replace('subgate_', '')}"
             return "rejected_other"
         return outcome  # stored / quarantined
+    if outcome == "in_progress":
+        return "in_progress"  # only seen pre-dedup; dedup converts orphans to abandoned
     return "unknown_outcome"
 
 
 def verdict_summary(log_file: Optional[Path] = None) -> dict:
     """Bucket all verdicts into a funnel distribution. The largest bucket is the bottleneck."""
-    verdicts = _read_verdicts(log_file)
+    verdicts = read_verdicts_dedup(log_file)
     buckets = Counter(_outcome_bucket(v) for v in verdicts)
     total = len(verdicts)
     # Gate-2 retrieval-failure rate (infrastructure health, §7.4)
@@ -109,6 +148,7 @@ def verdict_summary(log_file: Optional[Path] = None) -> dict:
         "gate2_retrieval_failed": retrieval_failed,
         "stored": buckets.get("stored", 0),
         "quarantined": buckets.get("quarantined", 0),
+        "abandoned": buckets.get("abandoned_mid_validation", 0),
     }
 
 

@@ -106,6 +106,12 @@ THEME_TAXONOMY: List[Tuple[str, List[str], str, bool]] = [
      ["exception:", "traceback"],
      "Root-cause the exception class; treat as a reliability fix.",
      True),
+    ("abandoned_mid_validation",
+     ["abandoned_mid_validation"],
+     "Reliability: a validation cycle started but never wrote a final verdict — "
+     "the process was likely killed mid-validation. Reduce mid-cycle kills "
+     "(bound downloads, lengthen watchdog patience, avoid SIGKILL mid-cycle).",
+     True),
     ("template_question",
      ["template question"],
      "Retire the generic template question or make it more specific.",
@@ -382,7 +388,13 @@ def _coverage(verdicts: List[dict]) -> Tuple[int, int]:
 def run(verdict_path: Path = VERDICT_LOG, applied_path: Path = APPLIED_JSONL,
         write: bool = True) -> dict:
     """Mine + measure in one pass. Returns a summary dict."""
-    verdicts = read_jsonl(verdict_path)
+    # Read through the dedup reader so provisional+final verdict pairs collapse to
+    # one record (and orphaned provisionals surface as `abandoned_mid_validation`).
+    try:
+        from biodisc_core.fixed_pipeline.verdict_log import read_verdicts_dedup
+        verdicts = read_verdicts_dedup(verdict_path)
+    except Exception:  # noqa: BLE001 - fall back to raw read if dedup unavailable
+        verdicts = read_jsonl(verdict_path)
     patterns = mine(verdicts)
     applied = read_jsonl(applied_path)
     measurements = measure(applied, verdicts)
@@ -411,7 +423,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--applied", default=str(APPLIED_JSONL))
     args = p.parse_args(argv)
 
-    verdicts = read_jsonl(Path(args.verdict_log))
+    try:
+        from biodisc_core.fixed_pipeline.verdict_log import read_verdicts_dedup
+        verdicts = read_verdicts_dedup(Path(args.verdict_log))
+    except Exception:  # noqa: BLE001
+        verdicts = read_jsonl(Path(args.verdict_log))
     if args.mine or not args.measure:
         patterns = mine(verdicts)
         write_proposals_md(patterns, PROPOSALS_MD, coverage=_coverage(verdicts))
