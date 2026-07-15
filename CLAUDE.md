@@ -99,7 +99,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   silently vanishing. This closes the blind spot where the miner undercounted exactly the
   failures it most needed to see. Verified live: 13 provisional+final pairs collapsed on
   the real log. (Coarse live-loop verdicts and legacy entries have no `vtok` and pass through.)
-- Full test suite green (202 tests). See `docs/peer_review_fixes_implementation.md`.
+- **Replication bug fix — unblocks the genuine tier** (2026-07-15, V8.0.5): the
+  held-out replication gate had been failing on *every* attempt (`np.where` "nonzero on
+  0d" ValueError), so replication was always degraded → 0% replication → zero discoveries
+  ever reached the genuine tier. Root cause: the gate passed group labels to the DE analyzer
+  as a Python list, but the analyzer does `np.where(group_labels == 0)` which only compares
+  element-wise on an ndarray. Fix: pass labels as an ndarray (plus a defensive `np.asarray`
+  in the DE analyzer). Regression-tested with the *real* DE analyzer. The 18 quarantined
+  candidates are now eligible for genuine-tier promotion once a candidate's top genes
+  replicate on the held-out split.
+- Full test suite green (203 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science

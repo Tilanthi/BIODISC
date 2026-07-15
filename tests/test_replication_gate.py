@@ -16,6 +16,9 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from biodisc_core.fixed_pipeline.replication_gate import (  # noqa: E402
     ReplicationGate, create_replication_gate, to_report_dict,
 )
+from biodisc_core.fixed_pipeline.differential_expression import (  # noqa: E402
+    create_differential_expression_analyzer,
+)
 
 
 def _results(gene_symbols, sig_set, lfc_by_gene):
@@ -95,6 +98,36 @@ def test_to_report_dict_shape():
                     analyze_fn=lambda *a, **k: _results([], {}, {}), dataset_id="X")
     d = to_report_dict(v)
     assert set(["replicated", "replication_fraction", "method", "reason"]).issubset(d.keys())
+
+
+def test_replication_computes_with_the_real_de_analyzer():
+    """Regression for the bug that kept replication at 0%.
+
+    The replication gate passed group labels to the DE analyzer as a Python list,
+    but the analyzer does ``np.where(group_labels == 0)`` which only does
+    element-wise comparison on an ndarray. On a list, ``list == 0`` is scalar
+    False -> ``np.where(False)`` -> 'nonzero on 0d' ValueError on EVERY split.
+    The per-split guard caught it, so replication always degraded to
+    'split DE failed' and no discovery ever reached the genuine tier.
+
+    This test uses the REAL DE analyzer (not a mock) so it would have failed
+    before the fix; after the fix it must COMPUTE a verdict, not degrade.
+    """
+    rng = np.random.default_rng(7)
+    n_genes, n_per = 40, 30
+    genes = [f"G{i}" for i in range(n_genes)]
+    X = rng.normal(0, 1, (n_genes, n_per * 2))
+    for j in range(n_per, n_per * 2):      # strong signal in first 6 genes, group 1
+        X[:6, j] += 3.0
+    labels = np.array([0] * n_per + [1] * n_per)
+
+    analyzer = create_differential_expression_analyzer()
+    gate = create_replication_gate(top_n=6, min_fraction=0.4, min_replicated=3)
+    v = gate.assess(X, genes, labels,
+                    analyze_fn=analyzer.perform_differential_expression_analysis,
+                    dataset_id="DS_REGRESS")
+    assert "split DE failed" not in v.reason, f"regression: replication degraded — {v.reason}"
+    assert v.n_tested > 0  # it actually ran both split DEs and compared top genes
 
 
 if __name__ == "__main__":

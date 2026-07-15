@@ -140,8 +140,14 @@ class ReplicationGate:
         axis = _sample_axis(expression_data, group_labels)
         disc_X = _slice(expression_data, disc_idx, axis)
         held_X = _slice(expression_data, held_idx, axis)
-        disc_labels = [groups[i] for i in disc_idx]
-        held_labels = [groups[i] for i in held_idx]
+        # Pass labels to the DE analyzer as an ndarray. The analyzer does
+        # np.where(group_labels == 0), which only compares element-wise on an
+        # array; a Python list makes `list == 0` scalar-False -> np.where(False)
+        # -> 'nonzero on 0d' ValueError on every split — the bug that kept
+        # replication at 0% and blocked every discovery from the genuine tier.
+        arr = np.asarray(group_labels)
+        disc_labels = arr[disc_idx]
+        held_labels = arr[held_idx]
 
         # Each split DE is run independently; a failure on either split means
         # replication cannot be established (the discovery stays a candidate).

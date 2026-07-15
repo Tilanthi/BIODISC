@@ -144,6 +144,10 @@ class DifferentialExpressionAnalyzer:
 
         self.analyses_performed += 1
 
+        # Coerce to ndarray: np.where(group_labels == 0) below only compares
+        # element-wise on an array, so a Python list would silently break.
+        group_labels = np.asarray(group_labels)
+
         # Validate inputs
         if expression_data.shape[0] != len(gene_symbols):
             raise ValueError("Expression data rows must match gene symbols length")
