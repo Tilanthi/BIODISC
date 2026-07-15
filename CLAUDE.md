@@ -67,14 +67,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   question validator now compares on canonical NCBITaxon IDs, so `mouse` matches
   `mus musculus` (was a false mismatch that rejected the entire GSE15822 mouse
   dataset). Same for tissue synonyms (`breast`↔`mammary`).
-- **Question↔dataset pinning** (2026-07-15, V8.0.3): `_search_real_geo_datasets` now
-  serves each question its biologically most-relevant dataset first
-  (`rank_datasets_for_question` — organism/tissue/disease entity overlap on canonical
-  IDs). A mouse-liver question is pinned to the mus_musculus liver dataset, breast to
-  the breast dataset, leukemia to the bone-marrow/PB dataset; rotation is the fallback
-  only when no dataset matches. This eliminates the incoherent pairings (e.g. a
-  breast-cancer question run against a mouse high-fat-diet liver dataset) that were
-  clearing the gates and producing low-quality candidates.
+- **Question↔dataset pinning + skip-unmatched** (2026-07-15, V8.0.3):
+  `_search_real_geo_datasets` serves each question only its biologically relevant
+  datasets (`select_datasets_for_question` → `rank_datasets_for_question`: organism/
+  tissue/disease entity overlap on canonical IDs). A mouse-liver question is pinned to
+  the mus_musculus liver dataset, breast to the breast dataset, leukemia to bone-marrow/PB.
+  **If no dataset is relevant (best score 0) the question is SKIPPED** (returns no
+  datasets) — it is not rotated onto an unrelated dataset. This eliminates the incoherent
+  pairings (e.g. a glioblastoma or breast-cancer question run against a mouse high-fat-diet
+  liver dataset) that were clearing the entity-sparse validator and producing junk
+  candidates. Tradeoff: lower raw throughput (questions with no matching data don't run),
+  but every candidate produced is a coherent question↔dataset pairing.
 - Full test suite green (189 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):

@@ -13,7 +13,9 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from biodisc_core.fixed_pipeline.specific_questions import rank_datasets_for_question  # noqa: E402
+from biodisc_core.fixed_pipeline.specific_questions import (  # noqa: E402
+    rank_datasets_for_question, select_datasets_for_question,
+)
 from biodisc_core.fixed_pipeline.real_datasets import REAL_GEO_DATASETS  # noqa: E402
 
 
@@ -57,6 +59,27 @@ def test_ranking_is_deterministic():
     a = _ids(rank_datasets_for_question(q, REAL_GEO_DATASETS))
     b = _ids(rank_datasets_for_question(q, REAL_GEO_DATASETS))
     assert a == b
+
+
+def test_select_returns_matched_dataset_first():
+    q = ("Which lipid-metabolism genes are differentially expressed in mouse "
+         "liver under high-fat vs standard diet?")
+    selected = select_datasets_for_question(q, REAL_GEO_DATASETS)
+    assert [d["id"] for d in selected] == ["GSE15822"]
+
+
+def test_select_returns_empty_when_no_dataset_matches():
+    """A question with no biological relation to any verified dataset must be
+    SKIPPED (return []), not rotated onto a random dataset — otherwise it yields
+    an incoherent candidate the entity-sparse validator can't catch
+    (e.g. glioblastoma on a breast-cancer dataset)."""
+    q = "Does STAT3 activation differ between IL-6 treated and untreated glioblastoma cells?"
+    assert select_datasets_for_question(q, REAL_GEO_DATASETS) == []
+
+
+def test_select_returns_empty_for_entity_less_question():
+    q = "How does quantum tunneling affect photosynthetic efficiency?"
+    assert select_datasets_for_question(q, REAL_GEO_DATASETS) == []
 
 
 if __name__ == "__main__":

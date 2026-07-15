@@ -237,6 +237,31 @@ def rank_datasets_for_question(question: str, datasets: List[Dict], mapper=None)
     return [(rel, ds) for (rel, _, ds) in scored]
 
 
+def select_datasets_for_question(
+    question: str, datasets: List[Dict], mapper=None, max_results: int = 3
+) -> List[Dict]:
+    """Return the biologically-matched datasets for ``question``, or ``[]`` if none.
+
+    Pins a question to its most-relevant dataset(s) via
+    :func:`rank_datasets_for_question`. If NO dataset shares any organism /
+    tissue / disease entity with the question (best score 0), returns ``[]`` so
+    the caller SKIPS the question instead of rotating it onto an unrelated
+    dataset. Rotating an unmatched question onto a random dataset produces an
+    incoherent candidate (e.g. a glioblastoma question on a breast-cancer
+    dataset) that the entity-sparse validator cannot catch — and you cannot
+    honestly answer a question with data that has no biological relation to it.
+    """
+    ranked = rank_datasets_for_question(question, datasets, mapper=mapper)
+    # Return ONLY the datasets with a positive relevance score (capped at
+    # max_results). Slicing ranked[:max_results] would pad with zero-score
+    # (irrelevant) datasets when fewer than max_results match — defeating the
+    # purpose. No positive match at all => [] (skip the question).
+    matched = [ds for (score, ds) in ranked if score > 0]
+    if not matched:
+        return []
+    return matched[:max_results]
+
+
 def create_specific_questions_generator() -> SpecificQuestionsGenerator:
     """Factory function to create specific questions generator"""
     return SpecificQuestionsGenerator()
