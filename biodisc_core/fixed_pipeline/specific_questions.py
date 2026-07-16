@@ -15,7 +15,7 @@ Each question should be:
 
 import logging
 import random
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -139,18 +139,40 @@ class SpecificQuestionsGenerator:
                 aligned.append(q)
         return aligned
 
-    def generate_question_pool(self, datasets: List[Dict] = None) -> List[str]:
-        """Diverse + dataset-aligned question pool, shuffled for cycle variety.
+    def generate_context_conditional_questions(self) -> List[str]:
+        """Module/pathway-focused questions that probe CONDITIONAL biology within
+        each contrast (ASTRA §6/§7.5: push past the dominant pairwise signal toward
+        context-specific relations). These are still answerable as case/control DE
+        but frame the finding around a specific gene module — surfaced via the
+        pathway-enrichment analysis, a step toward conditional biology. Full
+        residual/subset analysis would realize them further.
+        """
+        return [
+            # Breast cancer — module-focused
+            "Which immune-response and inflammation genes distinguish breast cancer tumors from normal breast tissue?",
+            "Which cell-cycle and proliferation genes are dysregulated in breast cancer vs normal?",
+            # Mouse liver high-fat — module-focused
+            "Which lipid-metabolism and fatty-acid pathway genes respond to a high-fat diet in mouse liver?",
+            "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+            # Pancreatic cancer — module-focused
+            "Which extracellular-matrix and adhesion genes distinguish pancreatic tumors from normal pancreas?",
+            # Lung adenocarcinoma — module-focused
+            "Which DNA-repair and replication genes distinguish lung adenocarcinoma from normal lung?",
+            "Which immune-checkpoint and antigen-presentation genes differ in lung adenocarcinoma vs normal?",
+        ]
 
-        Combining the broad specific-question list with the guaranteed-matched
-        dataset-aligned questions, then shuffling, varies which question is
-        attempted first each cycle. This is the diversity lever that reduces
-        duplicate-statistical-profile rejections (ASTRA §7.5: prime toward
-        varied, context-conditional relations rather than the dominant pairwise
-        one).
+    def generate_question_pool(self, datasets: List[Dict] = None) -> List[str]:
+        """Diverse + dataset-aligned + context-conditional pool, shuffled.
+
+        Combining the broad specific-question list with dataset-aligned questions
+        and module-focused context-conditional questions, then shuffling, varies
+        which question is attempted first each cycle. This is the diversity lever
+        that reduces duplicate-statistical-profile rejections (ASTRA §7.5) and
+        primes toward non-obvious, conditional biology past the dominant signal.
         """
         pool = list(self.generate_specific_questions())
         pool.extend(self.generate_dataset_aligned_questions(datasets))
+        pool.extend(self.generate_context_conditional_questions())
         # De-duplicate while preserving order, then shuffle for cycle variety.
         seen = set()
         unique = [q for q in pool if not (q in seen or seen.add(q))]
@@ -260,6 +282,36 @@ def select_datasets_for_question(
     if not matched:
         return []
     return matched[:max_results]
+
+
+def find_sibling_dataset(dataset_id: str, datasets: List[Dict], mapper=None) -> Optional[Dict]:
+    """Return a sibling dataset (same tissue + disease, different id) for independent-
+    cohort replication, or None. Two datasets are siblings when their titles map to
+    a shared tissue AND disease entity (e.g. GSE2034 + GSE42568, both breast cancer).
+    """
+    if mapper is None:
+        from biodisc_core.fixed_pipeline.dataset_question_validation.ontology_mapper import OntologyMapper
+        mapper = OntologyMapper()
+
+    def _ent(d):
+        text = f"{d.get('title', '')} {d.get('question', '')} {d.get('organism', '')}"
+        e = mapper.extract_entities(text)
+        return (mapper.normalize_tissues(e.get("tissues", set())),
+                mapper.normalize_diseases(e.get("diseases", set())))
+
+    target = next((d for d in datasets if d.get("id") == dataset_id), None)
+    if target is None:
+        return None
+    t_tis, t_dis = _ent(target)
+    if not (t_tis and t_dis):
+        return None
+    for d in datasets:
+        if d.get("id") == dataset_id:
+            continue
+        d_tis, d_dis = _ent(d)
+        if d_tis and d_dis and (t_tis & d_tis) and (t_dis & d_dis):
+            return d
+    return None
 
 
 def create_specific_questions_generator() -> SpecificQuestionsGenerator:

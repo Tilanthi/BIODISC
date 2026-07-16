@@ -1,10 +1,15 @@
 """Discovery cache for duplicate detection."""
-from collections import OrderedDict
-from typing import Dict, Set, Optional, Tuple, Any
+from collections import OrderedDict, defaultdict
+from typing import Dict, Set, Optional, Tuple, Any, List
 from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Near-duplicate threshold for top-DE-gene overlap on the SAME dataset. Two
+# discoveries sharing >= this fraction of their top genes are re-deriving the
+# same contrast (different question phrasings of the same biology).
+NEAR_DUP_OVERLAP = 0.7
 
 class DiscoveryCache:
     """LRU cache for tracking discoveries and detecting duplicates."""
@@ -20,6 +25,8 @@ class DiscoveryCache:
         self.discoveries: OrderedDict[str, Dict] = OrderedDict()
         self.question_dataset_pairs: Set[str] = set()
         self.statistical_profiles: Set[str] = set()
+        # dataset_id -> list of top-gene lists (for same-dataset overlap dedup)
+        self.dataset_gene_sets: Dict[str, List[List[str]]] = defaultdict(list)
 
         # Statistics
         self.total_discoveries = 0
@@ -58,6 +65,25 @@ class DiscoveryCache:
             logger.warning(f"🚫 DUPLICATE: {reason}")
             return True, reason
 
+        # Check 4: Near-duplicate by top-DE-gene overlap on the SAME dataset.
+        # Different question phrasings of the same contrast (e.g. "lipid-metabolism
+        # genes in mouse liver" vs "high-fat diet hepatic expression" on GSE15822)
+        # share most of their top genes -> the same finding re-derived.
+        if fingerprint.top_genes and fingerprint.dataset_id:
+            new_set = set(fingerprint.top_genes)
+            for stored in self.dataset_gene_sets.get(fingerprint.dataset_id, []):
+                stored_set = set(stored)
+                if not stored_set:
+                    continue
+                overlap = len(new_set & stored_set) / min(len(new_set), len(stored_set))
+                if overlap >= NEAR_DUP_OVERLAP:
+                    self.duplicates_detected += 1
+                    reason = (f"Near-duplicate: {int(overlap * 100)}% top-gene overlap "
+                              f"with an existing discovery on {fingerprint.dataset_id} "
+                              f"(same contrast re-derived)")
+                    logger.warning(f"🚫 DUPLICATE: {reason}")
+                    return True, reason
+
         # Not a duplicate
         return False, ""
 
@@ -92,6 +118,10 @@ class DiscoveryCache:
 
         # Track statistical profiles
         self.statistical_profiles.add(fingerprint.statistical_hash)
+
+        # Track top-gene sets per dataset (for same-dataset overlap dedup)
+        if fingerprint.top_genes and fingerprint.dataset_id:
+            self.dataset_gene_sets[fingerprint.dataset_id].append(list(fingerprint.top_genes))
 
         logger.info(f"✅ Discovery added to cache (total: {self.total_discoveries}, duplicates: {self.duplicates_detected})")
 

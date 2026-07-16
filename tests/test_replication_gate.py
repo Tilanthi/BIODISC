@@ -183,5 +183,25 @@ def test_replication_uses_nominal_p_not_fdr_in_held_out():
     assert v.n_replicated >= 2
 
 
+def test_independent_cohort_replication():
+    """An independent cohort (a different dataset of the same domain) confirms the
+    discovery's top genes — stronger than the internal held-out split of one dataset."""
+    discovery_top = [
+        {"gene_symbol": "G1", "log2_fold_change": 1.0},
+        {"gene_symbol": "G2", "log2_fold_change": 1.0},
+        {"gene_symbol": "G3", "log2_fold_change": 1.0},
+    ]
+    cohort = NS(results=[
+        NS(gene_symbol=g, p_value=0.01 if g in {"G1", "G2", "G3"} else 0.5,
+           log2_fold_change=1.0) for g in ["G1", "G2", "G3", "G4"]])
+    gate = create_replication_gate(min_replicated=2, min_fraction=0.4)
+    v = gate.assess_independent_cohort(
+        discovery_top, np.zeros((4, 4)), ["G1", "G2", "G3", "G4"],
+        np.array([0, 0, 1, 1]), lambda *a, **k: cohort, cohort_id="GSE42568")
+    assert v.method == "independent_cohort"
+    assert v.replicated is True
+    assert v.n_replicated == 3
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))

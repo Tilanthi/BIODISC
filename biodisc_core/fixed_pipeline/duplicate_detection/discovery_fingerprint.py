@@ -15,6 +15,8 @@ class DiscoveryFingerprint:
     statistical_hash: str  # Hash of key statistical measures
     gene_set_hash: str  # Hash of top 10 gene symbols
     combined_hash: str  # Master hash for duplicate detection
+    dataset_id: str = ""  # Raw dataset id (for same-dataset gene-overlap dedup)
+    top_genes: List[str] = None  # Raw top gene symbols (for overlap dedup)
 
     @classmethod
     def from_discovery(cls, discovery: Dict[str, Any]) -> 'DiscoveryFingerprint':
@@ -30,9 +32,15 @@ class DiscoveryFingerprint:
         significant_count = de_results.get('significant_genes_count', 0)
         total_genes = de_results.get('total_genes_tested', 0)
 
-        # Gene signature (top 10 if available)
-        top_genes = de_results.get('top_genes', [])
-        gene_list = sorted([g.get('gene_symbol', '') for g in top_genes[:10]])
+        # Gene signature — prefer an explicit top_genes list, else combine up/down
+        # (real orchestrator reports use top_upregulated/top_downregulated, not top_genes).
+        top_genes_raw = de_results.get('top_genes') or []
+        if not top_genes_raw:
+            top_genes_raw = (de_results.get('top_upregulated') or []) + (de_results.get('top_downregulated') or [])
+        gene_list = sorted({
+            (g.get('gene_symbol', '') if isinstance(g, dict) else str(g))
+            for g in top_genes_raw[:10]
+        } - {''})
 
         # Create hashes
         question_hash = hashlib.md5(question.encode()).hexdigest()[:8]
@@ -59,5 +67,7 @@ class DiscoveryFingerprint:
             dataset_hash=dataset_hash,
             statistical_hash=statistical_hash,
             gene_set_hash=gene_set_hash,
-            combined_hash=combined_hash
+            combined_hash=combined_hash,
+            dataset_id=dataset_id,
+            top_genes=gene_list,
         )

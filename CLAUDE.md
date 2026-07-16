@@ -140,7 +140,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   and **internally replicated (10/15 top genes, fraction 0.67, nominal-p + same-direction on the
   held-out split)**. The first finding to reach the `genuine` tier — genuine-discovery yield moved
   from 0 → 1. (Internally replicated, not independently replicated; GSE42568 now enables the latter.)
-- Full test suite green (211 tests). See `docs/peer_review_fixes_implementation.md`.
+- **Two discovery-quality levers** (2026-07-16, V8.0.13):
+  - *Near-duplicate dedup (DE-gene overlap)* — the duplicate detector now rejects two discoveries
+    on the same dataset that share ≥70% of their top DE genes (overlap coefficient), catching the
+    same contrast re-derived under different question phrasings (the genuine store was inflating
+    5× on the GSE15822 high-fat finding). Genuine count now reflects *distinct* findings.
+  - *Independent-cohort replication* — when a candidate's dataset has a same-domain sibling in the
+    pool (breast: GSE2034 + GSE42568), the discovery's top genes are replicated on the independent
+    cohort (stronger than the internal held-out split). Genuine findings that clear it are stamped
+    `method=independent_cohort`. The first lever past internal-only replication.
+  - *Context-conditional question priming* — module/pathway-focused questions (immune, cell-cycle,
+    lipid-metabolism, DNA-repair modules within each contrast) added to the pool, surfacing
+    conditional biology via pathway enrichment (ASTRA §6/§7.5: push past the dominant pairwise signal).
+- Full test suite green (215 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science

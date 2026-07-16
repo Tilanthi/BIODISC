@@ -225,6 +225,50 @@ class ReplicationGate:
         )
 
 
+    def assess_independent_cohort(self, discovery_top_genes, cohort_expression_data,
+                                  cohort_gene_symbols, cohort_group_labels, analyze_fn,
+                                  question: str = "", dataset_id: str = "",
+                                  cohort_id: str = "") -> ReplicationVerdict:
+        """Replicate the discovery's top genes on an INDEPENDENT cohort (stronger than
+        the internal held-out split of the same dataset). Used when the discovery's
+        dataset has a same-domain sibling in the pool (e.g. breast GSE2034 + GSE42568).
+
+        ``discovery_top_genes`` is a list of dicts/tuples each carrying a gene symbol
+        and the discovery's log2 fold change (e.g. the orchestrator's top-up/down genes).
+        """
+        method = "independent_cohort"
+        try:
+            cohort_de = analyze_fn(cohort_expression_data, cohort_gene_symbols,
+                                   cohort_group_labels, question, cohort_id)
+        except Exception as e:  # noqa: BLE001
+            logger.warning("independent-cohort DE failed: %s", e)
+            return ReplicationVerdict(
+                False, 0.0, 0, 0, 0, 0, method,
+                f"independent-cohort DE failed ({type(e).__name__})")
+
+        cohort_by_gene = {r.gene_symbol: r for r in cohort_de.results}
+        tested = replicated = 0
+        for g in discovery_top_genes:
+            sym = g.get("gene_symbol") if isinstance(g, dict) else g[0]
+            disc_lfc = g.get("log2_fold_change", 0.0) if isinstance(g, dict) else g[1]
+            h = cohort_by_gene.get(sym)
+            if h is None:
+                continue
+            tested += 1
+            h_p = getattr(h, "p_value", None)
+            if (h_p is not None and h_p < NOMINAL_P
+                    and np.sign(disc_lfc) == np.sign(getattr(h, "log2_fold_change", 0.0))):
+                replicated += 1
+
+        frac = replicated / max(1, tested)
+        is_repl = (replicated >= self.min_replicated) and (frac >= self.min_fraction)
+        reason = (f"{replicated}/{tested} discovery top genes nominal-p<0.05+same-direction "
+                  f"in independent cohort {cohort_id} (fraction {frac:.2f})")
+        logger.info("🧬 independent-cohort replication: %s", reason)
+        return ReplicationVerdict(
+            is_repl, round(frac, 4), replicated, tested, 0, 0, method, reason)
+
+
 def to_report_dict(verdict: ReplicationVerdict) -> dict:
     """Shape a verdict for ``report['replication']`` (consumed by discovery_gate)."""
     return {

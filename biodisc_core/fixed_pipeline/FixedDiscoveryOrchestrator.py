@@ -619,6 +619,37 @@ class FixedDiscoveryOrchestrator:
             except Exception as e:
                 logger.warning(f"   Replication assessment failed (non-fatal): {e}")
 
+            # STEP 3.6: Independent-cohort replication (stronger than held-out) when a
+            # same-domain sibling dataset exists (e.g. breast GSE2034 + GSE42568).
+            # Only attempted after internal replication succeeded; non-fatal.
+            if replication_verdict and replication_verdict.replicated:
+                try:
+                    from biodisc_core.fixed_pipeline.real_datasets import REAL_GEO_DATASETS
+                    from biodisc_core.fixed_pipeline.specific_questions import find_sibling_dataset
+                    sibling = find_sibling_dataset(geo_dataset_id, REAL_GEO_DATASETS)
+                    if sibling:
+                        logger.info(f"   Independent-cohort sibling found: {sibling['id']}")
+                        sib_expr, sib_genes, sib_labels = self.download_real_data_multi_repo(
+                            dataset_id=sibling['id'], repository='GEO', n_samples=12, n_genes=2000)
+                        disc_top = sorted(
+                            [r for r in de_analysis.results if r.significant],
+                            key=lambda r: getattr(r, "fdr_p_value", float("inf")))[:15]
+                        discovery_top_genes = [
+                            {"gene_symbol": r.gene_symbol,
+                             "log2_fold_change": getattr(r, "log2_fold_change", 0.0)}
+                            for r in disc_top]
+                        ic_verdict = self.replication_gate.assess_independent_cohort(
+                            discovery_top_genes, sib_expr, sib_genes, sib_labels,
+                            self.expression_analyzer.perform_differential_expression_analysis,
+                            question=question, dataset_id=geo_dataset_id, cohort_id=sibling['id'])
+                        if ic_verdict.replicated:
+                            logger.info(f"   Independent-cohort replication SUCCEEDED: {ic_verdict.reason}")
+                            replication_verdict = ic_verdict  # upgrade genuine to independent-cohort
+                        else:
+                            logger.info(f"   Independent-cohort replication did not confirm: {ic_verdict.reason}")
+                except Exception as e:
+                    logger.warning(f"   Independent-cohort replication skipped (non-fatal): {e}")
+
             # STEP 4: Perform pathway analysis
             logger.info("\n🧬 STEP 4: Pathway Enrichment Analysis")
 
