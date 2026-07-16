@@ -313,7 +313,8 @@ class FixedDiscoveryOrchestrator:
         dataset_id: str,
         repository: str = 'GEO',
         n_samples: int = 12,
-        n_genes: int = 2000
+        n_genes: int = 2000,
+        max_genes_cap: int = 2000
     ) -> Tuple[np.ndarray, List[str], np.ndarray]:
         """
         Download REAL biological data from MULTIPLE repositories.
@@ -353,7 +354,7 @@ class FixedDiscoveryOrchestrator:
         result = self.multi_repo_downloader.download_dataset(
             repository=repository,
             accession=dataset_id,
-            max_genes=min(n_genes, 2000),
+            max_genes=min(n_genes, max_genes_cap),
             timeout=60
         )
 
@@ -630,7 +631,8 @@ class FixedDiscoveryOrchestrator:
                     if sibling:
                         logger.info(f"   Independent-cohort sibling found: {sibling['id']}")
                         sib_expr, sib_genes, sib_labels = self.download_real_data_multi_repo(
-                            dataset_id=sibling['id'], repository='GEO', n_samples=12, n_genes=2000)
+                            dataset_id=sibling['id'], repository='GEO', n_samples=12, n_genes=8000,
+                            max_genes_cap=8000)  # larger gene set so it covers the discovery's top genes
                         disc_top = sorted(
                             [r for r in de_analysis.results if r.significant],
                             key=lambda r: getattr(r, "fdr_p_value", float("inf")))[:15]

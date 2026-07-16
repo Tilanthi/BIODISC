@@ -152,6 +152,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - *Context-conditional question priming* — module/pathway-focused questions (immune, cell-cycle,
     lipid-metabolism, DNA-repair modules within each contrast) added to the pool, surfacing
     conditional biology via pathway enrichment (ASTRA §6/§7.5: push past the dominant pairwise signal).
+- **Bug fixes for the two discovery levers** (2026-07-16, V8.0.14):
+  - *Independent-cohort 0/0 fixed*: the cohort was downloaded with a 2000-gene subset that didn't
+    cover the discovery's top genes + a gene-symbol case mismatch; now downloads 8000 genes (covers
+    the discovery's set) and normalizes symbols (uppercase) before matching.
+  - *Dedup persistence*: the near-duplicate gene-overlap registry is now persisted to
+    `duplicate_registry.json` (env-overridable via `BIODISC_DUPLICATE_REGISTRY`), so cross-restart
+    rediscoveries are caught. Test runs isolated via conftest (like the verdict log).
 - Full test suite green (215 tests). See `docs/peer_review_fixes_implementation.md`.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):

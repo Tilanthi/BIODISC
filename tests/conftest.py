@@ -13,4 +13,5 @@ import pytest
 @pytest.fixture(autouse=True)
 def _isolate_verdict_log(tmp_path, monkeypatch):
     monkeypatch.setenv("BIODISC_VERDICT_LOG", str(tmp_path / "test_verdicts.jsonl"))
+    monkeypatch.setenv("BIODISC_DUPLICATE_REGISTRY", str(tmp_path / "test_dup_registry.json"))
     yield

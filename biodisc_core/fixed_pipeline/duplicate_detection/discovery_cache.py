@@ -1,38 +1,61 @@
 """Discovery cache for duplicate detection."""
+import json
+import os
 from collections import OrderedDict, defaultdict
+from pathlib import Path
 from typing import Dict, Set, Optional, Tuple, Any, List
 from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Near-duplicate threshold for top-DE-gene overlap on the SAME dataset. Two
-# discoveries sharing >= this fraction of their top genes are re-deriving the
-# same contrast (different question phrasings of the same biology).
 NEAR_DUP_OVERLAP = 0.7
+
+_DEFAULT_REGISTRY = Path(__file__).resolve().parents[3] / "duplicate_registry.json"
+
+
+def _registry_file():
+    """Registry path, honoring the BIODISC_DUPLICATE_REGISTRY override (call-time,
+    not import-time, so per-test conftest isolation works)."""
+    env = os.environ.get("BIODISC_DUPLICATE_REGISTRY")
+    return Path(env) if env else _DEFAULT_REGISTRY
+
 
 class DiscoveryCache:
     """LRU cache for tracking discoveries and detecting duplicates."""
 
     def __init__(self, max_size: int = 10000):
-        """
-        Initialize discovery cache.
-
-        Args:
-            max_size: Maximum number of discovery fingerprints to track
-        """
         self.max_size = max_size
         self.discoveries: OrderedDict[str, Dict] = OrderedDict()
         self.question_dataset_pairs: Set[str] = set()
         self.statistical_profiles: Set[str] = set()
-        # dataset_id -> list of top-gene lists (for same-dataset overlap dedup)
         self.dataset_gene_sets: Dict[str, List[List[str]]] = defaultdict(list)
 
-        # Statistics
         self.total_discoveries = 0
         self.duplicates_detected = 0
 
-        logger.info(f"💾 DiscoveryCache initialized (max_size={max_size})")
+        # Load the persisted gene-set registry so dedup works across restarts.
+        self._load_registry()
+
+        logger.info(f"💾 DiscoveryCache initialized (max_size={max_size}, "
+                    f"registry: {sum(len(v) for v in self.dataset_gene_sets.values())} gene-sets)")
+
+    def _load_registry(self):
+        try:
+            rf = _registry_file()
+            if rf.exists():
+                data = json.loads(rf.read_text())
+                self.dataset_gene_sets = defaultdict(list, {k: v for k, v in data.items()})
+                logger.info(f"📂 Loaded {sum(len(v) for v in self.dataset_gene_sets.values())} "
+                            f"gene-sets from {rf.name}")
+        except Exception as e:
+            logger.warning(f"Could not load duplicate registry (non-fatal): {e}")
+
+    def _save_registry(self):
+        try:
+            _registry_file().write_text(json.dumps(dict(self.dataset_gene_sets)))
+        except Exception as e:
+            logger.warning(f"Could not save duplicate registry (non-fatal): {e}")
 
     def is_duplicate(self, fingerprint: 'DiscoveryFingerprint') -> Tuple[bool, str]:
         """
@@ -122,6 +145,7 @@ class DiscoveryCache:
         # Track top-gene sets per dataset (for same-dataset overlap dedup)
         if fingerprint.top_genes and fingerprint.dataset_id:
             self.dataset_gene_sets[fingerprint.dataset_id].append(list(fingerprint.top_genes))
+            self._save_registry()  # persist so dedup survives restarts
 
         logger.info(f"✅ Discovery added to cache (total: {self.total_discoveries}, duplicates: {self.duplicates_detected})")
 

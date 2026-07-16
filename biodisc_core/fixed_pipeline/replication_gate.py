@@ -246,10 +246,11 @@ class ReplicationGate:
                 False, 0.0, 0, 0, 0, 0, method,
                 f"independent-cohort DE failed ({type(e).__name__})")
 
-        cohort_by_gene = {r.gene_symbol: r for r in cohort_de.results}
+        cohort_by_gene = {str(r.gene_symbol).upper().strip(): r for r in cohort_de.results}
         tested = replicated = 0
         for g in discovery_top_genes:
-            sym = g.get("gene_symbol") if isinstance(g, dict) else g[0]
+            sym_raw = g.get("gene_symbol") if isinstance(g, dict) else g[0]
+            sym = str(sym_raw).upper().strip()
             disc_lfc = g.get("log2_fold_change", 0.0) if isinstance(g, dict) else g[1]
             h = cohort_by_gene.get(sym)
             if h is None:
