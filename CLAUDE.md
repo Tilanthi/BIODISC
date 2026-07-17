@@ -315,6 +315,7 @@ python biodisc_core/comprehensive_system_test.py
 - **Use factory functions** - never direct constructors
 - **Verify claims** against hallucination register
 - **WRITE CHOKEPOINT (V8.0)**: Every discovery is written through `discovery_store.append_verified`, which requires a machine verification block. Never add a second write path. Genuine (replicated) → `autonomous_discoveries.jsonl`; candidates → `autonomous_discoveries_candidates.jsonl`
+- **CODE INTEGRITY (V8.0.15 audit)**: `import biodisc_core` works (no cascade breakage). The **live pipeline** (fixed_pipeline 44/44, evolution 26/26) is syntactically clean. **34 truncated files** exist in orphaned legacy dirs (reasoning/, arc_reasoning/, retrieval/, etc.) — baselined in `BROKEN_FILES_BASELINE.md`, NOT guess-repaired. Tests: 215/215 pass.
 - **6-LAYER VALIDATION + GATE-2 + REPLICATION**: duplicate / dataset-question / probe-gene / FDR-significance / template / **PubMed literature-novelty (Gate-2)**, plus a held-out **replication** anchor for `is_genuine`
 
 ---
