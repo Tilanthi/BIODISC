@@ -313,9 +313,23 @@ def register_domain(cls: type) -> type:
 # Import DomainRegistry from registry module
 from .registry import DomainRegistry
 
-# Import new domain modules
-from .ism import ISMDomain, create_ism_domain
-from .star_formation import StarFormationDomain, create_star_formation_domain
+# Import new domain modules.
+# NOTE (audit 2026-07-17): `ism` and `star_formation` are astrophysics leftovers
+# from the ASTRA fork and are not present in BIODISC. They are guarded (like the
+# high_energy/galactic_archaeology blocks below) so an absent module degrades
+# gracefully instead of raising ImportError and cascading into the
+# "Domain system not available" warnings across the package.
+try:
+    from .ism import ISMDomain, create_ism_domain
+except ImportError:
+    ISMDomain = None
+    create_ism_domain = None
+
+try:
+    from .star_formation import StarFormationDomain, create_star_formation_domain
+except ImportError:
+    StarFormationDomain = None
+    create_star_formation_domain = None
 
 # V47+ New domains
 try:

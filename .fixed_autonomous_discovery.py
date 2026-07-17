@@ -67,7 +67,6 @@ class FixedAutonomousDiscovery:
         self.orchestrator = None
         self.running = False
         self.session_file = project_root / "fixed_discovery_state.json"
-        self.discoveries_file = project_root / "autonomous_discoveries.jsonl"
 
         # Shared ontology mapper for question<->dataset relevance pinning.
         try:

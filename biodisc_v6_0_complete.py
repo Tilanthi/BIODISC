@@ -387,36 +387,17 @@ class BIODISCV6Complete:
         # Interactive implementation would go here
 
     def _store_v6_discovery(self, experiment, hybrid_result, validation, health_metrics):
-        """Store discovery with all V6.0 metadata"""
-        import uuid
+        """Store discovery with all V6.0 metadata.
 
-        discovery_entry = {
-            'id': f"v6_discovery_{uuid.uuid4().hex[:8]}",
-            'question': experiment.question,
-            'timestamp': time.time(),
-            'v6_components': {
-                'hybrid_result': {
-                    'generative_confidence': hybrid_result.confidence_scores['generative'],
-                    'causal_confidence': hybrid_result.confidence_scores['causal'],
-                    'neurosymbolic_confidence': hybrid_result.confidence_scores['neurosymbolic'],
-                    'unified_confidence': hybrid_result.confidence_scores['unified'],
-                    'paradigm_contributions': hybrid_result.paradigm_contributions
-                },
-                'continuous_validation': validation,
-                'epistemic_health': {
-                    'diversity_score': health_metrics.conceptual_diversity_score,
-                    'collapse_risk': health_metrics.collapse_risk
-                }
-            },
-            'mode': self.mode
-        }
-
-        discoveries_file = project_root / "autonomous_discoveries.jsonl"
-        with open(discoveries_file, 'a') as f:
-            f.write(json.dumps(discovery_entry) + '\n')
-
-        total = self._count_discoveries()
-        logger.info(f"💾 V6.0 Discovery stored. Total discoveries: {total}")
+        BYPASS WRITE NEUTRALIZED (audit 2026-07-17): direct unverified writes to
+        the genuine store are forbidden. All discoveries must route through
+        biodisc_core.fixed_pipeline.discovery_store.append_verified, which
+        requires a machine verification block. This legacy method now refuses.
+        """
+        raise RuntimeError(
+            "Direct unverified write to autonomous_discoveries.jsonl is disabled. "
+            "Route through biodisc_core.fixed_pipeline.discovery_store.append_verified."
+        )
 
     def _count_discoveries(self) -> int:
         """Count total discoveries"""

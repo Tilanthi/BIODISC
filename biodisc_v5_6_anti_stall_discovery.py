@@ -539,31 +539,17 @@ class PermanentAntiStallDiscovery:
         logger.info("🔄 Forcing discovery cycle restart...")
 
     def _store_discovery(self, question: str, data: Dict, dataset: Dict, novelty: Dict):
-        """Store validated discovery"""
-        try:
-            discovery_id = f"discovery_{uuid.uuid4().hex[:8]}"
+        """Store validated discovery.
 
-            entry = {
-                'id': discovery_id,
-                'question': question,
-                'timestamp': time.time(),
-                'dataset': dataset.get('geo_id', 'unknown'),
-                'novelty_score': novelty.get('novelty_score', 0.0),
-                'confidence': novelty.get('confidence', 0.0),
-                'sample_count': dataset.get('sample_count', 0),
-                'feature_count': dataset.get('feature_count', 0)
-            }
-
-            discoveries_file = project_root / "autonomous_discoveries.jsonl"
-            with open(discoveries_file, 'a') as f:
-                f.write(json.dumps(entry) + '\n')
-
-            total = self._count_discoveries()
-            logger.info(f"💾 Discovery stored: {discovery_id}")
-            logger.info(f"   Total discoveries: {total}")
-
-        except Exception as e:
-            logger.error(f"❌ Error storing discovery: {e}")
+        BYPASS WRITE NEUTRALIZED (audit 2026-07-17): direct unverified writes to
+        the genuine store are forbidden. All discoveries must route through
+        biodisc_core.fixed_pipeline.discovery_store.append_verified, which
+        requires a machine verification block. This legacy method now refuses.
+        """
+        raise RuntimeError(
+            "Direct unverified write to autonomous_discoveries.jsonl is disabled. "
+            "Route through biodisc_core.fixed_pipeline.discovery_store.append_verified."
+        )
 
     def _count_discoveries(self) -> int:
         """Count total discoveries"""

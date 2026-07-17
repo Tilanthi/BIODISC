@@ -129,6 +129,22 @@
     `duplicate_registry.json` (env-overridable via `BIODISC_DUPLICATE_REGISTRY`), so cross-restart
     rediscoveries are caught. Test runs isolated via conftest (like the verdict log).
 - Full test suite green (215 tests). See `docs/peer_review_fixes_implementation.md`.
+- **Code-integrity audit** (2026-07-17, V8.0.16):
+  - *Bypass-write neutralization* — the 4 dormant legacy direct-writes to the genuine store
+    (`biodisc_v5_6_anti_stall_discovery.py`, `biodisc_v6_0_complete.py`,
+    `biodisc_v6_0_fixed_integrated.py`, `biodisc_core/reasoning/v73_autonomous_discovery_working.py`)
+    were replaced with `raise RuntimeError` (placed outside any swallowing `except`). The
+    chokepoint is now structurally — not just conventionally — the only write path.
+  - *Import-cascade fix* — `domains/__init__.py` no longer hard-imports the absent astrophysics
+    modules `ism`/`star_formation` (ASTRA leftovers); they now degrade to `None` like the other
+    optional domains, eliminating the "Domain system not available" warning cascade.
+  - *Genuine-store hygiene* — ~6,200 legacy `is_genuine=None` rows removed from the active store
+    (full pre-migration state preserved in git history; local archive + backup retained); the
+    genuine store now holds only the 20 genuine + 6 rejected findings.
+  - *Cosmetic* — `5-LAYER` → `6-LAYER` in orchestrator logs/docstrings (the code runs 6 gates);
+    dead `output_file` param on `save_discovery` and dead `self.discoveries_file` removed.
+    731-file syntax sweep = 34 broken files, exact `BROKEN_FILES_BASELINE.md` match, zero
+    regressions. 215/215 tests pass.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science

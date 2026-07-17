@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Quick Reference
 
 **Project**: BIODISC (Biology Discovery and Intelligence System)
-**Version**: V8.0.15 — VERIFICATION-FIRST
-**Capability**: not a fixed % — measured by the capability index (`capability_index.json`). **18 genuine discoveries** to date (internally replicated). Index ~15/100; trend is the signal.
+**Version**: V8.0.16 — VERIFICATION-FIRST (code-integrity audit)
+**Capability**: not a fixed % — measured by the capability index (`capability_index.json`). **20 genuine discoveries** to date (internally replicated; genuine store cleaned of ~6.2k legacy unreplicated rows on 2026-07-17). Index ~15/100; trend is the signal.
 **GitHub**: https://github.com/Tilanthi/BIODISC (ONLY repository)
 **Remote**: `biodisc` (use `git push biodisc main` — ONLY main branch)
 
@@ -65,10 +65,10 @@ result = system.answer("What causes protein misfolding?")
 
 ## Critical Reminders
 
-- **WRITE CHOKEPOINT**: Every discovery goes through `discovery_store.append_verified` (requires a machine verification block). Never add a second write path. Genuine → `autonomous_discoveries.jsonl`; candidates → `autonomous_discoveries_candidates.jsonl`.
+- **WRITE CHOKEPOINT**: Every discovery goes through `discovery_store.append_verified` (requires a machine verification block). Never add a second write path. Genuine → `autonomous_discoveries.jsonl`; candidates → `autonomous_discoveries_candidates.jsonl`. (The 4 dormant legacy bypass writes were neutralized to `raise RuntimeError` on 2026-07-17, making the chokepoint structurally — not just conventionally — the only write path.)
 - **6-LAYER VALIDATION + REPLICATION**: duplicate / dataset-question / probe-gene / FDR-significance / template / PubMed Gate-2 (literature novelty), plus a held-out replication anchor for `is_genuine`.
 - **SINGLE ALWAYS-ON PATH**: launchd → `discovery_watchdog.py` → `.fixed_autonomous_discovery.py`. Legacy V73 loops are retired stubs — never revive them.
-- **CODE INTEGRITY**: `import biodisc_core` works. Live pipeline (fixed_pipeline + evolution) is syntactically clean. 34 truncated files in orphaned legacy dirs — baselined in `BROKEN_FILES_BASELINE.md`, not guess-repaired. Tests: 215/215 pass.
+- **CODE INTEGRITY** (full audit 2026-07-17): `import biodisc_core` works. Live pipeline (fixed_pipeline + evolution) is syntactically clean; 731 files scanned, the 34 truncated legacy files are an exact match to `BROKEN_FILES_BASELINE.md` (zero regressions). The single write chokepoint is now **structurally** airtight — 4 dormant legacy bypass writes (`biodisc_v5_6_*`, `biodisc_v6_0_*`, `v73_*`) were neutralized to `raise RuntimeError`. The `domains/__init__.py` astrophysics-import cascade (which drove the "Domain system not available" warnings) is fixed. Tests: 215/215 pass. Legacy truncations remain baselined, not guess-repaired.
 - **NEVER push to ASTRA-dev** — use BIODISC repository only.
 - **Naming**: Always use "BIODISC" (not "STAN" or "STAN-XI-ASTRO").
 - **Use factory functions** — never direct constructors.

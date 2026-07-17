@@ -245,19 +245,17 @@ class V6FixedIntegratedSystem:
         )
 
     def save_discovery(self, discovery: Dict):
-        """Save discovery to file"""
-        try:
-            output_file = project_root / "autonomous_discoveries.jsonl"
+        """Save discovery to file.
 
-            with open(output_file, 'a') as f:
-                f.write(json.dumps(discovery) + '\n')
-
-            logger.info(f"💾 Discovery saved to {output_file}")
-            self.discoveries_made += 1
-            self.last_progress = time.time()
-
-        except Exception as e:
-            logger.error(f"Failed to save discovery: {e}")
+        BYPASS WRITE NEUTRALIZED (audit 2026-07-17): direct unverified writes to
+        the genuine store are forbidden. All discoveries must route through
+        biodisc_core.fixed_pipeline.discovery_store.append_verified, which
+        requires a machine verification block. This legacy method now refuses.
+        """
+        raise RuntimeError(
+            "Direct unverified write to autonomous_discoveries.jsonl is disabled. "
+            "Route through biodisc_core.fixed_pipeline.discovery_store.append_verified."
+        )
 
     def check_stall(self) -> bool:
         """Check if system is stalled"""

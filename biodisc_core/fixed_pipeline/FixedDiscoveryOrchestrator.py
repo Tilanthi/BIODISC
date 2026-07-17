@@ -33,7 +33,7 @@ from biodisc_core.fixed_pipeline.multi_repository_verification import create_mul
 from biodisc_core.fixed_pipeline.multi_repository_downloader import create_multi_repository_data_downloader
 from biodisc_core.fixed_pipeline.peer_review_validator import create_peer_review_validator
 
-# NEW: 5-layer validation system
+# NEW: 6-layer validation system
 from biodisc_core.fixed_pipeline.duplicate_detection import create_duplicate_detector
 from biodisc_core.fixed_pipeline.dataset_question_validation import create_dataset_question_validator
 from biodisc_core.fixed_pipeline.probe_gene_mapping import create_probe_gene_mapper
@@ -82,7 +82,7 @@ class FixedDiscoveryOrchestrator:
         self.peer_review_validator = create_peer_review_validator()
         self.multi_repo_downloader = create_multi_repository_data_downloader()
 
-        # NEW: 5-layer validation system (HARD GATES)
+        # NEW: 6-layer validation system (HARD GATES)
         self.duplicate_detector = create_duplicate_detector(max_cache_size=10000)
         self.dataset_question_validator = create_dataset_question_validator()
         self.probe_gene_mapper = create_probe_gene_mapper()
@@ -93,7 +93,7 @@ class FixedDiscoveryOrchestrator:
         self.literature_gate = create_literature_novelty_gate()
         self.replication_gate = create_replication_gate()
 
-        logger.info("✅ 5-LAYER VALIDATION SYSTEM INITIALIZED")
+        logger.info("✅ 6-LAYER VALIDATION SYSTEM INITIALIZED")
         logger.info("   1. Duplicate Detection")
         logger.info("   2. Dataset-Question Validation")
         logger.info("   3. Probe-Gene Mapping")
@@ -116,7 +116,7 @@ class FixedDiscoveryOrchestrator:
         discovery_report: Dict
     ) -> tuple[bool, List[str], Dict]:
         """
-        Perform comprehensive 5-layer validation on discovery.
+        Perform comprehensive 6-layer validation on discovery.
 
         Args:
             discovery_report: Complete discovery report to validate
@@ -125,7 +125,7 @@ class FixedDiscoveryOrchestrator:
             (passes_all_gates, rejection_reasons, validation_stats)
         """
 
-        logger.info("🛡️  COMPREHENSIVE 5-LAYER VALIDATION")
+        logger.info("🛡️  COMPREHENSIVE 6-LAYER VALIDATION")
         logger.info("=" * 80)
 
         passes_all_gates = True
@@ -730,7 +730,7 @@ class FixedDiscoveryOrchestrator:
             logger.info("\n✅ GENUINE DISCOVERY GENERATED")
             logger.info("=" * 80)
 
-            # NEW: Comprehensive 5-layer validation before returning
+            # NEW: Comprehensive 6-layer validation before returning
             passes_validation, rejection_reasons, validation_stats = self.validate_discovery_comprehensive(
                 discovery_report
             )
@@ -751,7 +751,7 @@ class FixedDiscoveryOrchestrator:
             self.duplicate_detector.register_discovery(discovery_report)
             self.discoveries_validated += 1
 
-            # Add 5-layer validation statistics to discovery report
+            # Add 6-layer validation statistics to discovery report
             discovery_report['comprehensive_validation_statistics'] = validation_stats
 
             logger.info("✅ DISCOVERY VALIDATED AND ACCEPTED")
@@ -894,7 +894,7 @@ class FixedDiscoveryOrchestrator:
 
         return report
 
-    def save_discovery(self, discovery_report: Dict, output_file: str = "autonomous_discoveries.jsonl"):
+    def save_discovery(self, discovery_report: Dict):
         """
         Save discovery to file after peer review validation.
 

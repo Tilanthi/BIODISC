@@ -470,21 +470,16 @@ class WorkingAutonomousDiscoveryOrchestrator:
 
         # Log to file if configured
         if self.config.log_all_discoveries:
-            try:
-                with open(self.config.discovery_log_path, 'a') as f:
-                    discovery_record = {
-                        'id': discovery.id,
-                        'question': discovery.question.question,
-                        'discovery': discovery.discovery,
-                        'confidence': discovery.confidence,
-                        'evidence': discovery.evidence,
-                        'timestamp': discovery.timestamp,
-                        'computational_backing': discovery.computational_backing,
-                        'validation_status': 'validated'
-                    }
-                    f.write(json.dumps(discovery_record) + '\n')
-            except Exception as e:
-                logger.error(f"Error writing discovery to log: {e}")
+            # BYPASS WRITE NEUTRALIZED (audit 2026-07-17): V73 is a retired loop
+            # and must never write unvalidated "validated" discovery records.
+            # All real discoveries route through
+            # biodisc_core.fixed_pipeline.discovery_store.append_verified, which
+            # requires a machine verification block. Not wrapped in try/except so
+            # the refusal cannot be silently swallowed.
+            raise RuntimeError(
+                "V73 unvalidated discovery-log write is disabled. Route through "
+                "biodisc_core.fixed_pipeline.discovery_store.append_verified."
+            )
 
         logger.info(f"✅ Discovery stored: {discovery.id}")
 
