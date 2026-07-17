@@ -137,6 +137,16 @@ class FixedAutonomousDiscovery:
                 # Generate biological questions
                 questions = self._generate_biological_questions()
 
+                # Validity pre-filter: drop questions that have no matching
+                # verified dataset, so the loop doesn't burn iterations (and
+                # pollute the funnel) on unanswerable questions. This was the #1
+                # funnel bucket (~33% no_datasets). It is a validity screen, not
+                # an interestingness screen — a question with no data can never
+                # yield a discovery, so there is zero eureka cost. It uses the
+                # same matcher as the dataset search below, so it never drops a
+                # question the loop would have accepted. (audit 2026-07-17)
+                questions = self._filter_answerable_questions(questions)
+
                 if not questions:
                     logger.warning("No questions generated - waiting...")
                     time.sleep(300)
@@ -295,6 +305,37 @@ class FixedAutonomousDiscovery:
         except Exception as e:
             logger.error(f"❌ Error loading verified datasets: {e}")
             return []
+
+    def _filter_answerable_questions(self, questions: List[str]) -> List[str]:
+        """Drop questions that have no biologically-matching verified dataset.
+
+        A question with no dataset home is definitionally unanswerable under the
+        current verified pool — it can only produce a ``no_datasets`` rejection
+        and pollute the funnel. This pre-filter removes such questions *before*
+        the loop iterates, so cycles focus on questions that can actually yield a
+        discovery. It is a VALIDITY screen (not interestingness): zero eureka
+        cost, because a question with no data can never be a eureka. It uses the
+        same matcher as :meth:`_search_real_geo_datasets`, so it never drops a
+        question the loop would have accepted. Fails open on import error.
+        (audit 2026-07-17)
+        """
+        try:
+            from biodisc_core.fixed_pipeline.real_datasets import REAL_GEO_DATASETS
+            from biodisc_core.fixed_pipeline.specific_questions import select_datasets_for_question
+        except Exception as e:
+            logger.warning(f"Could not import dataset matcher for pre-filter (failing open): {e}")
+            return questions
+
+        answerable = [
+            q for q in questions
+            if select_datasets_for_question(q, REAL_GEO_DATASETS, mapper=self._ontology_mapper)
+        ]
+        dropped = len(questions) - len(answerable)
+        if dropped:
+            logger.info(f"↪ Pre-filter dropped {dropped}/{len(questions)} question(s) with no "
+                        f"matching dataset (would have been no_datasets); "
+                        f"{len(answerable)} answerable remain")
+        return answerable
 
     def _generate_biological_questions(self) -> List[str]:
         """
