@@ -25,6 +25,17 @@ class DiscoveryFingerprint:
         # Extract key fields
         question = discovery.get('question', '').lower().strip()
         dataset_id = discovery.get('dataset_id', '')
+        if not dataset_id:
+            # Genuine reports carry the accession under dataset.geo_id / gse_id,
+            # not at top level. Without this fallback, dataset_id is empty, the
+            # near-duplicate gene-overlap check (which keys on dataset_id) is
+            # silently skipped, and the registry is never persisted — which is
+            # why V8.0.13's dedup never caught same-dataset re-derivations.
+            # (audit 2026-07-17)
+            _ds = discovery.get('dataset') or {}
+            if isinstance(_ds, dict):
+                dataset_id = (_ds.get('geo_id') or _ds.get('gse_id')
+                              or _ds.get('dataset_id') or '')
 
         # Statistical signature
         de_results = discovery.get('differential_expression', {})

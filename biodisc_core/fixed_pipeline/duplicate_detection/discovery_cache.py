@@ -37,6 +37,15 @@ class DiscoveryCache:
         # Load the persisted gene-set registry so dedup works across restarts.
         self._load_registry()
 
+        # Seed near-duplicate gene-sets from the genuine store so dedup works
+        # immediately — even on a fresh start, and even if duplicate_registry.json
+        # was never created (the pre-fix state). Gated by the test-isolation env
+        # var: conftest sets BIODISC_DUPLICATE_REGISTRY for tests, so they keep a
+        # clean cache; production seeds from real history. Only seeds when the
+        # registry loaded nothing, to avoid double-counting once it's populated.
+        if not self.dataset_gene_sets and not os.environ.get('BIODISC_DUPLICATE_REGISTRY'):
+            self._seed_from_store()
+
         logger.info(f"💾 DiscoveryCache initialized (max_size={max_size}, "
                     f"registry: {sum(len(v) for v in self.dataset_gene_sets.values())} gene-sets)")
 
@@ -56,6 +65,53 @@ class DiscoveryCache:
             _registry_file().write_text(json.dumps(dict(self.dataset_gene_sets)))
         except Exception as e:
             logger.warning(f"Could not save duplicate registry (non-fatal): {e}")
+
+    def _seed_from_store(self):
+        """Seed ``dataset_gene_sets`` from the genuine discovery store.
+
+        Best-effort (any error is swallowed, non-fatal). Only genuine
+        (``is_genuine=True``) findings are seeded, so the near-duplicate
+        gene-overlap check has real prior contrasts to compare against on a
+        fresh start. This is what makes V8.0.13's same-dataset dedup actually
+        fire before any discovery has been registered in this process.
+        """
+        try:
+            store_path = Path(__file__).resolve().parents[3] / "autonomous_discoveries.jsonl"
+            if not store_path.exists():
+                return
+            seeded = 0
+            with open(store_path) as f:
+                for line in f:
+                    s = line.strip()
+                    if not s:
+                        continue
+                    try:
+                        d = json.loads(s)
+                    except Exception:
+                        continue
+                    if d.get('is_genuine') is not True:
+                        continue  # seed only from confirmed-genuine findings
+                    ds = d.get('dataset') or {}
+                    dsid = (d.get('dataset_id')
+                            or (ds.get('geo_id') if isinstance(ds, dict) else '')
+                            or (ds.get('gse_id') if isinstance(ds, dict) else '')
+                            or '')
+                    de = d.get('differential_expression') or {}
+                    genes_raw = (((de.get('top_upregulated') or [])
+                                  + (de.get('top_downregulated') or []))
+                                 if isinstance(de, dict) else [])
+                    genes = sorted({
+                        (g.get('gene_symbol', '') if isinstance(g, dict) else str(g))
+                        for g in genes_raw[:10]
+                    } - {''})
+                    if dsid and genes:
+                        self.dataset_gene_sets[dsid].append(genes)
+                        seeded += 1
+            if seeded:
+                logger.info(f"🌱 Seeded near-dup dedup with {seeded} genuine "
+                            f"gene-sets from {store_path.name}")
+        except Exception as e:
+            logger.warning(f"Could not seed dedup from store (non-fatal): {e}")
 
     def is_duplicate(self, fingerprint: 'DiscoveryFingerprint') -> Tuple[bool, str]:
         """
