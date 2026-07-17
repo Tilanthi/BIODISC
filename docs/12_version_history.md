@@ -145,6 +145,30 @@
     dead `output_file` param on `save_discovery` and dead `self.discoveries_file` removed.
     731-file syntax sweep = 34 broken files, exact `BROKEN_FILES_BASELINE.md` match, zero
     regressions. 215/215 tests pass.
+- **Near-duplicate dedup fixed** (2026-07-17, V8.0.17): the V8.0.13 same-dataset
+  gene-overlap dedup had never fired. Two compounding bugs: (1) the fingerprint read
+  `dataset_id` only from the top level, but genuine reports store it under `dataset.geo_id`
+  -> it came back empty -> the overlap check (keyed on dataset_id) was skipped and
+  `duplicate_registry.json` was never persisted; (2) a fresh start had zero history. Fix:
+  fingerprint falls back to `dataset.geo_id`/`gse_id`, and `DiscoveryCache` seeds
+  `dataset_gene_sets` from the genuine store at init (production only; tests stay isolated
+  via the existing conftest guard). Verified: a new question with >=70% top-gene overlap on
+  a seeded dataset is now flagged as a near-duplicate. 215/215 tests pass.
+- **no_datasets pre-filter** (2026-07-17, V8.0.18): ~33% of verdicts were `no_datasets`
+  (the #1 funnel bucket) because the loop iterated the full mixed question pool every
+  cycle and every broad-mechanistic question with no home in the 6-dataset verified pool
+  logged a rejection. Added a question-validity pre-filter (`_filter_answerable_questions`)
+  that drops questions with no matching verified dataset *before* iterating — a validity
+  screen, not an interestingness screen (zero eureka cost). Uses the same matcher as the
+  dataset search, so it never drops a question the loop would have accepted. Cuts ~15/37
+  questions per cycle. 215/215 tests pass.
+- **OntologyMapper synonyms** (2026-07-17, V8.0.19): the matcher had false negatives —
+  e.g. an "hepatic" question failed to pin the liver dataset (GSE15822) because adjective
+  forms weren't in the tissue map. Added collision-safe anatomical synonyms (hepatic->liver,
+  cardiac->heart, pulmonary->lung, intestinal->colon, cutaneous->skin,
+  neural/neuronal/cerebral->brain, pancreas/pancreatic) mapping to the same UBERON so
+  `normalize_tissues` makes them compare equal. 'renal' omitted (substring of 'adrenal').
+  Answerable-question rate 59%->62%. 215/215 tests pass.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science

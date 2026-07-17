@@ -27,6 +27,22 @@ class OntologyMapping:
         'blood': 'UBERON:0000170',
         'plasma': 'UBERON:0000170',
         'serum': 'UBERON:0000170',
+        # Anatomical adjectives / synonyms — each maps to the SAME UBERON as its
+        # canonical tissue, so normalize_tissues() makes the adjective compare
+        # equal to the canonical form. Without these a "hepatic" question failed
+        # to pin the liver dataset (GSE15822) -> false-negative no_datasets.
+        # 'renal' is intentionally omitted: it is a substring of 'adrenal'.
+        # (audit 2026-07-17)
+        'hepatic': 'UBERON:0002107',     # liver
+        'cardiac': 'UBERON:0000948',     # heart
+        'pulmonary': 'UBERON:0002167',   # lung
+        'intestinal': 'UBERON:0001155',  # intestine / colon
+        'cutaneous': 'UBERON:0002097',   # skin
+        'neural': 'UBERON:0000955',      # brain
+        'neuronal': 'UBERON:0000955',    # brain
+        'cerebral': 'UBERON:0000955',    # brain
+        'pancreas': 'UBERON:0001264',
+        'pancreatic': 'UBERON:0001264',
     }
 
     # Disease mappings (DOID - Human Disease Ontology)
