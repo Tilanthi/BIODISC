@@ -19,6 +19,7 @@ import sys
 import os
 import signal
 import logging
+from logging.handlers import RotatingFileHandler
 import time
 from pathlib import Path
 from datetime import datetime
@@ -38,7 +39,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(log_dir / "fixed_discovery.log"),
+        RotatingFileHandler(log_dir / "fixed_discovery.log", maxBytes=10_000_000, backupCount=3),
         logging.StreamHandler()
     ]
 )

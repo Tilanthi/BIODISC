@@ -18,6 +18,7 @@ import time
 import subprocess
 import psutil
 import logging
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -35,7 +36,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(log_dir / "discovery_watchdog.log"),
+        RotatingFileHandler(log_dir / "discovery_watchdog.log", maxBytes=10_000_000, backupCount=3),
         logging.StreamHandler()
     ]
 )
