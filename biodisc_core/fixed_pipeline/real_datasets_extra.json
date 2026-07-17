@@ -1,0 +1,52 @@
+[
+  {
+    "id": "GSE6956",
+    "repo": "GEO",
+    "title": "Prostate cancer tumors vs normal prostate",
+    "organism": "Homo sapiens",
+    "samples": 89,
+    "data_type": "gene_expression",
+    "question": "Which genes distinguish prostate cancer tumors from normal prostate tissue?",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE6956"
+  },
+  {
+    "id": "GSE66360",
+    "repo": "GEO",
+    "title": "Colorectal cancer vs adjacent normal",
+    "organism": "Homo sapiens",
+    "samples": 99,
+    "data_type": "gene_expression",
+    "question": "Which genes distinguish colorectal cancer from adjacent normal tissue?",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE66360"
+  },
+  {
+    "id": "GSE4107",
+    "repo": "GEO",
+    "title": "Colorectal adenocarcinoma vs normal colonic mucosa",
+    "organism": "Homo sapiens",
+    "samples": 22,
+    "data_type": "gene_expression",
+    "question": "Which genes are differentially expressed between colorectal adenocarcinoma and normal colonic mucosa?",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4107"
+  },
+  {
+    "id": "GSE40435",
+    "repo": "GEO",
+    "title": "Clear-cell renal cell carcinoma vs normal kidney",
+    "organism": "Homo sapiens",
+    "samples": 202,
+    "data_type": "gene_expression",
+    "question": "Which genes distinguish clear-cell renal cell carcinoma from normal kidney tissue?",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE40435"
+  },
+  {
+    "id": "GSE14407",
+    "repo": "GEO",
+    "title": "Ovarian cancer vs normal ovary",
+    "organism": "Homo sapiens",
+    "samples": 24,
+    "data_type": "gene_expression",
+    "question": "Which genes distinguish ovarian cancer from normal ovarian tissue?",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE14407"
+  }
+]

@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Quick Reference
 
 **Project**: BIODISC (Biology Discovery and Intelligence System)
-**Version**: V8.0.19 — VERIFICATION-FIRST (code-integrity audit + discovery-selection sharpening)
+**Version**: V8.0.20 — VERIFICATION-FIRST (code-integrity audit + discovery-selection sharpening + pool expansion)
 **Capability**: not a fixed % — measured by the capability index (`capability_index.json`). **20 genuine discoveries** to date (internally replicated; genuine store cleaned of ~6.2k legacy unreplicated rows on 2026-07-17). Index ~15/100; trend is the signal.
 **GitHub**: https://github.com/Tilanthi/BIODISC (ONLY repository)
 **Remote**: `biodisc` (use `git push biodisc main` — ONLY main branch)
@@ -69,7 +69,7 @@ result = system.answer("What causes protein misfolding?")
 - **6-LAYER VALIDATION + REPLICATION**: duplicate / dataset-question / probe-gene / FDR-significance / template / PubMed Gate-2 (literature novelty), plus a held-out replication anchor for `is_genuine`.
 - **SINGLE ALWAYS-ON PATH**: launchd → `discovery_watchdog.py` → `.fixed_autonomous_discovery.py`. Legacy V73 loops are retired stubs — never revive them.
 - **CODE INTEGRITY** (full audit 2026-07-17): `import biodisc_core` works. Live pipeline (fixed_pipeline + evolution) is syntactically clean; 731 files scanned, the 34 truncated legacy files are an exact match to `BROKEN_FILES_BASELINE.md` (zero regressions). The single write chokepoint is now **structurally** airtight — 4 dormant legacy bypass writes (`biodisc_v5_6_*`, `biodisc_v6_0_*`, `v73_*`) were neutralized to `raise RuntimeError`. The `domains/__init__.py` astrophysics-import cascade (which drove the "Domain system not available" warnings) is fixed. Tests: 215/215 pass. Legacy truncations remain baselined, not guess-repaired.
-- **DISCOVERY SELECTION** (sharpened 2026-07-17, V8.0.17–19): near-duplicate dedup now seeds from the genuine store at init, so the same-dataset gene-overlap check (V8.0.13) actually fires. A pre-DE question-validity filter drops questions with no matching verified dataset — cutting the #1 `no_datasets` funnel bucket (~40% of questions had no dataset home). `OntologyMapper` learned anatomical synonyms (hepatic→liver, cardiac→heart, pulmonary→lung, …) so adjective-form questions pin their dataset instead of false-negative-rejecting. Structural ceiling remains the 6-dataset verified pool; expanding it is the long-term throughput lever.
+- **DISCOVERY SELECTION** (sharpened 2026-07-17, V8.0.17–20): near-duplicate dedup now seeds from the genuine store at init, so the same-dataset gene-overlap check (V8.0.13) actually fires. A pre-DE question-validity filter drops questions with no matching verified dataset — cutting the #1 `no_datasets` funnel bucket (~40% of questions had no dataset home). `OntologyMapper` learned anatomical synonyms (hepatic→liver, cardiac→heart, pulmonary→lung, …) so adjective-form questions pin their dataset instead of false-negative-rejecting. **Verified dataset pool expanded 6→11** (added prostate, colorectal ×2, kidney, ovary) via the `dataset_preflight --add` onboarding path — only candidates that pass download→binary-design→gene-mapping→DE are appended to `real_datasets_extra.json`; each new tissue creates more question homes (answerable-question rate 62%→65%).
 - **NEVER push to ASTRA-dev** — use BIODISC repository only.
 - **Naming**: Always use "BIODISC" (not "STAN" or "STAN-XI-ASTRO").
 - **Use factory functions** — never direct constructors.

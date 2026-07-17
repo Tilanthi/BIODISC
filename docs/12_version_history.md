@@ -169,6 +169,15 @@
   neural/neuronal/cerebral->brain, pancreas/pancreatic) mapping to the same UBERON so
   `normalize_tissues` makes them compare equal. 'renal' omitted (substring of 'adrenal').
   Answerable-question rate 59%->62%. 215/215 tests pass.
+- **Verified dataset pool expanded 6 -> 11** (2026-07-17, V8.0.20): ran `dataset_preflight` on
+  diverse-tissue human GEO candidates; the five that cleared download -> binary case/control
+  design -> probe/gene-symbol mapping -> differential signal were appended to
+  `real_datasets_extra.json` (the sidecar the loop reads at import). New tissues — prostate
+  (GSE6956, 89 samples), colorectal (GSE66360, 99; GSE4107, 22), kidney (GSE40435, 202),
+  ovary (GSE14407, 24). Candidates that failed DOWNLOAD (not design/signal) were correctly
+  rejected (GSE7696, GSE42861, GSE16011 — series-matrix formats the downloader can't parse).
+  Each new tissue creates more question homes; answerable-question rate 62% -> 65%. Pool
+  expansion is the structural throughput lever now that dedup is functional. 215/215 tests pass.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science
