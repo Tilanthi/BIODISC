@@ -13,6 +13,7 @@ This is a NON-NEGOTIABLE hard gate in the discovery pipeline.
 """
 
 import logging
+import re
 import requests
 import json
 import time
@@ -380,6 +381,21 @@ class GeneSymbolValidator:
                 gene_id=f"Probe_{symbol}",
                 gene_name="Affymetrix Probe ID",
                 error="Numeric Affymetrix probe ID is not a gene symbol; resolve to gene symbol before analysis"
+            )
+
+        # Affymetrix 3'-IVT probe IDs (e.g. "117_at", "211234_s_at", "1553367_a_at").
+        # These are probe identifiers, not gene symbols, and must be rejected
+        # LOCALLY here — otherwise they fall through to the HGNC network lookup,
+        # which is non-deterministic and can fail-open to VALID under timing
+        # pressure (the latent bug behind the flaky test_numeric_affy_probe_id test).
+        if re.fullmatch(r"\d+_(a_|s_|x_)?at", symbol):
+            return GeneSymbolValidation(
+                symbol=symbol,
+                result=ValidationResult.INVALID,
+                source="AFFYMETRIX_PROBE",
+                gene_id=f"Probe_{symbol}",
+                gene_name="Affymetrix Probe ID",
+                error="Affymetrix _at probe ID is not a gene symbol; resolve to gene symbol before analysis"
             )
 
         # Control probes. These should be filtered out of datasets entirely; if

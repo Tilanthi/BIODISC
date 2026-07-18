@@ -61,6 +61,7 @@ class _FakeCtrl:
 
 
 def test_dry_run_does_not_publish(monkeypatch):
+    monkeypatch.setenv("BIODISC_EVOLUTION_SANDBOX", "1")  # opt in to the hypothesis-as-code gate
     monkeypatch.setattr(ei, "DiscoveryEvolutionController", _FakeCtrl)
     r = ei.run_method_evolution(generations=1)
     assert r.ran is True
@@ -73,12 +74,14 @@ def test_dry_run_does_not_publish(monkeypatch):
 
 
 def test_publish_flag_writes(monkeypatch):
+    monkeypatch.setenv("BIODISC_EVOLUTION_SANDBOX", "1")  # opt in to the hypothesis-as-code gate
     monkeypatch.setattr(ei, "DiscoveryEvolutionController", _FakeCtrl)
     r = ei.run_method_evolution(generations=1, publish=True)
     assert r.publication_written is True
 
 
 def test_failure_is_graceful(monkeypatch):
+    monkeypatch.setenv("BIODISC_EVOLUTION_SANDBOX", "1")  # opt in; then force a controller failure
     class _Boom:
         def __init__(self, *a, **k):
             raise RuntimeError("no LLM endpoint configured")

@@ -73,7 +73,18 @@ def run_method_evolution(
     ``publish=False`` (default) is a DRY RUN: the publication gate is evaluated
     but nothing is written. ``publish=True`` exercises human approval and writes
     the provenance record ONLY if the gate is met.
+
+    OFF BY DEFAULT: this loop ``exec()``s LLM-written code (evolution/program.py,
+    discovery.py, tasks.py), so it is gated behind ``BIODISC_EVOLUTION_SANDBOX=1``
+    and must route generated programs through ``sandboxed_executor.run_code`` before
+    it is enabled for real. See item 5 / V8.0.24.
     """
+    from biodisc_core.fixed_pipeline.sandboxed_executor import is_enabled
+    if not is_enabled():
+        logger.warning("run_method_evolution refused: hypothesis-as-code is OFF by default. "
+                       "The evolution loop exec()s LLM-written code; set BIODISC_EVOLUTION_SANDBOX=1 "
+                       "AND route generated programs through sandboxed_executor.run_code before enabling.")
+        return EvolutionRunResult(ran=False, reason="evolution_sandbox_disabled")
     logger.info("🧬 supervised method-evolution episode starting (benchmark ground truth)")
     try:
         pair = make_replication_pair(
