@@ -178,6 +178,25 @@
   rejected (GSE7696, GSE42861, GSE16011 — series-matrix formats the downloader can't parse).
   Each new tissue creates more question homes; answerable-question rate 62% -> 65%. Pool
   expansion is the structural throughput lever now that dedup is functional. 215/215 tests pass.
+- **Eureka-steering rebuild** (2026-07-18, V8.0.21–25): the selector optimized for
+  realness (replicability), which is anti-correlated with novelty — it surfaced
+  textbook biology by construction (the most replicable signals on a public dataset
+  are the ones already published). The rebuild holds realness as a floor and steers
+  compute at surprise. (V8.0.21) value-of-compute gate: scores each question on
+  novelty (1 - Gate-2 PubMed similarity), importance (hub-gene/pathway proxy),
+  surprise (contrarian/reversal heuristic), cost (~log2 samples); funds top-k by EV
+  + a 15% exploration slice before any DE — never silently drops the tail. (V8.0.22)
+  contrarian/anti-textbook question generation — scores ~12x higher EV than
+  confirmatory questions. (V8.0.23) cross-dataset module synthesis: finds genes that
+  FLIP direction across datasets (a cross-context bridge) and shared modules;
+  produces bridge hypotheses for review (not auto-stamped). anomaly_vs_expectation
+  scaffolded (textbook-baseline is a research item, not faked). (V8.0.24) sandboxed
+  hypothesis-as-code: 3-layer executor (process isolation + rlimits + timeout/temp
+  cwd) around exec() of LLM code, opt-in via BIODISC_EVOLUTION_SANDBOX, OFF by
+  default; run_method_evolution gated on the same flag. Also fixes a latent
+  flaky-test root cause (Affymetrix _at probes now rejected locally, not via the
+  HGNC network). (V8.0.25) under-studied-context pool expansion 11->13
+  (GSE6764 liver-disease spectrum, GSE15653 biliary). 233 tests pass.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science
