@@ -48,5 +48,25 @@
     "data_type": "gene_expression",
     "question": "Which genes distinguish ovarian cancer from normal ovarian tissue?",
     "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE14407"
+  },
+  {
+    "id": "GSE6764",
+    "repo": "GEO",
+    "title": "Chronic liver disease spectrum (normal/HBV/HCV/cirrhosis vs hepatocellular carcinoma)",
+    "organism": "Homo sapiens",
+    "samples": 75,
+    "data_type": "gene_expression",
+    "question": "Which genes distinguish hepatocellular carcinoma from non-tumor chronic liver disease (HBV/HCV/cirrhosis) across the disease spectrum?",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE6764"
+  },
+  {
+    "id": "GSE15653",
+    "repo": "GEO",
+    "title": "Biliary / cholestatic liver disease vs normal liver",
+    "organism": "Homo sapiens",
+    "samples": 18,
+    "data_type": "gene_expression",
+    "question": "Which genes differ between biliary/cholestatic liver disease and normal liver tissue?",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE15653"
   }
 ]
