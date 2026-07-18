@@ -147,6 +147,14 @@ class FixedAutonomousDiscovery:
                 # question the loop would have accepted. (audit 2026-07-17)
                 questions = self._filter_answerable_questions(questions)
 
+                # Value-of-compute gate (V8.0.21): rank the answerable questions by
+                # EV = novelty x importance x surprise / cost and fund only the top-k
+                # plus a small exploration slice. This steers DE/replication compute at
+                # surprising/novel/important candidates instead of every answerable
+                # question, and never silently drops the long tail. Two-stage so it
+                # makes at most ~2*top_k PubMed calls per cycle (cache-warm after).
+                questions = self._fund_by_value_of_compute(questions)
+
                 if not questions:
                     logger.warning("No questions generated - waiting...")
                     time.sleep(300)
@@ -336,6 +344,67 @@ class FixedAutonomousDiscovery:
                         f"matching dataset (would have been no_datasets); "
                         f"{len(answerable)} answerable remain")
         return answerable
+
+    def _fund_by_value_of_compute(self, questions: List[str],
+                                  top_k: int = 5,
+                                  exploration_frac: float = 0.15) -> List[str]:
+        """Rank questions by EV and fund the top-k + an exploration slice.
+
+        EV = novelty x importance x surprise / cost. Steers DE/replication compute
+        at surprising/novel/important candidates instead of every answerable
+        question, and never silently drops the long tail (the exploration slice is
+        the eureka-insurance discipline). Two-stage to bound PubMed calls: cheap-
+        rank by importance x surprise / cost (no network) -> shortlist of 2*top_k
+        -> score novelty (cached, fail-open) on the shortlist only -> fund top-k +
+        exploration. Unfunded shortlist questions are verdict-logged as
+        ``low_ev_deprioritized`` so the funnel shows the gate's effect.
+        (V8.0.21)
+        """
+        from biodisc_core.fixed_pipeline.value_of_compute import (
+            score_question, fund_candidates)
+        from biodisc_core.fixed_pipeline.specific_questions import select_datasets_for_question
+        from biodisc_core.fixed_pipeline.real_datasets import REAL_GEO_DATASETS
+        from biodisc_core.fixed_pipeline.verdict_log import log_verdict
+
+        if not questions:
+            return questions
+
+        gate = getattr(self.orchestrator, "literature_gate", None) if self.orchestrator else None
+
+        # Stage 1: cheap score (no network) with each question's top dataset for cost.
+        cheap = []
+        for q in questions:
+            ds = None
+            try:
+                sel = select_datasets_for_question(q, REAL_GEO_DATASETS, mapper=self._ontology_mapper)
+                ds = sel[0] if sel else None
+            except Exception:
+                ds = None
+            cheap.append(score_question(q, ds, None))
+        cheap_key = lambda s: (s.importance * s.surprise / s.cost) if s.cost > 0 else 0.0
+        shortlist = sorted(cheap, key=cheap_key, reverse=True)[: max(top_k * 2, top_k)]
+
+        # Stage 2: real novelty (PubMed, cached, fail-open) on the shortlist only.
+        scored = [score_question(s.question, s.dataset, gate) for s in shortlist]
+        funded = fund_candidates(scored, top_k=top_k, exploration_frac=exploration_frac)
+        funded_qs = {s.question for s in funded}
+
+        for s in scored:
+            if s.question not in funded_qs:
+                try:
+                    log_verdict({"question": s.question, "outcome": "rejected",
+                                 "both_pass": False, "reason": "low_ev_deprioritized",
+                                 "ev": s.ev, "novelty": s.novelty,
+                                 "importance": s.importance, "surprise": s.surprise})
+                except Exception:
+                    pass
+
+        if funded:
+            top_ev = max(s.ev for s in funded)
+            logger.info(f"💰 Value-of-compute: funding {len(funded)}/{len(questions)} "
+                        f"questions (top EV {top_ev:.4f}); "
+                        f"{len(scored) - len(funded)} shortlisted questions deprioritized as low-EV")
+        return [s.question for s in funded]
 
     def _generate_biological_questions(self) -> List[str]:
         """
