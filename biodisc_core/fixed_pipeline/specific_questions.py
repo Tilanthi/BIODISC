@@ -161,6 +161,56 @@ class SpecificQuestionsGenerator:
             "Which immune-checkpoint and antigen-presentation genes differ in lung adenocarcinoma vs normal?",
         ]
 
+    def generate_contrarian_questions(self, datasets: List[Dict] = None) -> List[str]:
+        """Anti-textbook questions — assert reversal / contradiction of the expected pattern.
+
+        These score high on the value-of-compute 'surprise' axis by construction
+        (reversal/contradiction language + a named hub gene), so the EV gate funds
+        them ahead of confirmatory questions. When the loop runs one, a result that
+        CONTRADICTS the textbook is a Eureka candidate for review; a result that
+        confirms it is discarded — the asymmetry a novelty-seeking pipeline wants.
+        Biologically matched to each dataset (tissue/disease entities extracted from
+        the title) so they clear the dataset-question gate. Bounded to a few per
+        dataset so the pool isn't dominated. (V8.0.22 / item 4)
+        """
+        if datasets is None:
+            try:
+                from biodisc_core.fixed_pipeline.real_datasets import REAL_GEO_DATASETS
+                datasets = REAL_GEO_DATASETS
+            except Exception:  # noqa: BLE001
+                datasets = []
+        try:
+            from biodisc_core.fixed_pipeline.dataset_question_validation.ontology_mapper import OntologyMapper
+            mapper = OntologyMapper()
+        except Exception:  # noqa: BLE001
+            mapper = None
+
+        # Disease -> hubs whose reversed pattern would be paradigm-relevant.
+        def _hubs_for(disease: str, tissue: str) -> list:
+            d = (disease or "").lower()
+            t = (tissue or "").lower()
+            if any(k in d for k in ("cancer", "carcinoma", "tumor", "neoplasm", "leukemia", "lymphoma")):
+                return ["TP53", "MYC", "EGFR"]
+            if any(k in d + " " + t for k in ("liver", "diet", "diabetes", "insulin", "lipid", "fat")):
+                return ["INS", "MTOR", "PPARG"]
+            return ["TP53", "VEGFA", "MYC"]
+
+        templates = [
+            "Does {hub} change in the OPPOSITE direction in {ctx} than the textbook predicts, contrary to the usual pattern?",
+            "Whereas {hub} typically increases in {ctx}, does it paradoxically decrease here instead?",
+            "Is the established relationship between {hub} and {ctx} reversed in this dataset?",
+        ]
+        contrarian = []
+        for ds in datasets:
+            title = ds.get("title", "")
+            ent = mapper.extract_entities(title) if mapper else {"tissues": set(), "diseases": set()}
+            tissue = next(iter(ent.get("tissues", set()) or []), None)
+            disease = next(iter(ent.get("diseases", set()) or []), None)
+            ctx = disease or tissue or title.split("(")[0].strip() or "this condition"
+            for hub, tmpl in zip(_hubs_for(disease, tissue), templates):
+                contrarian.append(tmpl.format(hub=hub, ctx=ctx))
+        return contrarian
+
     def generate_question_pool(self, datasets: List[Dict] = None) -> List[str]:
         """Diverse + dataset-aligned + context-conditional pool, shuffled.
 
@@ -173,6 +223,7 @@ class SpecificQuestionsGenerator:
         pool = list(self.generate_specific_questions())
         pool.extend(self.generate_dataset_aligned_questions(datasets))
         pool.extend(self.generate_context_conditional_questions())
+        pool.extend(self.generate_contrarian_questions(datasets))
         # De-duplicate while preserving order, then shuffle for cycle variety.
         seen = set()
         unique = [q for q in pool if not (q in seen or seen.add(q))]
