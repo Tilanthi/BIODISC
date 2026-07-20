@@ -170,6 +170,14 @@ class FixedAutonomousDiscovery:
                     # Search for REAL GEO datasets instead of synthetic test data
                     geo_datasets = self._search_real_geo_datasets(question, max_results=3)
 
+                    # For contrarian (gene-naming) questions, try the FRESHEST
+                    # matched dataset first — the one with the fewest prior genuine
+                    # discoveries — so the contrarian clears dedup instead of re-
+                    # hitting an exhausted contrast (e.g. GSE15822, 16 prior). All
+                    # returned datasets are already relevance-matched, so this only
+                    # reorders within that set. (V8.0.37)
+                    geo_datasets = self._prefer_fresh_for_contrarian(question, geo_datasets)
+
                     if not geo_datasets:
                         logger.warning(f"❌ No GEO datasets found for question {i}, skipping...")
                         discovery_status.record_rejection("no_datasets")
@@ -313,6 +321,48 @@ class FixedAutonomousDiscovery:
         except Exception as e:
             logger.error(f"❌ Error loading verified datasets: {e}")
             return []
+
+    def _prefer_fresh_for_contrarian(self, question: str, datasets: List[Dict]) -> List[Dict]:
+        """For contrarian (gene-naming) questions, reorder the relevance-matched
+        datasets so the FRESHEST (fewest prior genuine discoveries) is tried first.
+        Steers contrarians at non-exhausted datasets so they can clear dedup
+        instead of re-hitting a mined-out contrast (e.g. GSE15822, 16 prior).
+        No-op for exploratory questions and when there's nothing to reorder. (V8.0.37)
+        """
+        if not datasets or len(datasets) <= 1:
+            return datasets
+        try:
+            from biodisc_core.fixed_pipeline.value_of_compute import extract_named_genes
+        except Exception:
+            return datasets
+        if not extract_named_genes(question):
+            return datasets  # exploratory — keep relevance order
+        try:
+            import json as _json
+            from collections import Counter
+            store = project_root / "autonomous_discoveries.jsonl"
+            counts = Counter()
+            if store.exists():
+                with open(store) as f:
+                    for line in f:
+                        s = line.strip()
+                        if not s:
+                            continue
+                        try:
+                            d = _json.loads(s)
+                        except Exception:
+                            continue
+                        if d.get("is_genuine") is not True:
+                            continue
+                        ds = d.get("dataset") or {}
+                        gse = (d.get("dataset_id")
+                               or (ds.get("geo_id") if isinstance(ds, dict) else "")).upper()
+                        if gse:
+                            counts[gse] += 1
+            # stable sort: fewest prior discoveries first; ties keep relevance order
+            return sorted(datasets, key=lambda ds: counts.get(str(ds.get("id", "")).upper(), 0))
+        except Exception:
+            return datasets
 
     def _filter_answerable_questions(self, questions: List[str]) -> List[str]:
         """Drop questions that have no biologically-matching verified dataset.

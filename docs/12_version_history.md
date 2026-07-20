@@ -211,6 +211,23 @@
   directional RESULT claim, not the question text. (V8.0.30) contrarian_success_rate
   metric (supported-and-novel) added to the capability index — the trend to watch.
   Suite green (240+ tests).
+- **Keystone proven end-to-end (live)** (2026-07-20, V8.0.31–37): watching a funded
+  contrarian run through the new gates surfaced and fixed the chain that had kept
+  the gene-specific direction test from ever actually firing. (V8.0.31/.32) a 25k-
+  gene expansion to measure the named gene was tried then REVERTED — it hung per-gene
+  network HGNC validation. (V8.0.33) force-include: the GEO downloader adds the named
+  gene's probe row on top of the first-2000 subset, so it's measured without bloating
+  validation. (V8.0.34) the real bug — evaluate_gene_hypothesis assumed genes-as-
+  columns but live data is genes-as-rows, so EVERY gene index tripped 'shape mismatch'
+  and the test had never run; orientation-aware now. (V8.0.35) Layer-7 binding deferred
+  to 7b when the named gene was measured (it had been preempting the direction gate).
+  (V8.0.36) numpy-safe verdict logging (np.bool_ had been silently dropping contrarian
+  verdicts, so the metric couldn't track them). RESULT: a live MTOR-liver contrarian
+  reached supports=True (MTOR confirmed to decrease vs the textbook), Gate-2 novel
+  (sim 0.10), replicated (0.67), binding passed — rejected only by dedup on the
+  exhausted GSE15822 contrast (16 prior). (V8.0.37) contrarians now steered at the
+  FRESHEST matched dataset first (fewest prior discoveries), so they clear dedup
+  instead of re-hitting a mined-out contrast. Suite green (245+ tests).
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science
