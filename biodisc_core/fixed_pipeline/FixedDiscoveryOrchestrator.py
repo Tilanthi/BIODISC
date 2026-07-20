@@ -611,19 +611,25 @@ class FixedDiscoveryOrchestrator:
             # This replaces synthetic data generation with actual biological data
             logger.info("\n🧬 STEP 2: Download REAL Expression Data")
 
-            # NOTE: an earlier attempt (V8.0.31) expanded the gene set for
-            # gene-naming questions so the named gene (e.g. MTOR, ~row 21k by probe
-            # order) would be measured and the gene-specific direction test could
-            # fire. REVERTED: per-gene network HGNC validation (the STEP 2.5 hard
-            # gate) does not scale to ~15k genes, so the expansion hung the loop.
-            # The correct fix is to force-include ONLY the named gene in a small
-            # subset (a multi-point downloader change), not a blanket cap raise.
-            expression_data, gene_symbols, group_labels = self.download_real_data_multi_repo(
-                dataset_id=geo_dataset_id,
-                repository='GEO',
-                n_samples=verified_dataset.get('sample_count', 12),
-                n_genes=min(verified_dataset.get('feature_count', 2000), 2000)  # Limit for computational efficiency
-            )
+            # Force-include the contrarian's named gene (V8.0.33): tell the GEO
+            # downloader to add the named gene's probe row on top of the first-2000
+            # subset, so the gene-specific direction test can measure it — WITHOUT
+            # expanding (and re-validating) the whole matrix. (Replaces the reverted
+            # V8.0.31 25k-cap attempt, which hung per-gene network validation.)
+            from biodisc_core.fixed_pipeline import geo_data_downloader as _gdd
+            from biodisc_core.fixed_pipeline.value_of_compute import extract_named_genes
+            _named = extract_named_genes(question)
+            if _named:
+                _gdd.set_ensure_genes(_named)
+            try:
+                expression_data, gene_symbols, group_labels = self.download_real_data_multi_repo(
+                    dataset_id=geo_dataset_id,
+                    repository='GEO',
+                    n_samples=verified_dataset.get('sample_count', 12),
+                    n_genes=min(verified_dataset.get('feature_count', 2000), 2000)
+                )
+            finally:
+                _gdd.clear_ensure_genes()
 
             logger.info(f"✅ Expression data generated: {expression_data.shape}")
 

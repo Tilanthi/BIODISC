@@ -18,6 +18,25 @@ import io
 
 logger = logging.getLogger(__name__)
 
+# Module-level "ensure these genes are measured" set (V8.0.33 force-include).
+# Set by the orchestrator around a download so _parse_geo_matrix adds the named
+# gene's probe row(s) on top of the first-N subset — keeping the gene set small
+# (validation fast + strict) while guaranteeing a contrarian's named gene is in
+# the data for the gene-specific direction test. The discovery loop is single-
+# threaded per process, so a process-global set is safe here; clear after use.
+_ENSURE_GENES: set = set()
+
+
+def set_ensure_genes(genes) -> None:
+    """Set the named genes to force-include in the next download(s)."""
+    global _ENSURE_GENES
+    _ENSURE_GENES = {str(g).upper() for g in (genes or [])}
+
+
+def clear_ensure_genes() -> None:
+    global _ENSURE_GENES
+    _ENSURE_GENES = set()
+
 
 class GEODataDownloader:
     """
@@ -401,6 +420,40 @@ class GEODataDownloader:
                     logger.info(f"   REJECTING: probe-based rows with no GPL mapping "
                                 f"(platform={platform_id}); refusing to publish probe IDs")
                     return None
+                # V8.0.33 force-include: add the named gene's probe row(s) from
+                # beyond the first-N subset, so a contrarian's named gene is
+                # measured WITHOUT expanding (and re-validating) the whole matrix.
+                # Keeps the gene set small -> validation fast + strict.
+                if _ENSURE_GENES:
+                    named_probes = {p for p, g in mapping.items() if g.upper() in _ENSURE_GENES}
+                    already = set(gene_symbols)
+                    _added = 0
+                    for _line in data_lines[max_genes:]:
+                        _line = _line.strip()
+                        if not _line or '\t' not in _line:
+                            continue
+                        _parts = _line.split('\t')
+                        _probe = _parts[0].strip().strip('"').strip("'")
+                        if _probe in named_probes and _probe not in already:
+                            _vals = []
+                            for _part in _parts[1:]:
+                                _part = _part.strip()
+                                if not _part or _part in ('null', 'NA', ''):
+                                    _vals.append(0.0)
+                                else:
+                                    try:
+                                        _vals.append(float(_part))
+                                    except ValueError:
+                                        _vals.append(0.0)
+                            gene_symbols.append(_probe)
+                            expression_data.append(_vals)
+                            if _vals:
+                                max_cols = max(max_cols, len(_vals))
+                            already.add(_probe)
+                            _added += 1
+                    if _added:
+                        logger.info(f"   Force-included {_added} row(s) for named gene(s) "
+                                    f"{sorted(_ENSURE_GENES)} beyond the first-{max_genes} subset")
                 symbols, kept = map_probes(gene_symbols, mapping)
                 rate = len(symbols) / max(1, len(gene_symbols))
                 if rate < MIN_MAPPING_RATE:
