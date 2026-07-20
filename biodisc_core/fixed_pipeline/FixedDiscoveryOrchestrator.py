@@ -367,8 +367,21 @@ class FixedDiscoveryOrchestrator:
         }
 
     def _build_claim_text(self, discovery_report: Dict) -> str:
-        """Build a concise claim string for the literature-novelty gate."""
-        parts = [discovery_report.get('question', '')]
+        """Build a concise claim string for the literature-novelty gate.
+
+        Leads with the SPECIFIC directional result when the gene-specific test ran
+        (V8.0.29 / rebuild item 4): "MTOR is downregulated ..." is a checkable
+        claim, not a fuzzy question + bare-gene-name blob. Gate-2 therefore scores
+        the RESULT's specific claim against PubMed, so 'novel' means the specific
+        directional finding is absent from the literature — not just that the
+        question wording is uncommon.
+        """
+        parts = []
+        gh = discovery_report.get('gene_hypothesis')
+        if isinstance(gh, dict) and gh.get('gene') and gh.get('observed_direction'):
+            d = "down" if gh.get('observed_direction') == "down" else "up"
+            parts.append(f"{gh['gene']} is {d}regulated")
+        parts.append(discovery_report.get('question', ''))
         de = discovery_report.get('differential_expression', {})
         for g in de.get('top_upregulated', [])[:6]:
             parts.append(g.get('gene_symbol', '') if isinstance(g, dict) else str(g))

@@ -131,3 +131,23 @@ def test_binding_passes_for_exploratory_question(orchestrator):
     assert b["named"] == []
     assert b["bound"] is True
 
+
+def test_build_claim_text_leads_with_directional_result(orchestrator):
+    # rebuild item 4: Gate-2 must assess the specific RESULT claim, not the question text
+    report = {
+        "question": "Whereas MTOR typically increases in liver, does it paradoxically decrease?",
+        "gene_hypothesis": {"gene": "MTOR", "observed_direction": "down"},
+        "differential_expression": {"top_upregulated": [{"gene_symbol": "ANLN"}]},
+        "dataset": {"organism": "Homo sapiens", "data_type": "gene_expression"},
+    }
+    claim = orchestrator._build_claim_text(report)
+    assert claim.startswith("MTOR is downregulated")
+
+
+def test_build_claim_text_no_direction_without_hypothesis(orchestrator):
+    report = {"question": "Which genes differ between tumor and normal?",
+              "differential_expression": {}}
+    claim = orchestrator._build_claim_text(report)
+    assert "is downregulated" not in claim and "is upregulated" not in claim
+
+
