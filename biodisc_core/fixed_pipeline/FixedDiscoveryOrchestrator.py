@@ -258,7 +258,8 @@ class FixedDiscoveryOrchestrator:
         # This is what makes 'genuine' mean 'the claimed discovery is evidenced',
         # not just 'a signal replicated somewhere in the contrast'.
         logger.info("🔗 LAYER 7: QUESTION-RESULT BINDING")
-        binding = self._check_question_result_binding(question, de_results)
+        binding = self._check_question_result_binding(
+            question, de_results, discovery_report.get('gene_hypothesis'))
         validation_stats['question_result_binding'] = binding
         if binding['named'] and not binding['bound']:
             passes_all_gates = False
@@ -335,14 +336,20 @@ class FixedDiscoveryOrchestrator:
 
         return passes_all_gates, rejection_reasons, validation_stats
 
-    def _check_question_result_binding(self, question: str, de_results) -> dict:
-        """Layer 7: is a gene-naming question actually answered by the DE result?
+    def _check_question_result_binding(self, question: str, de_results,
+                                       gene_hypothesis=None) -> dict:
+        """Layer 7: is a gene-naming question actually answered by the data?
 
         Extracts explicit gene symbols from the question and checks they appear
         among the DE result's reported genes (top_upregulated/downregulated).
         An exploratory question that names no gene is always 'bound'. If the DE
         result has no reported genes (shouldn't happen post-DE), fail open rather
-        than block validation on missing data. (V8.0.26)
+        than block validation on missing data.
+
+        For gene-naming (contrarian) questions, the gene-specific test (Layer 7b)
+        is the relevant gate: if it MEASURED the named gene, the finding does
+        address it (7b judges the direction), so we don't reject at binding just
+        because the gene isn't in the top-DE ranking. (V8.0.35)
         """
         from biodisc_core.fixed_pipeline.value_of_compute import extract_named_genes
         named = extract_named_genes(question)
@@ -353,8 +360,13 @@ class FixedDiscoveryOrchestrator:
                     sym = g.get("gene_symbol") if isinstance(g, dict) else g
                     if sym:
                         reported.add(str(sym).upper())
+        gh = gene_hypothesis if isinstance(gene_hypothesis, dict) else None
+        measured = bool(gh and gh.get("present")
+                        and str(gh.get("gene", "")).upper() in {n.upper() for n in named})
         if not named:
             bound = True                       # exploratory — no binding requirement
+        elif measured:
+            bound = True                       # named gene measured -> defer direction to 7b
         elif not reported:
             bound = True                       # fail open: nothing to check against
         else:
@@ -364,6 +376,7 @@ class FixedDiscoveryOrchestrator:
             "bound": bound,
             "reported_gene_count": len(reported),
             "reported_sample": sorted(reported)[:8],
+            "measured_via_hypothesis": measured,
         }
 
     def _build_claim_text(self, discovery_report: Dict) -> str:
