@@ -621,7 +621,11 @@ class FixedDiscoveryOrchestrator:
             from biodisc_core.fixed_pipeline.value_of_compute import extract_named_genes
             feature_count = verified_dataset.get('feature_count', 2000) or 2000
             if extract_named_genes(question):
-                _n_genes = min(feature_count, 25000)
+                # FIXED large cap (NOT gated on feature_count — the verifier reports
+                # 0/unknown, which previously collapsed this to 2000 and re-excluded
+                # the named gene). The downloader returns all rows when the matrix is
+                # smaller than this.
+                _n_genes = 25000
                 logger.info(f"   Gene-naming question: expanding gene set to {_n_genes} "
                             f"so the named gene is measured")
             else:
