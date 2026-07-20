@@ -197,6 +197,20 @@
   flaky-test root cause (Affymetrix _at probes now rejected locally, not via the
   HGNC network). (V8.0.25) under-studied-context pool expansion 11->13
   (GSE6764 liver-disease spectrum, GSE15653 biliary). 233 tests pass.
+- **Eureka-steering rebuild: the analyzer half + metric** (2026-07-20, V8.0.26–30):
+  the selector funded surprise-seeking questions but the analyzer still returned a
+  generic top-DE signature, so contrarian findings could be stamped 'genuine' with
+  an unrelated result (MTOR/MYC absent from their own findings) — selector and
+  analyzer were mismatched. (V8.0.26) Layer-7 question-result binding gate rejects
+  findings whose named gene isn't in the result; + organism-conflict exclusion in
+  the dataset ranker (a mouse question no longer pairs with a human dataset — the
+  relevance-gate sparse-metadata loophole). (V8.0.27) gene-specific hypothesis
+  primitive: tests the NAMED gene's direction + significance directly, not a top-N
+  list; Layer-7b rejects a FAILED contrarian (textbook held). (V8.0.28) cross-dataset
+  direction primitive (queryable bridges). (V8.0.29) Gate-2 assesses the specific
+  directional RESULT claim, not the question text. (V8.0.30) contrarian_success_rate
+  metric (supported-and-novel) added to the capability index — the trend to watch.
+  Suite green (240+ tests).
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science
