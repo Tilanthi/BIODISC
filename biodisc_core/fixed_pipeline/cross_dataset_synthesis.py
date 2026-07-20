@@ -191,6 +191,69 @@ def anomaly_vs_expectation(observed: Dict[str, Dict[str, str]],
     return anomalies
 
 
+@dataclass
+class CrossContextResult:
+    """A gene's direction across multiple datasets/contexts (a queryable bridge check)."""
+    gene: str
+    directions: Dict[str, Optional[str]]      # context -> 'up' | 'down' | None
+    up_in: List[str] = field(default_factory=list)
+    down_in: List[str] = field(default_factory=list)
+    flips: bool = False
+    contexts_tested: int = 0
+    note: str = ""
+
+    def as_dict(self) -> dict:
+        return {"gene": self.gene, "directions": self.directions, "up_in": self.up_in,
+                "down_in": self.down_in, "flips": self.flips,
+                "contexts_tested": self.contexts_tested, "note": self.note}
+
+
+def evaluate_cross_context_direction(gene: str, contexts) -> CrossContextResult:
+    """Test ``gene``'s direction across multiple contexts; flag a FLIP.
+
+    ``contexts`` is an iterable of ``(expr, genes, labels, name)`` tuples. A gene
+    that is UP in some contexts and DOWN in others is a cross-dataset BRIDGE —
+    the paradigm-relevant pattern invisible to any single-dataset contrast (item 3
+    of the rebuild). Reuses :func:`evaluate_gene_hypothesis` per context.
+    """
+    from biodisc_core.fixed_pipeline.gene_specific_hypothesis import evaluate_gene_hypothesis
+    dirs: Dict[str, Optional[str]] = {}
+    for ctx in contexts:
+        expr, glist, labels, name = ctx
+        r = evaluate_gene_hypothesis(expr, glist, labels, gene)
+        dirs[name] = r.observed_direction if r.present else None
+    up_in = sorted([k for k, v in dirs.items() if v == "up"])
+    down_in = sorted([k for k, v in dirs.items() if v == "down"])
+    flips = bool(up_in) and bool(down_in)
+    return CrossContextResult(
+        gene=gene, directions=dirs, up_in=up_in, down_in=down_in, flips=flips,
+        contexts_tested=len(dirs),
+        note=("cross-context FLIP (bridge candidate)" if flips
+              else ("consistent direction" if (up_in or down_in) else "not measured")))
+
+
+def check_gene_across_store(gene: str, store_path: Optional[Path] = None,
+                            include_candidates: bool = False) -> CrossContextResult:
+    """Queryable primitive: a gene's direction across all datasets in the genuine
+    store (no new downloads). Flags flips = cross-dataset bridge candidates. This
+    is the operational form of :func:`find_bridges` for a single gene of interest.
+    """
+    all_dirs = load_gene_directions(store_path, include_candidates)
+    target = (gene or "").upper()
+    per_ds: Dict[str, str] = {}
+    for g, dsmap in all_dirs.items():
+        if g.upper() == target:
+            per_ds.update(dsmap or {})
+    up_in = sorted([k for k, v in per_ds.items() if v == "up"])
+    down_in = sorted([k for k, v in per_ds.items() if v == "down"])
+    flips = bool(up_in) and bool(down_in)
+    return CrossContextResult(
+        gene=target, directions=per_ds, up_in=up_in, down_in=down_in, flips=flips,
+        contexts_tested=len(per_ds),
+        note=("cross-context FLIP (bridge candidate)" if flips
+              else ("consistent direction" if (up_in or down_in) else "not measured in store")))
+
+
 def summarize(store_path: Optional[Path] = None,
               include_candidates: bool = False,
               top: int = 15) -> dict:

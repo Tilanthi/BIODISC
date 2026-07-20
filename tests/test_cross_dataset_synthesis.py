@@ -2,8 +2,11 @@
 import json
 from pathlib import Path
 
+import numpy as np
+
 from biodisc_core.fixed_pipeline.cross_dataset_synthesis import (
-    load_gene_directions, find_bridges, find_shared, anomaly_vs_expectation, summarize)
+    load_gene_directions, find_bridges, find_shared, anomaly_vs_expectation,
+    summarize, evaluate_cross_context_direction, check_gene_across_store)
 
 
 def _write_store(tmp_path: Path, discoveries: list) -> Path:
@@ -74,3 +77,47 @@ def test_only_genuine_counted_by_default(tmp_path):
     assert "GSE2" not in dirs.get("G", {})
     dirs2 = load_gene_directions(store, include_candidates=True)
     assert "GSE2" in dirs2.get("G", {})                     # candidates included
+
+
+def _ctx(expr_vals, name):
+    """One context: GENEA expression per sample (3 group0 + 3 group1)."""
+    genes = ["GENEA"]
+    expr = np.array([[v] for v in expr_vals])
+    labels = [0, 0, 0, 1, 1, 1]
+    return (expr, genes, labels, name)
+
+
+def test_evaluate_cross_context_direction_detects_flip():
+    r = evaluate_cross_context_direction(
+        "GENEA",
+        [_ctx([2, 2, 2, 8, 8, 8], "A"),   # up in group1
+         _ctx([8, 8, 8, 2, 2, 2], "B")])  # down in group1
+    assert r.flips is True
+    assert r.up_in == ["A"] and r.down_in == ["B"]
+
+
+def test_evaluate_cross_context_direction_consistent_no_flip():
+    r = evaluate_cross_context_direction(
+        "GENEA",
+        [_ctx([2, 2, 2, 8, 8, 8], "A"),
+         _ctx([2, 2, 2, 8, 8, 8], "B")])
+    assert r.flips is False
+    assert r.up_in == ["A", "B"]
+
+
+def test_check_gene_across_store_detects_flip(tmp_path):
+    store = _write_store(tmp_path, [
+        _disc("GSE1", ups=["GENEA"], downs=[]),
+        _disc("GSE2", ups=[], downs=["GENEA"]),
+    ])
+    r = check_gene_across_store("GENEA", store)
+    assert r.flips is True
+    assert "GSE1" in r.up_in and "GSE2" in r.down_in
+
+
+def test_check_gene_across_store_absent_gene(tmp_path):
+    store = _write_store(tmp_path, [_disc("GSE1", ups=["GENEA"], downs=[])])
+    r = check_gene_across_store("NOTHERE", store)
+    assert r.flips is False
+    assert r.contexts_tested == 0
+
