@@ -48,6 +48,22 @@ def _verdict_log_path(log_file: Optional[Path] = None) -> Path:
     return Path(env) if env else VERDICT_LOG
 
 
+def _json_default(obj):
+    """JSON default: coerce numpy scalar/array to native Python. np.bool_ /
+    np.float64 (e.g. from the DE analyzer / gene-specific test) are not
+    JSON-serializable and were breaking verdict logging, so the success metric
+    couldn't record contrarian verdicts. Falls back to str for anything else."""
+    try:
+        import numpy as _np
+        if isinstance(obj, _np.generic):
+            return obj.item()
+        if isinstance(obj, _np.ndarray):
+            return obj.tolist()
+    except Exception:  # noqa: BLE001
+        pass
+    return str(obj)
+
+
 def log_verdict(verdict: dict, *, log_file: Optional[Path] = None) -> None:
     """Append one structured verdict line. Never raises (logging must not kill the pipeline).
 
@@ -66,7 +82,7 @@ def log_verdict(verdict: dict, *, log_file: Optional[Path] = None) -> None:
         line = dict(verdict)
         line.setdefault("logged_at", datetime.now(timezone.utc).isoformat(timespec="seconds"))
         with open(target, "a") as f:
-            f.write(json.dumps(line) + "\n")
+            f.write(json.dumps(line, default=_json_default) + "\n")
     except Exception as e:  # noqa: BLE001 - logging must never break discovery
         logger.warning("verdict logging failed (non-fatal): %s", e)
 
