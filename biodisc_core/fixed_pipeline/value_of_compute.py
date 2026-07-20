@@ -37,6 +37,7 @@ from __future__ import annotations
 import logging
 import math
 import random
+import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
@@ -83,6 +84,45 @@ REVERSAL_TERMS = {"reverse", "reverses", "opposite", "contradict", "contrary",
                   "paradox", "unexpected", "surprising", "inconsistent", "break",
                   "violat", "unlike", "whereas", "contrast", "differ between species",
                   "cross-species", "mutually exclusive", "anti-correlat"}
+
+# All-caps tokens that look like gene symbols but aren't. Used by
+# ``extract_named_genes`` so the binding gate doesn't treat "DNA"/"FDR"/"GSE" as
+# a named gene. Kept conservative — real gene symbols (TP53, MYC, MTOR, ABCB1,
+# CYP2E1, MMP2) are 2-7 chars and all-caps, so the exclusion list is the cheap
+# way to drop the common non-gene acronyms that share that shape.
+NON_GENE_CAPS = {
+    "DNA", "RNA", "MRNA", "RRNA", "TRNA", "FDR", "GSE", "GPL", "GEO", "ECM",
+    "SNP", "MSI", "ILMN", "HOMO", "HFD", "NCBI", "HUGO", "SRA", "UCSC", "TSS",
+    "PCR", "NMR", "BMI", "CNS", "MRI", "DE", "UP", "DOWN", "VS", "LOG", "FC",
+    "SD", "SE", "CI", "HR", "OR", "AUC", "ROC", "PCA", "UMAP", "TSNE", "GWAS",
+    "ORF", "UTR", "CHR", "Bp", "KDA", "MMR",
+}
+
+# Prefixes of sequence/probe/accession identifiers that look gene-shaped but
+# aren't (GSE2034, ILMN_1659893, ENSG00000141510, SRR3424567…). No real gene
+# symbol starts with these.
+_ACCESSION_PREFIXES = ("GSE", "GSM", "GPL", "ILMN", "ENS", "SRR", "ERR",
+                       "PXD", "NX", "BC0")
+
+
+def extract_named_genes(question: str) -> List[str]:
+    """Gene symbols explicitly named in the question.
+
+    Matches all-caps alphanumeric tokens of length 2-7 (the shape of real gene
+    symbols — TP53, MYC, MTOR, ABCB1, CYP2E1) and drops the common non-gene
+    acronyms in :data:`NON_GENE_CAPS`. Used by the question-result binding gate
+    (Layer 7) to check that a gene-naming question is actually answered by the
+    DE result, not decorative.
+    """
+    found = set()
+    for m in re.findall(r"\b[A-Z][A-Z0-9-]{1,6}\b", question or ""):
+        g = m.upper().rstrip("-")          # "DNA-repair" -> "DNA" -> excluded below
+        if len(g) < 2 or g in NON_GENE_CAPS:
+            continue
+        if any(g.startswith(p) for p in _ACCESSION_PREFIXES):  # GSE2034, ILMN_…, ENSG…
+            continue
+        found.add(g)
+    return sorted(found)
 
 
 def _clamp01(x: float) -> float:

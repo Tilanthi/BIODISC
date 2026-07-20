@@ -297,6 +297,14 @@ def rank_datasets_for_question(question: str, datasets: List[Dict], mapper=None)
         do = mapper.normalize_organisms(d.get("organisms", set()))
         dt = mapper.normalize_tissues(d.get("tissues", set()))
         dd = mapper.normalize_diseases(d.get("diseases", set()))
+        # Organism conflict (e.g. a mouse question vs a human dataset) is an
+        # EXCLUSION, not merely a lower score — the dataset cannot answer the
+        # question. Without this, a human liver dataset matches a mouse-liver
+        # question on tissue alone and gets selected. Aligns the ranker with
+        # check_relevance's hard-reject. (V8.0.26)
+        if qo and do and not (qo & do):
+            scored.append((0, idx, ds))
+            continue
         rel = 0
         if qo and do and (qo & do):
             rel += 5

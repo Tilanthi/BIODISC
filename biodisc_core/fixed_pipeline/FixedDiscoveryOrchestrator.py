@@ -250,6 +250,29 @@ class FixedDiscoveryOrchestrator:
         else:
             validation_stats['literature_novelty'] = {'status': 'not_assessed'}
 
+        # LAYER 7: Question-Result Binding (V8.0.26). If the question names a
+        # specific gene (contrarian / gene-focused questions), that gene must be
+        # among the DE result's reported genes. Otherwise the finding is "unbound":
+        # the question is decorative and the result is a generic signature that
+        # doesn't answer it (the MTOR/MYC-absent-from-their-own-findings failure).
+        # This is what makes 'genuine' mean 'the claimed discovery is evidenced',
+        # not just 'a signal replicated somewhere in the contrast'.
+        logger.info("🔗 LAYER 7: QUESTION-RESULT BINDING")
+        binding = self._check_question_result_binding(question, de_results)
+        validation_stats['question_result_binding'] = binding
+        if binding['named'] and not binding['bound']:
+            passes_all_gates = False
+            rejection_reasons.append(
+                f"QUESTION-RESULT UNBOUND: question names {binding['named']} but "
+                f"none are in the DE result ({binding['reported_gene_count']} genes "
+                f"reported, e.g. {binding['reported_sample']}) — the finding does "
+                f"not answer the question asked")
+            logger.error(f"❌ LAYER 7 FAILED: named gene(s) {binding['named']} not in result")
+        elif binding['named']:
+            logger.info(f"✅ LAYER 7 PASSED: named gene(s) {binding['named']} present in result")
+        else:
+            logger.info("✅ LAYER 7 PASSED: question names no specific gene (exploratory)")
+
         # Final decision
         logger.info("=" * 80)
         if passes_all_gates:
@@ -280,6 +303,8 @@ class FixedDiscoveryOrchestrator:
             "subgate_dataset_question": relevance_result.is_relevant,
             "subgate_probe_gene": gene_result.success,
             "subgate_template": question_valid,
+            "subgate_binding": binding.get("bound") if isinstance(binding, dict) else None,
+            "binding_named_genes": binding.get("named") if isinstance(binding, dict) else None,
             "gate2_status": lit_verdict.status if lit_verdict else "not_assessed",
             "gate2_max_similarity": lit_verdict.max_similarity if lit_verdict else None,
             "gate2_n_papers": lit_verdict.n_papers_checked if lit_verdict else 0,
@@ -292,6 +317,37 @@ class FixedDiscoveryOrchestrator:
         })
 
         return passes_all_gates, rejection_reasons, validation_stats
+
+    def _check_question_result_binding(self, question: str, de_results) -> dict:
+        """Layer 7: is a gene-naming question actually answered by the DE result?
+
+        Extracts explicit gene symbols from the question and checks they appear
+        among the DE result's reported genes (top_upregulated/downregulated).
+        An exploratory question that names no gene is always 'bound'. If the DE
+        result has no reported genes (shouldn't happen post-DE), fail open rather
+        than block validation on missing data. (V8.0.26)
+        """
+        from biodisc_core.fixed_pipeline.value_of_compute import extract_named_genes
+        named = extract_named_genes(question)
+        reported = set()
+        if isinstance(de_results, dict):
+            for bucket in ("top_upregulated", "top_downregulated", "top_genes"):
+                for g in (de_results.get(bucket) or []):
+                    sym = g.get("gene_symbol") if isinstance(g, dict) else g
+                    if sym:
+                        reported.add(str(sym).upper())
+        if not named:
+            bound = True                       # exploratory — no binding requirement
+        elif not reported:
+            bound = True                       # fail open: nothing to check against
+        else:
+            bound = any(n in reported for n in named)
+        return {
+            "named": named,
+            "bound": bound,
+            "reported_gene_count": len(reported),
+            "reported_sample": sorted(reported)[:8],
+        }
 
     def _build_claim_text(self, discovery_report: Dict) -> str:
         """Build a concise claim string for the literature-novelty gate."""

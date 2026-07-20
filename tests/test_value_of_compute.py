@@ -1,6 +1,8 @@
 """Tests for the value-of-compute gate (offline: literature_gate=None)."""
+import pytest
+
 from biodisc_core.fixed_pipeline.value_of_compute import (
-    score_question, fund_candidates)
+    score_question, fund_candidates, extract_named_genes)
 
 
 def test_confirmatory_question_is_low_surprise():
@@ -77,3 +79,55 @@ def test_fund_candidates_exploration_is_bounded():
     funded = fund_candidates(scored, top_k=3, exploration_frac=0.2)
     # top_k=3 + ~20% of 17 remainder (~3) -> ~6; never more than all
     assert 3 <= len(funded) <= len(scored)
+
+
+# ---- extract_named_genes (used by the Layer 7 binding gate) ----
+
+def test_extract_named_genes_finds_symbols():
+    assert extract_named_genes("Whereas MYC typically increases in prostate cancer...") == ["MYC"]
+    assert extract_named_genes("Does CYP2E1 decrease in mouse fatty liver?") == ["CYP2E1"]
+    both = extract_named_genes("Does TP53 and BRCA1 loss drive progression?")
+    assert "TP53" in both and "BRCA1" in both
+
+
+def test_extract_named_genes_exploratory_has_none():
+    assert extract_named_genes("Which genes differ between tumor and normal?") == []
+
+
+def test_extract_named_genes_excludes_non_gene_acronyms_and_hyphens():
+    g = extract_named_genes("DNA-repair genes at FDR threshold (GSE2034, ILMN_1)")
+    assert "DNA" not in g and "FDR" not in g
+    assert g == []  # nothing real named -> exploratory; accessions excluded too
+
+
+# ---- Layer 7 question-result binding gate ----
+
+@pytest.fixture(scope="module")
+def orchestrator():
+    from biodisc_core.fixed_pipeline.FixedDiscoveryOrchestrator import create_fixed_discovery_orchestrator
+    return create_fixed_discovery_orchestrator()
+
+
+def test_binding_rejects_unbound_named_gene(orchestrator):
+    # the documented failure: question names MTOR, result has a generic signature
+    de = {"top_upregulated": [{"gene_symbol": "ANLN"}, {"gene_symbol": "MAD2L1"}],
+          "top_downregulated": []}
+    b = orchestrator._check_question_result_binding(
+        "Whereas MTOR typically increases in liver, does it paradoxically decrease?", de)
+    assert b["named"] == ["MTOR"]
+    assert b["bound"] is False
+
+
+def test_binding_passes_when_named_gene_present(orchestrator):
+    de = {"top_upregulated": [{"gene_symbol": "MTOR"}], "top_downregulated": []}
+    b = orchestrator._check_question_result_binding(
+        "Whereas MTOR typically increases in liver, does it paradoxically decrease?", de)
+    assert b["bound"] is True
+
+
+def test_binding_passes_for_exploratory_question(orchestrator):
+    b = orchestrator._check_question_result_binding(
+        "Which genes differ between tumor and normal?", {"top_upregulated": []})
+    assert b["named"] == []
+    assert b["bound"] is True
+
