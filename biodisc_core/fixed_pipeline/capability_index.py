@@ -26,6 +26,56 @@ INDEX_FILE = PROJECT_ROOT / "capability_index.json"
 EFFECTIVENESS_FILE = PROJECT_ROOT / "rsi_effectiveness.txt"
 GENUINE_STORE = PROJECT_ROOT / "autonomous_discoveries.jsonl"
 CANDIDATE_STORE = PROJECT_ROOT / "autonomous_discoveries_candidates.jsonl"
+VERDICT_LOG = PROJECT_ROOT / "discovery_verdicts.jsonl"
+
+
+def contrarian_success_rate(verdict_log: Optional[Path] = None) -> dict:
+    """The rebuild's true success metric (rebuild item 5).
+
+    Of funded gene-naming (contrarian) questions that ran the gene-specific test,
+    how many were BOTH supported by the data (the named gene moved in the claimed
+    direction) AND novel (that specific directional claim is absent from PubMed).
+    That intersection is a genuine surprise candidate — the thing the whole
+    rebuild is trying to produce. ``supported_novel_rate`` is the trend to watch:
+    if it stays at 0 the primitive is still the bottleneck (or the bets keep
+    failing/being known); if it climbs, the pipeline is producing real novelty.
+
+    Reads the verdict log; entries without ``gene_hypothesis_supports`` (exploratory
+    questions, or pre-V8.0.27 runs) are skipped. Forward-looking — populates only
+    once the loop runs V8.0.27+ code.
+    """
+    log = verdict_log or VERDICT_LOG
+    tested = supported = supported_novel = supported_known = 0
+    if log.exists():
+        with open(log) as fh:
+            for line in fh:
+                s = line.strip()
+                if not s:
+                    continue
+                try:
+                    r = json.loads(s)
+                except Exception:
+                    continue
+                sup = r.get("gene_hypothesis_supports")
+                if sup is None:
+                    continue
+                tested += 1
+                if sup is True:
+                    supported += 1
+                    g2 = r.get("gate2_status")
+                    if g2 == "novel":
+                        supported_novel += 1
+                    elif g2 == "known":
+                        supported_known += 1
+    return {
+        "contrarian_tested": tested,
+        "supported": supported,
+        "supported_and_novel": supported_novel,
+        "supported_but_known": supported_known,
+        "supported_novel_rate": round(supported_novel / tested, 4) if tested else 0.0,
+        "note": ("genuine-surprise candidates = contrarian claim supported AND novel. "
+                 "0 until the loop runs V8.0.27+ and funds gene-naming questions."),
+    }
 
 
 def _count_store(path: Path, tier: Optional[str] = None) -> int:
@@ -120,6 +170,7 @@ def compute_capability_index(verdict_summary: Optional[dict] = None,
             "abandoned": buckets.get("abandoned_mid_validation", 0),
             "rsi_measured": rsi_measured,
         },
+        "contrarian_success_rate": contrarian_success_rate(),
         "note": ("Compass needle, not a benchmark. 100 = formula saturation, not "
                  "'solved biology'. genuine/quarantined counted from the chokepoint-"
                  "gated stores (authoritative); replication_rate is the load-bearing "
