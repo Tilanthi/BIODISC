@@ -107,12 +107,27 @@ def evaluate_gene_hypothesis(expr, genes, labels, named_gene: str,
                                 note="gene not measured in this dataset")
     try:
         arr = np.asarray(expr, dtype=float)
-        if arr.ndim != 2 or arr.shape[1] <= col:
+        if arr.ndim != 2:
             return HypothesisResult(gene=named_gene, present=False, log2fc=None,
                                     p_value=None, observed_direction=None,
                                     claimed_direction=claimed_dir, significant=None,
-                                    supports_claim=None, note="expression shape mismatch")
-        vals = arr[:, col]
+                                    supports_claim=None, note="expression not 2D")
+        n_genes = len(genes)
+        # Orientation-aware: the gene axis is whichever dimension matches the
+        # gene-symbol count. The orchestrator passes genes x samples (genes are
+        # rows); tests pass samples x genes (genes are columns). The previous
+        # code assumed columns only, so on live data every gene index tripped
+        # "shape mismatch" and the direction test never ran. (V8.0.27a bugfix)
+        if arr.shape[0] == n_genes:
+            vals = arr[col, :]
+        elif arr.shape[1] == n_genes:
+            vals = arr[:, col]
+        else:
+            return HypothesisResult(gene=named_gene, present=False, log2fc=None,
+                                    p_value=None, observed_direction=None,
+                                    claimed_direction=claimed_dir, significant=None,
+                                    supports_claim=None,
+                                    note=f"expression shape {arr.shape} matches neither gene count {n_genes} axis")
     except Exception as e:  # noqa: BLE001
         return HypothesisResult(gene=named_gene, present=False, log2fc=None,
                                 p_value=None, observed_direction=None,
