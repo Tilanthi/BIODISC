@@ -611,32 +611,18 @@ class FixedDiscoveryOrchestrator:
             # This replaces synthetic data generation with actual biological data
             logger.info("\n🧬 STEP 2: Download REAL Expression Data")
 
-            # For gene-naming (contrarian) questions, download enough rows to
-            # GUARANTEE the named gene is measured. The downloader takes the first-N
-            # rows by probe order, so the 2000 cap structurally excludes high-numbered
-            # probes (e.g. MTOR ~row 21k on HG-U133 Plus 2.0) and the gene-specific
-            # direction test returns 'gene not measured'. Expand to ~the full matrix
-            # for gene-naming questions; exploratory questions keep the 2000 cap for
-            # efficiency. (V8.0.31)
-            from biodisc_core.fixed_pipeline.value_of_compute import extract_named_genes
-            feature_count = verified_dataset.get('feature_count', 2000) or 2000
-            if extract_named_genes(question):
-                # FIXED large cap (NOT gated on feature_count — the verifier reports
-                # 0/unknown, which previously collapsed this to 2000 and re-excluded
-                # the named gene). The downloader returns all rows when the matrix is
-                # smaller than this.
-                _n_genes = 25000
-                logger.info(f"   Gene-naming question: expanding gene set to {_n_genes} "
-                            f"so the named gene is measured")
-            else:
-                _n_genes = min(feature_count, 2000)
-
+            # NOTE: an earlier attempt (V8.0.31) expanded the gene set for
+            # gene-naming questions so the named gene (e.g. MTOR, ~row 21k by probe
+            # order) would be measured and the gene-specific direction test could
+            # fire. REVERTED: per-gene network HGNC validation (the STEP 2.5 hard
+            # gate) does not scale to ~15k genes, so the expansion hung the loop.
+            # The correct fix is to force-include ONLY the named gene in a small
+            # subset (a multi-point downloader change), not a blanket cap raise.
             expression_data, gene_symbols, group_labels = self.download_real_data_multi_repo(
                 dataset_id=geo_dataset_id,
                 repository='GEO',
                 n_samples=verified_dataset.get('sample_count', 12),
-                n_genes=_n_genes,
-                max_genes_cap=_n_genes,
+                n_genes=min(verified_dataset.get('feature_count', 2000), 2000)  # Limit for computational efficiency
             )
 
             logger.info(f"✅ Expression data generated: {expression_data.shape}")
