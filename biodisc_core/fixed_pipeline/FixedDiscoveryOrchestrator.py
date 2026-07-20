@@ -273,6 +273,21 @@ class FixedDiscoveryOrchestrator:
         else:
             logger.info("✅ LAYER 7 PASSED: question names no specific gene (exploratory)")
 
+        # LAYER 7b: Contrarian-hypothesis support (V8.0.27). If the question named
+        # a gene + asserted a direction and the gene-specific test ran, a FAILED
+        # contrarian (textbook held) is a re-derivation of known biology framed as
+        # contrarian — reject, don't stamp genuine on the framing alone. Inconclusive
+        # (relative claim, no baseline) and supported claims proceed.
+        gh = discovery_report.get('gene_hypothesis')
+        if isinstance(gh, dict) and gh.get('supports_claim') is False:
+            passes_all_gates = False
+            rejection_reasons.append(
+                f"CONTRARIAN HYPOTHESIS NOT SUPPORTED: {gh.get('gene')} observed "
+                f"{gh.get('observed_direction')} (claimed {gh.get('claimed_direction')}, "
+                f"log2FC={gh.get('log2fc')}, p={gh.get('p_value')}); the textbook held — "
+                f"not a novel finding")
+            logger.error("❌ LAYER 7b FAILED: contrarian claim not supported by the data")
+
         # Final decision
         logger.info("=" * 80)
         if passes_all_gates:
@@ -305,6 +320,8 @@ class FixedDiscoveryOrchestrator:
             "subgate_template": question_valid,
             "subgate_binding": binding.get("bound") if isinstance(binding, dict) else None,
             "binding_named_genes": binding.get("named") if isinstance(binding, dict) else None,
+            "gene_hypothesis_supports": (gh.get("supports_claim")
+                                         if isinstance(gh, dict) else None),
             "gate2_status": lit_verdict.status if lit_verdict else "not_assessed",
             "gate2_max_similarity": lit_verdict.max_similarity if lit_verdict else None,
             "gate2_n_papers": lit_verdict.n_papers_checked if lit_verdict else 0,
@@ -676,6 +693,29 @@ class FixedDiscoveryOrchestrator:
             except Exception as e:
                 logger.warning(f"   Replication assessment failed (non-fatal): {e}")
 
+            # STEP 3.55: Gene-specific hypothesis test (V8.0.27 — keystone). For a
+            # gene-naming/contrarian question, test the NAMED gene's specific
+            # direction + significance directly. The default top-DE primitive
+            # returns the dominant (textbook) signal and cannot answer "does MTOR
+            # paradoxically decrease?"; this is what lets a funded contrarian bet
+            # deliver a real surprise. Attached to the report; a FAILED contrarian
+            # (textbook held) is rejected at Layer 7b. Non-fatal. Returns None for
+            # exploratory questions that name no gene.
+            gene_hypothesis = None
+            try:
+                from biodisc_core.fixed_pipeline.gene_specific_hypothesis import (
+                    evaluate_question_hypothesis)
+                gene_hypothesis = evaluate_question_hypothesis(
+                    question, expression_data, gene_symbols, group_labels)
+                if gene_hypothesis is not None:
+                    logger.info(f"   Gene-specific hypothesis: {gene_hypothesis.gene} "
+                                f"observed={gene_hypothesis.observed_direction} "
+                                f"claimed={gene_hypothesis.claimed_direction} "
+                                f"supports={gene_hypothesis.supports_claim} "
+                                f"({gene_hypothesis.note})")
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"   Gene-specific hypothesis test failed (non-fatal): {e}")
+
             # STEP 3.6: Independent-cohort replication (stronger than held-out) when a
             # same-domain sibling dataset exists (e.g. breast GSE2034 + GSE42568).
             # Only attempted after internal replication succeeded; non-fatal.
@@ -780,6 +820,9 @@ class FixedDiscoveryOrchestrator:
             # Attach the replication anchor so the flagging gate can decide is_genuine.
             if replication_verdict is not None:
                 discovery_report['replication'] = replication_to_report_dict(replication_verdict)
+            # Attach the gene-specific hypothesis result (None for exploratory questions).
+            if gene_hypothesis is not None:
+                discovery_report['gene_hypothesis'] = gene_hypothesis.as_dict()
 
             self.discoveries_made += 1
 
