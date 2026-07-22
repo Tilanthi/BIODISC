@@ -888,8 +888,18 @@ class FixedDiscoveryOrchestrator:
                 from biodisc_core.fixed_pipeline.anomaly_miner import best_anomaly
                 from biodisc_core.fixed_pipeline.cross_dataset_synthesis import load_gene_directions
                 _prior_dirs = load_gene_directions()
+                # Mine the FULL significant gene set (V8.0.40), not just the top-20
+                # reported — far more chances to find a direction-flip or extreme effect.
+                _gene_results = [
+                    {"gene_symbol": r.gene_symbol, "log2_fold_change": r.log2_fold_change,
+                     "p_value": r.p_value, "fdr_p_value": r.fdr_p_value,
+                     "regulation": getattr(r, "regulation", None)}
+                    for r in (de_analysis.results or [])
+                    if getattr(r, "significant", False)
+                ]
                 _obs = best_anomaly(discovery_report.get('differential_expression') or {},
-                                    _prior_dirs, dataset_id=geo_dataset_id)
+                                    _prior_dirs, dataset_id=geo_dataset_id,
+                                    gene_results=_gene_results)
                 if _obs is not None:
                     discovery_report['observed_surprise'] = _obs.as_dict()
                     logger.info(f"   🔎 Anomaly (observed surprise): {_obs.gene} "

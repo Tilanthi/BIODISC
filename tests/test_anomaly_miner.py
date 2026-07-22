@@ -53,3 +53,24 @@ def test_best_anomaly_or_none():
     assert best_anomaly(_de([("GENEA", 0.3, 1e-4)], []), {}, "X") is None  # nothing surprising
     b = best_anomaly(_de([("GENEA", 3.0, 1e-8)], []), {}, "X")
     assert b is not None and b.gene == "GENEA"
+
+
+def test_confounded_sex_linked_gene_excluded():
+    # RPS4Y1 is Y-linked; its "extreme" signal is male-vs-female composition, not biology
+    cands = mine_anomalies(_de([("RPS4Y1", 3.0, 1e-9)], []), {}, dataset_id="X")
+    assert cands == []
+
+
+def test_gene_results_mines_full_set():
+    # gene_results (full significant set) is mined, not just top-20
+    gr = [{"gene_symbol": "GENEH", "log2_fold_change": 2.5, "p_value": 1e-7,
+           "fdr_p_value": 1e-7, "regulation": "up"}]
+    cands = mine_anomalies(None, {}, dataset_id="X", gene_results=gr)
+    assert cands and cands[0].gene == "GENEH" and "extreme_effect" in cands[0].kind
+
+
+def test_extreme_threshold_is_2fold():
+    # |log2FC| = 1.0 (2-fold) now qualifies (V8.0.40 lowered from 1.5)
+    cands = mine_anomalies(_de([("GENEI", 1.0, 1e-5)], []), {}, dataset_id="X")
+    assert cands and "extreme_effect" in cands[0].kind
+

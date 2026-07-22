@@ -34,10 +34,22 @@ from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Extreme-effect threshold (|log2FC|). On the current pool, median |log2FC| is
-# ~0.04 and p90 ~1.2, so >= 1.5 (~top 4%, a ~2.8-fold change) is genuinely
-# large. Calibrated from the real effect-size distribution.
-EXTREME_LOG2FC = 1.5
+# Extreme-effect threshold (|log2FC|). 1.0 = a 2-fold change, the classic
+# large-effect cutoff. On the current pool ~11% of reported genes reach this
+# (vs ~4% at 1.5, ~1% at 2.0), so the miner fires far more often. Lowered from
+# 1.5 in V8.0.40 to raise the fire-rate.
+EXTREME_LOG2FC = 1.0
+
+# Sex-linked / technical genes whose "DE" reflects sample composition (e.g.
+# male-vs-female), not biology. RPS4Y1 flagged as an "extreme" anomaly was this
+# exact artifact. Excluded from anomaly candidacy entirely. (V8.0.40)
+CONFOUNDED_GENES = {
+    # Y-linked
+    "RPS4Y1", "RPS4Y2", "DDX3Y", "EIF1AY", "KDM5D", "UTY", "ZFY", "TXLNGY",
+    "CYORF15A", "CYORF15B", "PRORY", "VCY", "CDY1", "BPY2", "TBL1Y", "USP9Y",
+    # X-inactivation
+    "XIST", "TSIX",
+}
 
 
 @dataclass
@@ -86,8 +98,9 @@ def _form_claim(gene: str, kind: str, obs_dir: str,
     return f"{gene} is surprisingly {obs_word} here"
 
 
-def mine_anomalies(de_results, prior_directions: Dict[str, Dict[str, str]],
-                   dataset_id: str = "", top_k: int = 10) -> List[AnomalyCandidate]:
+def mine_anomalies(de_results=None, prior_directions: Optional[Dict] = None,
+                   dataset_id: str = "", top_k: int = 10,
+                   gene_results=None) -> List[AnomalyCandidate]:
     """Mine a DE result for observed surprises vs prior discoveries.
 
     Args:
@@ -98,25 +111,44 @@ def mine_anomalies(de_results, prior_directions: Dict[str, Dict[str, str]],
         dataset_id: this contrast's dataset id (so a gene's prior in THIS dataset
             doesn't count as a "flip" against itself).
         top_k: return at most this many candidates.
+        gene_results: the FULL significant gene set (V8.0.40) — list of
+            ``{gene_symbol, log2_fold_change, p_value/fdr_p_value, regulation}``.
+            Preferred over de_results' top-20; mines far more genes.
 
     Returns: ``AnomalyCandidate`` list ranked by ``surprise * importance``.
     """
-    if not isinstance(de_results, dict):
-        return []
-    # collect reported genes -> (direction, log2fc, p)
+    prior_directions = prior_directions or {}
+    # collect genes -> (direction, log2fc, p). Prefer the full significant set.
     here: Dict[str, tuple] = {}
-    for bucket, default_dir in (("top_upregulated", "up"), ("top_downregulated", "down")):
-        for g in (de_results.get(bucket) or []):
-            sym = g.get("gene_symbol") if isinstance(g, dict) else g
+    if gene_results:
+        for g in gene_results:
+            if not isinstance(g, dict):
+                continue
+            sym = g.get("gene_symbol")
             if not sym:
                 continue
-            d = (g.get("regulation") if isinstance(g, dict) else None) or default_dir
-            l2 = g.get("log2_fold_change") if isinstance(g, dict) else None
-            p = (g.get("fdr_p_value") or g.get("p_value")) if isinstance(g, dict) else None
+            l2 = g.get("log2_fold_change")
+            try:
+                d = g.get("regulation") or ("up" if float(l2) >= 0 else "down")
+            except Exception:  # noqa: BLE001
+                d = "up"
+            p = g.get("fdr_p_value") or g.get("p_value")
             here[str(sym)] = (d, l2, p)
+    elif isinstance(de_results, dict):
+        for bucket, default_dir in (("top_upregulated", "up"), ("top_downregulated", "down")):
+            for g in (de_results.get(bucket) or []):
+                sym = g.get("gene_symbol") if isinstance(g, dict) else g
+                if not sym:
+                    continue
+                d = (g.get("regulation") if isinstance(g, dict) else None) or default_dir
+                l2 = g.get("log2_fold_change") if isinstance(g, dict) else None
+                p = (g.get("fdr_p_value") or g.get("p_value")) if isinstance(g, dict) else None
+                here[str(sym)] = (d, l2, p)
 
     candidates: List[AnomalyCandidate] = []
     for gene, (obs_dir, l2, p) in here.items():
+        if gene.upper() in CONFOUNDED_GENES:
+            continue  # technical (sex-composition), not a biological surprise
         prior = prior_directions.get(gene, {}) or {}
         prior_other = {ds: d for ds, d in prior.items() if ds != dataset_id}
         surprise = 0.0
@@ -158,7 +190,9 @@ def mine_anomalies(de_results, prior_directions: Dict[str, Dict[str, str]],
     return candidates[:top_k]
 
 
-def best_anomaly(de_results, prior_directions, dataset_id="") -> Optional[AnomalyCandidate]:
+def best_anomaly(de_results=None, prior_directions=None, dataset_id="",
+                 gene_results=None) -> Optional[AnomalyCandidate]:
     """Convenience: the single highest-scoring observed surprise, or None."""
-    mined = mine_anomalies(de_results, prior_directions, dataset_id, top_k=1)
+    mined = mine_anomalies(de_results, prior_directions, dataset_id, top_k=1,
+                           gene_results=gene_results)
     return mined[0] if mined else None
