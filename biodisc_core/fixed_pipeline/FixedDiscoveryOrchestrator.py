@@ -280,7 +280,14 @@ class FixedDiscoveryOrchestrator:
         # contrarian — reject, don't stamp genuine on the framing alone. Inconclusive
         # (relative claim, no baseline) and supported claims proceed.
         gh = discovery_report.get('gene_hypothesis')
-        if isinstance(gh, dict) and gh.get('supports_claim') is False:
+        # V8.0.39: 7b rejects a failed CONTRARIAN — but only when the contrarian
+        # IS the finding. With anomaly-first discovery (V8.0.38), a primary
+        # observed_surprise may be the real finding and the contrarian question is
+        # just the entry point. Don't let a failed secondary contrarian kill an
+        # observed-surprise discovery. (Live proof: RPS4Y1/CYP2A6 anomaly claims
+        # passed Gate-2 but were rejected here on an unrelated MTOR contrarian.)
+        if (isinstance(gh, dict) and gh.get('supports_claim') is False
+                and not discovery_report.get('observed_surprise')):
             passes_all_gates = False
             rejection_reasons.append(
                 f"CONTRARIAN HYPOTHESIS NOT SUPPORTED: {gh.get('gene')} observed "
