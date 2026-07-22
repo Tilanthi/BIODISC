@@ -228,6 +228,18 @@
   exhausted GSE15822 contrast (16 prior). (V8.0.37) contrarians now steered at the
   FRESHEST matched dataset first (fewest prior discoveries), so they clear dedup
   instead of re-hitting a mined-out contrast. Suite green (245+ tests).
+- **Anomaly-first discovery (keystone architectural shift)** (2026-07-22, V8.0.38):
+  the contrarian channel guesses a surprise and mostly misses (the textbook usually
+  holds — observed supports=False repeatedly). This inverts the pipeline to
+  anomaly-first: `anomaly_miner.mine_anomalies()` scans each DE result for OBSERVED
+  surprises — a gene whose direction flips vs its prior genuine discoveries, or an
+  extreme effect (|log2FC|>=1.5) — ranked by surprise x importance, with a formed
+  Gate-2-checkable claim. STEP 3.55b attaches the best one as `observed_surprise`;
+  `_build_claim_text` leads with it (PRIMARY), demoting the contrarian question to a
+  secondary entry point. The surprise is real by construction; the work shifts from
+  "guess correctly" to "validate what was found." Calibrated to the real effect
+  distribution (median |log2FC|~0.04, threshold 1.5); 30 candidates on the current
+  store. 6 tests. Suite green.
 
 **V7.3 - PEER REVIEW FIXES** (July 10, 2026):
 - 5-layer validation system to prevent pseudo-science
