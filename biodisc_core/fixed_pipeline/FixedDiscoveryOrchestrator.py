@@ -390,6 +390,13 @@ class FixedDiscoveryOrchestrator:
         question wording is uncommon.
         """
         parts = []
+        # PRIMARY (V8.0.38): the observed surprise — anomaly-first discovery. The
+        # finding is what the data actually shows that's surprising, not a guessed
+        # contrarian claim, so Gate-2 scores the OBSERVED anomaly's novelty.
+        obs = discovery_report.get('observed_surprise')
+        if isinstance(obs, dict) and obs.get('claim'):
+            parts.append(obs['claim'])
+        # Secondary: the gene-specific hypothesis direction.
         gh = discovery_report.get('gene_hypothesis')
         if isinstance(gh, dict) and gh.get('gene') and gh.get('observed_direction'):
             d = "down" if gh.get('observed_direction') == "down" else "up"
@@ -862,6 +869,26 @@ class FixedDiscoveryOrchestrator:
             # Attach the gene-specific hypothesis result (None for exploratory questions).
             if gene_hypothesis is not None:
                 discovery_report['gene_hypothesis'] = gene_hypothesis.as_dict()
+
+            # STEP 3.55b: Anomaly miner (V8.0.38) — the PRIMARY discovery input.
+            # Scan the DE result for OBSERVED surprises (direction flips vs prior
+            # discoveries, extreme effects) and make the top one the discovery's
+            # headline. Inverts the pipeline from hypothesis-first (contrarian
+            # guesses that mostly miss) to anomaly-first (observed surprises that
+            # are real by construction). The contrarian question remains the entry
+            # point but the FINDING is the observed anomaly. Non-fatal.
+            try:
+                from biodisc_core.fixed_pipeline.anomaly_miner import best_anomaly
+                from biodisc_core.fixed_pipeline.cross_dataset_synthesis import load_gene_directions
+                _prior_dirs = load_gene_directions()
+                _obs = best_anomaly(discovery_report.get('differential_expression') or {},
+                                    _prior_dirs, dataset_id=geo_dataset_id)
+                if _obs is not None:
+                    discovery_report['observed_surprise'] = _obs.as_dict()
+                    logger.info(f"   🔎 Anomaly (observed surprise): {_obs.gene} "
+                                f"[{_obs.kind}] score={_obs.score} — {_obs.claim[:60]}")
+            except Exception as _e:  # noqa: BLE001
+                logger.warning(f"   Anomaly mining failed (non-fatal): {_e}")
 
             self.discoveries_made += 1
 
