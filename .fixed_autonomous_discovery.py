@@ -129,7 +129,12 @@ class FixedAutonomousDiscovery:
         # context engine runs per-discovery (integrated via observed_surprise).
         try:
             from biodisc_core.breakthrough.runner import run_breakthrough_discovery
-            bt = run_breakthrough_discovery(literature_gate=None)
+            bt = run_breakthrough_discovery(
+                literature_gate=None,
+                run_connectors=True,       # live TCGA GDC + AlphaFold EBI
+                connector_dry_run=False,  # real data, not synthetic
+                tcga_cancer_types=["BRCA"],
+            )
             if bt["all_ranked"]:
                 _bt_store = project_root / "breakthrough_candidates.jsonl"
                 with open(_bt_store, "a") as f:
