@@ -148,17 +148,17 @@ def _default_value_column(workflow_type: str) -> str:
     if wf == "STAR - Counts":
         # Multi-column file; FPKM is comparable across genes (unlike raw counts
         # without a size factor). TPM is the alternative.
-        return "fpkm_unstrand"
+        return "fpkm_unstranded"
     if wf == "HTSeq - FPKM":
         return "FPKM"
     if wf == "HTSeq - Counts":
         return "unstranded"
     # Unknown workflow — assume the modern STAR format.
     logger.warning(
-        "Unknown GDC workflow_type %r; defaulting value column to 'fpkm_unstrand'",
+        "Unknown GDC workflow_type %r; defaulting value column to 'fpkm_unstranded'",
         workflow_type,
     )
-    return "fpkm_unstrand"
+    return "fpkm_unstranded"
 
 
 # ---------------------------------------------------------------------------
