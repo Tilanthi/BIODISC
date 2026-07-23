@@ -82,6 +82,7 @@ def run_remining_with_connectors(
             for c in tcga_cands:
                 c.methods = ["remining_tcga"]
                 c.source_datasets = [f"TCGA-{ctype}"]
+                c.data_backed = True  # real data → outranks conceptual candidates
                 c.evidence["tcga_cancer_type"] = ctype
                 c.evidence["n_significant_genes"] = de.significant_genes
             candidates.extend(tcga_cands)
@@ -126,6 +127,7 @@ def run_remining_with_connectors(
                         methods=["remining_alphafold"],
                         novelty=0.5, importance=0.6, surprise=min(1.0, frac),
                         testable_with_existing_data=False,
+                        data_backed=True,
                     ))
         logger.info("AlphaFold re-mining: %d candidates from %d proteins",
                     len([c for c in candidates if "remining_alphafold" in c.methods]),

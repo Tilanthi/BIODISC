@@ -43,10 +43,14 @@ class DiscoveryCandidate:
     high_potential: bool = False       # convergence >= threshold (set by ConvergenceScorer)
     testable_with_existing_data: bool = False
     source_datasets: List[str] = field(default_factory=list)
+    data_backed: bool = False          # True = backed by real downloaded data (TCGA/scRNA/AlphaFold), not just conceptual
 
     @property
     def ev(self) -> float:
-        return round(self.novelty * self.importance * max(self.surprise, 0.1), 4)
+        base = self.novelty * self.importance * max(self.surprise, 0.1)
+        if self.data_backed:
+            base *= 2.0  # real data evidence outranks conceptual plausibility
+        return round(base, 4)
 
     @property
     def convergence_key(self) -> str:
@@ -78,6 +82,7 @@ class DiscoveryCandidate:
             "high_potential": self.high_potential,
             "testable_with_existing_data": self.testable_with_existing_data,
             "source_datasets": self.source_datasets,
+            "data_backed": self.data_backed,
             "convergence_key": self.convergence_key,
         }
 
