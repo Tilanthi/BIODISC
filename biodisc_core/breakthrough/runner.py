@@ -50,8 +50,9 @@ def run_breakthrough_discovery(
         pool.add_all(detect_anomaly_candidates(
             de_results, prior_directions, dataset_id, gene_results))
 
-    # Item 2: dataset re-mining (slot — connector not yet built)
-    # pool.add_all(detect_remining_candidates(...))
+    # Item 2: dataset re-mining framework (targets logged; data connectors are follow-up)
+    from .remining import detect_remining_candidates
+    pool.add_all(detect_remining_candidates())
 
     # Item 5: convergence scoring
     scorer = ConvergenceScorer(min_methods=min_convergence)
