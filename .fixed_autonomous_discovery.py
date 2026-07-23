@@ -121,6 +121,25 @@ class FixedAutonomousDiscovery:
             logger.error("❌ FIXED PIPELINE NOT AVAILABLE - CANNOT START")
             return
 
+        # V9.0: breakthrough scan — run the multi-modality engines (bridge +
+        # contradiction) once at startup. These produce conceptual hypotheses
+        # (cross-domain bridges, literature contradictions) logged for review —
+        # not auto-stamped genuine (they can't be validated by DE/replication;
+        # they're hypothesis-generation for expert follow-up). The anomaly-in-
+        # context engine runs per-discovery (integrated via observed_surprise).
+        try:
+            from biodisc_core.breakthrough.runner import run_breakthrough_discovery
+            bt = run_breakthrough_discovery(literature_gate=None)
+            if bt["all_ranked"]:
+                _bt_store = project_root / "breakthrough_candidates.jsonl"
+                with open(_bt_store, "a") as f:
+                    for c in bt["all_ranked"][:20]:
+                        f.write(json.dumps(c.as_dict()) + "\n")
+                logger.info(f"🔎 Breakthrough scan: {len(bt['all_ranked'])} candidates "
+                            f"({len(bt['high_potential'])} high-potential) -> {_bt_store.name}")
+        except Exception as e:
+            logger.warning(f"Breakthrough scan failed (non-fatal): {e}")
+
         # Main discovery loop
         while self.running:
             try:
