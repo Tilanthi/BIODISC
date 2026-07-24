@@ -131,9 +131,11 @@ class FixedAutonomousDiscovery:
             from biodisc_core.breakthrough.runner import run_breakthrough_discovery
             bt = run_breakthrough_discovery(
                 literature_gate=None,
-                run_connectors=True,       # live TCGA GDC + AlphaFold EBI
-                connector_dry_run=False,  # real data, not synthetic
-                tcga_cancer_types=["BRCA"],
+                run_connectors=False,      # V9.0f: connectors VALIDATED but startup
+                                           # blocks the loop (TCGA download ~2 min →
+                                           # watchdog restart cycle). Use framework
+                                           # targets at startup; invoke connectors
+                                           # explicitly/periodically instead.
             )
             if bt["all_ranked"]:
                 _bt_store = project_root / "breakthrough_candidates.jsonl"
