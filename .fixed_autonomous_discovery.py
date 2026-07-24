@@ -129,15 +129,32 @@ class FixedAutonomousDiscovery:
         # context engine runs per-discovery (integrated via observed_surprise).
         try:
             from biodisc_core.breakthrough.runner import run_breakthrough_discovery
-            bt = run_breakthrough_discovery(
-                literature_gate=None,
-                run_connectors=False,      # V9.0f: connectors VALIDATED but startup
-                                           # blocks the loop (TCGA download ~2 min →
-                                           # watchdog restart cycle). Use framework
-                                           # targets at startup; invoke connectors
-                                           # explicitly/periodically instead.
-            )
+            bt = run_breakthrough_discovery(literature_gate=None)
             if bt["all_ranked"]:
+
+                # V9.0h: non-blocking TCGA re-mining in a background daemon
+                # thread. The download (~2 min) runs ASYNC; the main loop
+                # proceeds immediately. Results append to
+                # breakthrough_candidates.jsonl when the background task
+                # completes. This decouples the connector from the watchdog's
+                # restart cycle.
+                def _bg_remining():
+                    try:
+                        from biodisc_core.breakthrough.runner import run_remining_with_connectors
+                        import json as _json
+                        cands = run_remining_with_connectors(
+                            tcga_cancer_types=["BRCA"], dry_run=False)
+                        if cands:
+                            with open(project_root / "breakthrough_candidates.jsonl", "a") as f:
+                                for c in cands[:20]:
+                                    f.write(_json.dumps(c.as_dict()) + "\n")
+                            logger.info("🔎 Background TCGA re-mining complete: %d candidates",
+                                        len(cands))
+                    except Exception as _be:  # noqa: BLE001
+                        logger.warning("Background TCGA re-mining failed (non-fatal): %s", _be)
+
+                threading.Thread(target=_bg_remining, daemon=True,
+                                 name="tcga-remining").start()
                 _bt_store = project_root / "breakthrough_candidates.jsonl"
                 with open(_bt_store, "a") as f:
                     for c in bt["all_ranked"][:20]:

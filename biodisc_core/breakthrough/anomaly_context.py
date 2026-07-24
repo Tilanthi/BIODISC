@@ -47,6 +47,7 @@ def detect_anomaly_candidates(de_results=None, prior_directions=None,
             novelty=0.5,  # neutral until Gate-2 checks the specific claim
             importance=a.importance,
             surprise=a.surprise,
+            consensus_conflict="direction_flip" in a.kind,  # R2: flip = consensus conflict
             source_datasets=[dataset_id] if dataset_id else [],
             testable_with_existing_data=True,
         ))

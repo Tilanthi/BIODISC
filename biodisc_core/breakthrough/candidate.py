@@ -49,18 +49,26 @@ class DiscoveryCandidate:
     # signature → gets anomaly_priority boost + reserved shortlist slot.
     ledger_status: str = "UNEXPLAINED_UNCONFIRMED"
     # EXPLAINED_CONFIRMED | UNEXPLAINED_CONFIRMED | EXPLAINED_UNCONFIRMED | UNEXPLAINED_UNCONFIRMED
+    # V9.0h — consensus_conflict (Gates Recalibration R2): when Gate-2 returns
+    # "novel" (claim absent from PubMed), this is a POSITIVE novelty signal.
+    # 7/20 landmark discoveries survived by contradicting consensus.
+    consensus_conflict: bool = False
 
     @property
     def anomaly_priority(self) -> float:
         """From the Gates Recalibration: mechanism-absence (literature-absent) +
         reproducible (data_backed) = the paradigm-breaker signature. INVERTED:
         absence BOOSTS priority for reproducible signals, never penalizes.
-        Returns 0.0-1.0."""
+        consensus_conflict (R2) adds to the boost — contradicting consensus is a
+        positive novelty signal, never a demerit. Returns 0.0-1.0."""
         if not self.data_backed:
             return 0.0  # conceptual-only candidates don't get the paradigm-breaker boost
         # The more novel (literature-absent) AND data-backed, the higher the priority.
         # This is the "inexplicable-but-reproducible" track from the 18-case survey.
-        return self.novelty * (1.0 if self.ledger_status == "UNEXPLAINED_CONFIRMED" else 0.5)
+        base = self.novelty * (1.0 if self.ledger_status == "UNEXPLAINED_CONFIRMED" else 0.5)
+        if self.consensus_conflict:
+            base = min(1.0, base + 0.2)  # R2: consensus-conflict boost
+        return base
 
     @property
     def ev(self) -> float:
@@ -104,6 +112,7 @@ class DiscoveryCandidate:
             "source_datasets": self.source_datasets,
             "data_backed": self.data_backed,
             "ledger_status": self.ledger_status,
+            "consensus_conflict": self.consensus_conflict,
             "anomaly_priority": self.anomaly_priority,
             "convergence_key": self.convergence_key,
         }
