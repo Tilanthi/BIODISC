@@ -274,27 +274,38 @@ class FixedDiscoveryOrchestrator:
         else:
             logger.info("✅ LAYER 7 PASSED: question names no specific gene (exploratory)")
 
-        # LAYER 7b: Contrarian-hypothesis support (V8.0.27). If the question named
-        # a gene + asserted a direction and the gene-specific test ran, a FAILED
-        # contrarian (textbook held) is a re-derivation of known biology framed as
-        # contrarian — reject, don't stamp genuine on the framing alone. Inconclusive
-        # (relative claim, no baseline) and supported claims proceed.
+        # LAYER 7b: Contrarian-hypothesis support. V9.0i (Gates Recalibration):
+        # DEMOTED from HARD KILL to SCORE DIMENSION. A failed contrarian no
+        # longer kills the discovery — it lowers the promotion_score. This stops
+        # the system from killing paradigm-breakers at t0 (the disease the Gates
+        # Recalibration diagnosed: 7/20 landmark discoveries hard-killed by
+        # maturity/conformity gates at the moment of first proposal).
         gh = discovery_report.get('gene_hypothesis')
-        # V8.0.39: 7b rejects a failed CONTRARIAN — but only when the contrarian
-        # IS the finding. With anomaly-first discovery (V8.0.38), a primary
-        # observed_surprise may be the real finding and the contrarian question is
-        # just the entry point. Don't let a failed secondary contrarian kill an
-        # observed-surprise discovery. (Live proof: RPS4Y1/CYP2A6 anomaly claims
-        # passed Gate-2 but were rejected here on an unrelated MTOR contrarian.)
-        if (isinstance(gh, dict) and gh.get('supports_claim') is False
-                and not discovery_report.get('observed_surprise')):
-            passes_all_gates = False
-            rejection_reasons.append(
-                f"CONTRARIAN HYPOTHESIS NOT SUPPORTED: {gh.get('gene')} observed "
-                f"{gh.get('observed_direction')} (claimed {gh.get('claimed_direction')}, "
-                f"log2FC={gh.get('log2fc')}, p={gh.get('p_value')}); the textbook held — "
-                f"not a novel finding")
-            logger.error("❌ LAYER 7b FAILED: contrarian claim not supported by the data")
+        l7b_penalty = 0.0
+        if isinstance(gh, dict) and gh.get('supports_claim') is False:
+            l7b_penalty = 0.3  # score penalty, NOT a kill
+            logger.info(f"⚠️  LAYER 7b: contrarian claim not supported "
+                        f"({gh.get('gene')} observed {gh.get('observed_direction')}, "
+                        f"claimed {gh.get('claimed_direction')}) — score penalty -0.3, "
+                        f"not rejected (Gates Recalibration R3)")
+
+        # V9.0i: Promotion score (Gates Recalibration Part 3). Hard-kill gates
+        # (L1/L2/L3/L5/L7) must pass — they're checked above. The maturity/
+        # conformity dimensions below contribute to a continuous promotion_score
+        # ∈ [0,1] that ranks candidates for the human review shortlist.
+        promotion_score = 0.5  # base for passing hard kills
+        if validation_stats.get('fdr_significance_gate'):     # L4 significance
+            promotion_score += 0.1
+        lit = validation_stats.get('literature_novelty', {})  # L6 Gate-2
+        if lit.get('status') == 'novel':
+            promotion_score += 0.15  # consensus-conflicting = positive signal
+        promotion_score -= l7b_penalty                          # L7b penalty
+        replication = discovery_report.get('replication') or {} # replication fraction
+        rep_frac = float(replication.get('replication_fraction', 0.0) or 0.0)
+        promotion_score += min(rep_frac, 1.0) * 0.25
+        promotion_score = max(0.0, min(1.0, promotion_score))
+        validation_stats['promotion_score'] = round(promotion_score, 3)
+        validation_stats['l7b_demoted_to_score'] = True
 
         # Final decision
         logger.info("=" * 80)
@@ -935,6 +946,8 @@ class FixedDiscoveryOrchestrator:
 
             # Add 6-layer validation statistics to discovery report
             discovery_report['comprehensive_validation_statistics'] = validation_stats
+            # V9.0i: attach promotion_score for the ranked shortlist (Gates Recalibration)
+            discovery_report['promotion_score'] = validation_stats.get('promotion_score', 0.5)
 
             logger.info("✅ DISCOVERY VALIDATED AND ACCEPTED")
             logger.info(f"   Validation: {validation_stats}")

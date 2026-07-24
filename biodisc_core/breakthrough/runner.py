@@ -201,3 +201,60 @@ def run_breakthrough_discovery(
         "high_potential": high,
         "all_ranked": ranked,
     }
+
+
+def get_review_batch(k: int = 10, min_reserved_unexplained: int = 2) -> List[Dict]:
+    """Read the shortlist (genuine + candidate + breakthrough stores), rank by
+    promotion_score + anomaly_priority, and return the top-K with reserved slots
+    for UNEXPLAINED_CONFIRMED candidates.
+
+    This is the human-review interface from the Gates Recalibration Part 4: the
+    machine delivers a ranked batch of K candidates. ≥6 ranked by promotion_score
+    (mature evidence); ≥2 reserved for UNEXPLAINED_CONFIRMED (paradigm-breaker
+    guarantee — they can never be ranked to zero); ≤2 "engaged-but-uncertain".
+
+    Returns a list of dicts (the review batch), each with its scores + evidence.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    root = _Path(__file__).resolve().parents[2]
+    all_cands = []
+    for store_name in ['autonomous_discoveries.jsonl',
+                       'autonomous_discoveries_candidates.jsonl',
+                       'breakthrough_candidates.jsonl']:
+        store = root / store_name
+        if store.exists():
+            with open(store) as f:
+                for line in f:
+                    s = line.strip()
+                    if not s:
+                        continue
+                    try:
+                        all_cands.append(_json.loads(s))
+                    except Exception:
+                        continue
+
+    def _rank_key(c):
+        ps = c.get('promotion_score', c.get('ev', 0))
+        ap = c.get('anomaly_priority', 0)
+        return ps + ap * 0.3
+
+    all_cands.sort(key=_rank_key, reverse=True)
+
+    # Top-K by score (mature evidence)
+    n_scored = k - min_reserved_unexplained
+    top_scored = all_cands[:n_scored]
+    # Reserved slots for UNEXPLAINED_CONFIRMED (paradigm-breaker guarantee)
+    remaining = all_cands[n_scored:]
+    unexplained = [c for c in remaining
+                   if c.get('ledger_status') == 'UNEXPLAINED_CONFIRMED'][:min_reserved_unexplained]
+    # If not enough UNEXPLAINED, fill from remaining top
+    if len(unexplained) < min_reserved_unexplained:
+        unexplained += remaining[:min_reserved_unexplained - len(unexplained)]
+
+    batch = top_scored + unexplained
+    logger.info("review batch: %d candidates (%d scored + %d reserved) from %d total",
+                len(batch), len(top_scored), len(unexplained), len(all_cands))
+    return batch
+
