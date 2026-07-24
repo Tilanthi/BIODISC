@@ -44,12 +44,32 @@ class DiscoveryCandidate:
     testable_with_existing_data: bool = False
     source_datasets: List[str] = field(default_factory=list)
     data_backed: bool = False          # True = backed by real downloaded data (TCGA/scRNA/AlphaFold), not just conceptual
+    # V9.0g — the 4-way ledger from the Gates Recalibration (BEAST survey).
+    # UNEXPLAINED_CONFIRMED (reproducible + no mechanism) = paradigm-breaker
+    # signature → gets anomaly_priority boost + reserved shortlist slot.
+    ledger_status: str = "UNEXPLAINED_UNCONFIRMED"
+    # EXPLAINED_CONFIRMED | UNEXPLAINED_CONFIRMED | EXPLAINED_UNCONFIRMED | UNEXPLAINED_UNCONFIRMED
+
+    @property
+    def anomaly_priority(self) -> float:
+        """From the Gates Recalibration: mechanism-absence (literature-absent) +
+        reproducible (data_backed) = the paradigm-breaker signature. INVERTED:
+        absence BOOSTS priority for reproducible signals, never penalizes.
+        Returns 0.0-1.0."""
+        if not self.data_backed:
+            return 0.0  # conceptual-only candidates don't get the paradigm-breaker boost
+        # The more novel (literature-absent) AND data-backed, the higher the priority.
+        # This is the "inexplicable-but-reproducible" track from the 18-case survey.
+        return self.novelty * (1.0 if self.ledger_status == "UNEXPLAINED_CONFIRMED" else 0.5)
 
     @property
     def ev(self) -> float:
+        """Expected value: novelty × importance × surprise, with multipliers for
+        data-backed evidence and anomaly_priority (paradigm-breaker signature)."""
         base = self.novelty * self.importance * max(self.surprise, 0.1)
         if self.data_backed:
             base *= 2.0  # real data evidence outranks conceptual plausibility
+        base += self.anomaly_priority * 0.5  # paradigm-breaker boost (additive, not multiplicative)
         return round(base, 4)
 
     @property
@@ -83,6 +103,8 @@ class DiscoveryCandidate:
             "testable_with_existing_data": self.testable_with_existing_data,
             "source_datasets": self.source_datasets,
             "data_backed": self.data_backed,
+            "ledger_status": self.ledger_status,
+            "anomaly_priority": self.anomaly_priority,
             "convergence_key": self.convergence_key,
         }
 

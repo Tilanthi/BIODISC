@@ -83,6 +83,9 @@ def run_remining_with_connectors(
                 c.methods = ["remining_tcga"]
                 c.source_datasets = [f"TCGA-{ctype}"]
                 c.data_backed = True  # real data → outranks conceptual candidates
+                # V9.0g: assign ledger_status per the Gates Recalibration 4-way ledger.
+                # data-backed + novel = UNEXPLAINED_CONFIRMED (paradigm-breaker track)
+                c.ledger_status = "UNEXPLAINED_CONFIRMED" if c.novelty > 0.5 else "EXPLAINED_CONFIRMED"
                 c.evidence["tcga_cancer_type"] = ctype
                 c.evidence["n_significant_genes"] = de.significant_genes
             candidates.extend(tcga_cands)
