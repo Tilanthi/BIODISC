@@ -29,6 +29,46 @@ CANDIDATE_STORE = PROJECT_ROOT / "autonomous_discoveries_candidates.jsonl"
 VERDICT_LOG = PROJECT_ROOT / "discovery_verdicts.jsonl"
 
 
+def kill_recovery_rates(verdict_log: Optional[Path] = None) -> dict:
+    """Paired kill-rate + recovery-rate (Item-Bank Schema v0.2).
+
+    Kill-rate = fraction of candidates rejected (specificity — high is good).
+    Recovery-rate = fraction that survived to the shortlist (sensitivity —
+    stored + quarantined). The PAIR is what matters: kill-rate alone rewards
+    refusing everything (perfect kill, zero recovery = safe but meaningless).
+    """
+    log = verdict_log or VERDICT_LOG
+    rejected = stored = quarantined = in_progress = 0
+    if log.exists():
+        with open(log) as fh:
+            for line in fh:
+                s = line.strip()
+                if not s:
+                    continue
+                try:
+                    r = json.loads(s)
+                except Exception:
+                    continue
+                outcome = r.get("outcome", "")
+                if outcome == "rejected":
+                    rejected += 1
+                elif outcome == "stored":
+                    stored += 1
+                elif outcome == "quarantined":
+                    quarantined += 1
+                elif outcome == "in_progress":
+                    in_progress += 1
+    total = max(1, rejected + stored + quarantined)
+    return {
+        "kill_rate": round(rejected / total, 4),
+        "recovery_rate": round((stored + quarantined) / total, 4),
+        "decided": rejected + stored + quarantined,
+        "in_progress": in_progress,
+        "note": ("kill-rate + recovery-rate reported as a PAIR. Kill-rate alone "
+                 "rewards refusing everything (perfect specificity, zero sensitivity)."),
+    }
+
+
 def contrarian_success_rate(verdict_log: Optional[Path] = None) -> dict:
     """The rebuild's true success metric (rebuild item 5).
 
@@ -171,6 +211,7 @@ def compute_capability_index(verdict_summary: Optional[dict] = None,
             "rsi_measured": rsi_measured,
         },
         "contrarian_success_rate": contrarian_success_rate(),
+        "kill_recovery_rates": kill_recovery_rates(),
         "note": ("Compass needle, not a benchmark. 100 = formula saturation, not "
                  "'solved biology'. genuine/quarantined counted from the chokepoint-"
                  "gated stores (authoritative); replication_rate is the load-bearing "

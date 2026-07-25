@@ -258,3 +258,51 @@ def get_review_batch(k: int = 10, min_reserved_unexplained: int = 2) -> List[Dic
                 len(batch), len(top_scored), len(unexplained), len(all_cands))
     return batch
 
+
+def main(argv=None):
+    """CLI entry point for the breakthrough package.
+
+    Usage:
+        python -m biodisc_core.breakthrough.runner --review-batch
+        python -m biodisc_core.breakthrough.runner --run
+    """
+    import sys
+    if argv is None:
+        argv = sys.argv[1:]
+
+    if "--review-batch" in argv:
+        batch = get_review_batch()
+        print(f"\n{'=' * 80}")
+        print(f"DISCOVERY REVIEW BATCH — top {len(batch)} candidates for human review")
+        print(f"{'=' * 80}\n")
+        for i, c in enumerate(batch, 1):
+            ps = c.get("promotion_score", c.get("ev", 0))
+            ap = c.get("anomaly_priority", 0)
+            kind = c.get("kind", "?")
+            claim = c.get("claim", "?")[:75]
+            gene = c.get("gene", "")
+            ledger = c.get("ledger_status", "")
+            db = "📊" if c.get("data_backed") else "  "
+            cc = "⚡" if c.get("consensus_conflict") else "  "
+            print(f"  {i:2}. {db}{cc} ps={ps:.3f} ap={ap:.3f} [{kind[:18]:18}] "
+                  f"ledger={ledger[:22]:22} gene={gene:10} | {claim}")
+        print(f"\n{'=' * 80}")
+        print("Precision@K is YOUR judgment: which would you pursue?")
+        print("📊 = data-backed   ⚡ = consensus-conflict (paradigm-breaker signal)")
+        print(f"{'=' * 80}\n")
+        return 0
+
+    if "--run" in argv:
+        result = run_breakthrough_discovery(literature_gate=None)
+        print(json.dumps({"pool_size": result["pool_size"],
+                          "high_potential": len(result["high_potential"])}, indent=2))
+        return 0
+
+    print("Usage: python -m biodisc_core.breakthrough.runner --review-batch")
+    print("       python -m biodisc_core.breakthrough.runner --run")
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

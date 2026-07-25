@@ -68,6 +68,12 @@ class FixedAutonomousDiscovery:
         self.orchestrator = None
         self.running = False
         self.session_file = project_root / "fixed_discovery_state.json"
+        # V9.0k: systematic TCGA data expansion — rotate through cancer types
+        # every 10 cycles to mine fresh under-studied data alongside GEO.
+        self._cycle_count = 0
+        self._tcga_idx = 0
+        self._tcga_types = ["BRCA", "LUAD", "COAD", "KIRC", "PRAD", "GBM",
+                            "UCEC", "HNSC", "LUSC", "THCA"]
 
         # Shared ontology mapper for question<->dataset relevance pinning.
         try:
@@ -293,6 +299,29 @@ class FixedAutonomousDiscovery:
 
                 logger.info(f"\n📊 Discovery cycle complete: {discoveries_made_this_cycle} discoveries")
                 discovery_status.record_cycle(discoveries_made_this_cycle)
+
+                # V9.0k: periodic TCGA re-mining — every 10 cycles, mine a
+                # different TCGA cancer type in the background. Systematically
+                # expands data coverage beyond the exhausted GEO microarray pool.
+                self._cycle_count += 1
+                if self._cycle_count % 10 == 0:
+                    ctype = self._tcga_types[self._tcga_idx % len(self._tcga_types)]
+                    self._tcga_idx += 1
+                    def _bg_tcga(ct=ctype):
+                        try:
+                            from biodisc_core.breakthrough.runner import run_remining_with_connectors
+                            import json as _json
+                            cands = run_remining_with_connectors(
+                                tcga_cancer_types=[ct], dry_run=False)
+                            if cands:
+                                with open(project_root / "breakthrough_candidates.jsonl", "a") as f:
+                                    for c in cands[:10]:
+                                        f.write(_json.dumps(c.as_dict()) + "\n")
+                                logger.info("🔎 Periodic TCGA %s: %d candidates", ct, len(cands))
+                        except Exception as _be:
+                            logger.warning("Periodic TCGA %s failed (non-fatal): %s", ct, _be)
+                    threading.Thread(target=_bg_tcga, daemon=True,
+                                     name=f"tcga-{ctype}").start()
 
                 # Save session state
                 self.save_session_state()
