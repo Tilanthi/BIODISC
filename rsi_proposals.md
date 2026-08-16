@@ -1,12 +1,12 @@
 # RSI proposals — mined from discovery_verdicts.jsonl
 
-_Candidate failures analyzed: 44720  (themes: 10)_
-_Verdict coverage: 44640 rejected of 44665 logged (100%) — a system that stops logging failures would look healthier here for worse behavior._
+_Candidate failures analyzed: 45044  (themes: 10)_
+_Verdict coverage: 44964 rejected of 44989 logged (100%) — a system that stops logging failures would look healthier here for worse behavior._
 
 _Propose-only. Applying any [APPROVAL] fix is a human-gated act; record it in rsi_proposals_applied.jsonl so its effect can be measured._
 
 ## 1. unclassified  [APPROVAL]
-- occurrences: **42022**  (1447.388/day over 29.033d)
+- occurrences: **42338**  (1451.914/day over 29.16d)
 - proposed fix: Investigate root cause.
 - samples:
     - Does TP53 change in the OPPOSITE direction in cancer than the textbook
@@ -14,7 +14,7 @@ _Propose-only. Applying any [APPROVAL] fix is a human-gated act; record it in rs
     - Does TP53 change in the OPPOSITE direction in leukemia than the textbo
 
 ## 2. generation_failed  [APPROVAL]
-- occurrences: **1428**  (44.049/day over 32.419d)
+- occurrences: **1432**  (44.0/day over 32.545d)
 - proposed fix: Root-cause the pre-validation failure (download timeout, gene-symbol validation, DE setup); treat as a reliability fix.
 - samples:
     - Which lipid-metabolism genes are differentially expressed in mouse liv
@@ -22,7 +22,7 @@ _Propose-only. Applying any [APPROVAL] fix is a human-gated act; record it in rs
     - How does eIF2α phosphorylation alter global translation during ER stre
 
 ## 3. duplicate_profile  [APPROVAL]
-- occurrences: **496**  (15.232/day over 32.563d)
+- occurrences: **500**  (15.295/day over 32.689d)
 - proposed fix: Broaden question/dataset diversity or perturb DE so repeated pairs yield distinct statistical profiles (the small dataset pool is the deeper cause).
 - samples:
     - How does novel gene X affect pathway Y in cancer?

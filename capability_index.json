@@ -1,31 +1,31 @@
 {
   "capability_index": 17.3,
-  "computed_at": "2026-08-16T08:55:01+00:00",
+  "computed_at": "2026-08-16T12:10:31+00:00",
   "dimensions": {
     "replication_rate": 0.265,
     "gate_pass_rate": 0.002,
-    "rsi_effectiveness": 20.0
+    "rsi_effectiveness": 19.6
   },
   "drivers": {
     "genuine": 26,
     "quarantined": 72,
-    "total_candidates": 44665,
+    "total_candidates": 44989,
     "abandoned": 352,
     "rsi_measured": true
   },
   "contrarian_success_rate": {
-    "contrarian_tested": 474,
-    "supported": 63,
-    "supported_and_novel": 63,
+    "contrarian_tested": 478,
+    "supported": 64,
+    "supported_and_novel": 64,
     "supported_but_known": 0,
-    "supported_novel_rate": 0.1329,
+    "supported_novel_rate": 0.1339,
     "note": "genuine-surprise candidates = contrarian claim supported AND novel. 0 until the loop runs V8.0.27+ and funds gene-naming questions."
   },
   "kill_recovery_rates": {
     "kill_rate": 0.9994,
     "recovery_rate": 0.0006,
-    "decided": 44313,
-    "in_progress": 883,
+    "decided": 44637,
+    "in_progress": 887,
     "note": "kill-rate + recovery-rate reported as a PAIR. Kill-rate alone rewards refusing everything (perfect specificity, zero sensitivity)."
   },
   "note": "Compass needle, not a benchmark. 100 = formula saturation, not 'solved biology'. genuine/quarantined counted from the chokepoint-gated stores (authoritative); replication_rate is the load-bearing dimension."

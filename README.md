@@ -1,5 +1,8 @@
 # BIODISC: Biology Discovery and Intelligence System
 
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
+
 BIODISC is a unified AGI-inspired framework for autonomous hypothesis generation and validation in biology. The system integrates ~320,000 lines of clean, functional code across modular cognitive capabilities.
 
 ## Overview
@@ -172,7 +175,7 @@ Contributions are welcome! Please read our contributing guidelines and submit pu
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](LICENSE) file for details. Source files carry the corresponding Apache-2.0 boilerplate notice; attribution notices are in [NOTICE](NOTICE).
 
 ## Citation
 
