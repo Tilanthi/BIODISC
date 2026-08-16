@@ -27,4 +27,12 @@ import pytest
 def _isolate_verdict_log(tmp_path, monkeypatch):
     monkeypatch.setenv("BIODISC_VERDICT_LOG", str(tmp_path / "test_verdicts.jsonl"))
     monkeypatch.setenv("BIODISC_DUPLICATE_REGISTRY", str(tmp_path / "test_dup_registry.json"))
+    # Same reason, for the runtime status store the watchdog reads: the loop now
+    # heartbeats from inside long operations, so any test that exercises
+    # gene-symbol validation would otherwise rewrite the production
+    # discovery_status.json — and that file is the watchdog's only evidence that
+    # the loop is alive.
+    monkeypatch.setenv("BIODISC_DISCOVERY_STATUS", str(tmp_path / "test_discovery_status.json"))
+    # Likewise for the persisted HGNC verdict cache.
+    monkeypatch.setenv("BIODISC_HGNC_CACHE", str(tmp_path / "test_hgnc_cache.json"))
     yield
