@@ -809,7 +809,11 @@ it).
 feedback on the preregistered outcome vector at matched information
 and budget --- no penalty for removing P3, no advantage to keeping it
 --- the residual loop is not the mechanism the thesis rests on, and H1
-fails.
+fails. A laptop-scale pilot implementation of both phases --- code,
+seeds and raw outputs in the repository (\texttt{Jay/phase12}) --- is
+reported in Appendix~\ref{app:pilot}; it was run to de-risk the two
+termination criteria ahead of the definitive runs, and its findings
+are marked where they sharpen the commitments made here.
 
 \subsection{Phase III --- Benchmarks and inverse design}
 
@@ -1131,6 +1135,401 @@ Before submission, an independent second scorer rescores every family
 against the same frozen definitions; disagreements are resolved by
 documented discussion, and both scorings will be published with the
 paper.
+
+\section{Phases I--II pilot: implementation and first results}
+\label{app:pilot}
+
+This appendix reports a pilot execution of the Phase~I and Phase~II
+commitments (Sections~4.1--4.2), run on 2026-08-16 to de-risk the
+programme's two termination criteria before the definitive runs.  The
+pilot implements the closed loop of Eqs.~\ref{eq:integral}--\ref{eq:pool}
+as a delay differential equation integrated by Euler steps with a
+ring-buffer maturation history, and the sandbox of
+Eqs.~\ref{eq:medium}--\ref{eq:response} on a $24\times24$ torus with
+positivity-preserving donor-cell advection; P1--P5 are compile-time
+toggles and the six arms are production/redistribution policies on the
+same plant.  Every draw is through a seeded \texttt{numpy} generator;
+code, seeds and raw outputs are in the repository
+(\texttt{Jay/phase12}: \texttt{jay\_core.py}, \texttt{sandbox.py},
+\texttt{run\_phase1.py}, \texttt{run\_phase2.py},
+\texttt{phase1\_results.json}, \texttt{phase2\_results.json}).  The
+entire pilot --- all sweeps, both phases --- runs in under three
+minutes on one laptop.  It is not the definitive study: 30 seeds per
+sandbox cell, one grid resolution, and no preregistered effect sizes;
+its numbers are descriptive.  Its purpose is to find, early and
+cheaply, the places where the programme's stated commitments meet an
+unfriendly numerical reality; five such findings are collected in
+Section~\ref{app:pilot-changes}.
+
+\subsection{Phase I pilot: the minimal loop}
+\label{app:pilot-1}
+
+\emph{Setup.}  The normalisation $\kappa = p_0 = 1$, $u_0 = \mu$
+makes the no-demand baseline $N = 1$ with zero residual, generalising
+Fig.~\ref{fig:loop}'s.  The anchored box of Section~4.1 is sampled
+log-uniformly in its five free dimensions: $\mu \in [10^{-2},10^{-1}]$
+(responder lifespans), $\beta \in [10^{-2},0.3]$ (production
+relaxation), $\tau \in [10,100]$ (the reference ratio
+$\tau_{\rm production}/\tau_{\rm signal}$), loop gain
+$y = \gamma\kappa/\beta(\mu+w) \in [0.5,10]$ (the ordinate of the
+Section~4.1 phase diagram, so $\gamma$ is fixed by the drawn $y$), and
+demand $w/\mu \in [1,10]$.  A box point \emph{passes the quantitative
+gate} if the active branch is asymptotically stable under
+Eq.~\ref{eq:char} \emph{and} the simulated step response overshoots
+the target by $\le 50\%$ \emph{and} settles within the $\pm5\%$ band
+in at most five production delays --- the same bounds Phase~V
+enforces.
+
+\emph{Equilibria.}  Across 400 box points, the simulated final state
+matches Eq.~\ref{eq:eqm} to 0.55\% (95th percentile) wherever the
+response has converged ($\tau < 0.5\,\tau_H$); the error tail (6.7\%
+at the 95th percentile over all stable points) sits entirely at
+$\tau/\tau_H \in [0.5,1)$, where damped ringing outlasts the $12\tau$
+integration window --- slow convergence near the boundary, not
+integrator bias.
+
+\emph{Phase diagram.}  Fig.~\ref{fig:pilot1}(a) plots the closed-form
+Hopf boundary $\tau_H$ of Eq.~\ref{eq:char} in the $(\beta\tau, y)$
+plane at three values of $m/\beta$, with the Monte-Carlo box overlaid
+in the same coordinates.  Simulated oscillation onset coincides with
+the analytic boundary: at the Fig.~\ref{fig:loop} slice, the
+last-quarter amplitude is $\le 0.002$ at $0.5\,\tau_H$, jumps
+$\times4$ across $\tau_H$ (0.0125 at $0.8\,\tau_H$ to 0.047 at
+$\tau_H$ at $y=1.5$) and keeps growing to 0.083 at $2\,\tau_H$; the
+same stair-step appears at $y = 3$ and $y = 6$.
+
+\begin{figure*}
+\includegraphics[width=\textwidth]{figA1_phase1}
+\caption{Phase~I pilot.  (a) The delay-Hopf boundary of
+Eq.~\ref{eq:char} in the $(\beta\tau,\, y)$ plane of Section~4.1 at
+three $m/\beta$ contours (lines, left to right: $m/\beta = 10$, 1,
+0.1); the anchored parameter box overlaid as pass (blue) / fail
+(grey) against the quantitative gate; $\times$ marks simulated
+oscillation onset, placed at $\tau = \tau_H$.  (b) First-order Sobol
+indices of the gate indicator (covariance estimator, Saltelli
+$A/B$ matrices, $N=1024$, bootstrap 95\% confidence intervals): the
+envelope is set by timescales and demand ($\mu$, $w$, $\tau$,
+$\beta$), not by loop gain $y$.}
+\label{fig:pilot1}
+\end{figure*}
+
+\emph{Gate volume --- the honest number.}  Over $2^{12}$ box points:
+45.9\% are asymptotically stable, 36.3\% meet the overshoot bound,
+and 11.5\% settle within five production delays --- the gate volume
+is 11.5\%, and \emph{settling is the binding criterion} (median
+settling among passers: $4.17\,\tau$; median overshoot: 10\%).  Under
+eight simultaneous $\pm20\%$ perturbations of all five dimensions,
+50.3\% of passing points survive every draw (5.8\% of the box
+unconditionally).  Against Section~4.1's hope of ``majority, not
+sliver'', the pilot finds a sliver --- and Section~\ref%
+{app:pilot-changes} records the two candidate responses (denominate
+the settling budget in the loop's slowest timescale, or report the
+volume honestly).  The termination criterion itself is \emph{not}
+triggered: a realistic-delay region passing all three bounds with
+majority robustness exists.
+
+\emph{Sensitivity.}  First-order Sobol indices of the gate indicator
+(Fig.~\ref{fig:pilot1}b): $w$ 0.75 [0.65, 0.86], $\mu$ 0.71 [0.61,
+0.81], $\tau$ 0.56 [0.47, 0.68], $\beta$ 0.40 [0.31, 0.50], and loop
+gain $y$ 0.04 [$-0.02$, 0.11] (bootstrap 95\% CIs).  The inversion is
+the useful result: which parameters must be identified carefully are
+the timescales and the demand; the loop gain that the stability
+analysis centres on is, within the anchored box, nearly free ---
+exactly the parameter the biology leaves unpinned across an order of
+magnitude.  The indices sum to well above one's expectation for an
+additive decomposition (2.5), i.e.\ the gate fails through
+interacting parameter combinations, consistent with settling being
+governed by the slowest of $\{\tau, \beta^{-1}, m^{-1}\}$.
+
+\emph{Extensions.}  Table~\ref{tab:ext} gives the gate volume under
+the four named extensions.  Finite capacity and Michaelis--Menten
+clearance \emph{help} (both self-limit overshoot); heterogeneity
+costs a third of the volume; and the delayed+noisy measurement arm
+collapses it --- decomposed, the collapse is entirely measurement
+\emph{latency}, not measurement \emph{noise}: with $\sigma = 0.1$
+sampled-and-held jitter and no delay the volume is unchanged (the
+integral loop averages the jitter), while a pure residual-measurement
+delay of $0.1\,\tau$, $0.25\,\tau$, $0.5\,\tau$ gives 0.091, 0.048,
+0.015.  The minimal model's assumption that the medium relaxes on the
+signal timescale is load-bearing: the factory must see the residual
+fast relative to its own production delay, or the settling budget is
+spent before the loop begins.
+
+\begin{table}
+\centering
+\caption{Phase~I gate volume under the four named extensions
+($n = 2048$ box points each; baseline re-drawn per arm).}
+\label{tab:ext}
+\begin{tabular}{lc}
+\toprule
+arm & gate volume \\
+\midrule
+baseline & 0.123 \\
+finite capacity ($u \le 4u_0$) & 0.140 \\
+Michaelis--Menten clearance & 0.146 \\
+heterogeneous responders & 0.085 \\
+measurement noise only ($\sigma = 0.1$) & 0.123 \\
+residual delay $0.1\,\tau$ only & 0.091 \\
+residual delay $0.25\,\tau$ only & 0.048 \\
+delayed$+$noisy residual ($0.5\,\tau$, $\sigma=0.1$) & 0.015 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\emph{The no-P3 divergence (closed-loop face of H1).}  With demand on
+throughout and a burst removing 70\% of the pool ($N_0 = 0.3$ under a
+fixed-production ceiling $u_0/m = 0.5$), Table~\ref{tab:nop3} compares
+the simulated time to reach $N_T = (1-\varepsilon)\,u_0/m$ against
+the closed form $T = -(1/m)\ln[(u_0/m - N_T)/(u_0/m - N_0)]$.  The
+fixed-production arm matches the closed form to $\le 0.1\%$ at every
+$\varepsilon$ and diverges logarithmically as $\varepsilon
+\rightarrow 0$, while the demand-tracking loop ($y = 0.6$,
+delay-unconditionally stable) saturates at $\approx 1.1\,\tau$: at
+$\varepsilon = 1.6\times10^{-3}$ the contrast is $2.6\times$ and
+growing without bound.  Near the ceiling the two arms agree, as they
+must --- the loop has not yet had time to matter.
+
+\begin{table}
+\centering
+\caption{No-P3 divergence: time to reach $N_T = (1-\varepsilon)\,
+u_0/m$ from $N_0 = 0.3$ ($\mu = w = 0.05$, $m = 0.1$, ceiling
+$u_0/m = 0.5$; tracking loop $y = 0.6$, $\tau = 20$).  ``Theory'' is
+the closed form of H1 for the fixed arm.}
+\label{tab:nop3}
+\begin{tabular}{lccc}
+\toprule
+$\varepsilon$ & $T_{\rm fixed}$ (sim) & $T_{\rm fixed}$ (theory) &
+$T_{\rm tracking}$ (sim) \\
+\midrule
+0.355 & 1.20 & 1.20 & 1.20 \\
+0.092 & 14.72 & 14.73 & 14.72 \\
+0.024 & 28.24 & 28.25 & 21.22 \\
+0.0061 & 41.74 & 41.78 & 21.62 \\
+0.0016 & 55.26 & 55.31 & 21.72 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Phase II pilot: the digital wound sandbox}
+\label{app:pilot-2}
+
+\emph{Setup.}  Three sites of demand on a $24\times24$ torus;
+responders migrate up the sensed gradient above threshold
+($\chi$-limited, donor-cell advection) and are expended by serving;
+the systemic loop of Eqs.~\ref{eq:integral}--\ref{eq:pool} couples a
+factory (delay $\tau = 20$, antagonist $\beta$) to the grid-total
+pool through the residual $r = [1 - \kappa N]^+$.  Scenario classes:
+\emph{injury} (one-shot demand), \emph{infection} (demand refills at
+constant rate), \emph{chronic} (refilling demand that clears at
+$t = 6\tau$).  Routine housekeeping traffic --- diffusive distractor
+pulses that receiver-correct responders must ignore --- runs
+throughout (P1's payload).  30 seeds per cell; every metric below is
+over seeds; the deadline is $8\tau$.
+
+\emph{Factorial knockout.}  Table~\ref{tab:factorial} regresses the
+failure indicator on the five toggles plus the three named
+interactions ($2^5$ cells, infection scenario).  P3 dominates:
+knocking out the residual loop costs $0.763$ [$-0.808$, $-0.708$] in
+failure probability --- every P3-less cell fails outright under
+infection, exactly the no-P3 ceiling of H1.  P2 and P4 knockouts cost
+$0.075$ and $0.083$.  The P3$\times$P5 interaction is the largest
+conditional effect ($-0.175$): the antagonist's dissolution pays only
+when there is a loop to terminate --- with P3 present, adding P5 cuts
+failure from 0.24 to 0.07 averaged over the stratum; with P3 absent
+it is irrelevant.  (The P5 main effect is unidentified rather than
+zero: all sixteen P3-less cells fail at exactly 1.0, so the saturated
+stratum has no variance and the effect loads entirely on the
+interaction.)  The P2$\times$P4 term ($-0.058$, CI marginally
+excluding zero) points the same way as the design intent: the
+co-signal guard substitutes for some of the selectivity that
+threshold-free responders lose.  P1 is failure-neutral at these
+distractor loads (its cost appears as misallocated holding, not
+failed episodes) --- an honest null.
+
+Two further readings of the cell means matter for the definitive
+design.  First, in the \emph{benign} infection scenario the P3-only
+cell fails least of all (0.00 failure, 0.059 unmet, versus 0.10 /
+0.077 for the full stack): the guard and the antagonist each trade a
+little throughput for safety that this scenario does not bill ---
+their value appears precisely where H2 and H2b bill it.  Second, the
+P4 knockout \emph{raises} failure here (0.00 $\to$ 0.33 in the
+P3-only stratum) because serving gated by the co-signal is slower
+\emph{and} because without the guard, responders burn at stale halos
+left by cleared sites --- friendly fire, not adversarial fire.  The
+primitives are throughput costs and robustness gains, which is the
+paper's argument for reporting the full outcome vector rather than
+latency alone.
+
+\begin{table}
+\centering
+\caption{Factorial knockout regression on the infection scenario
+($2^5$ cells $\times$ 30 seeds; toggle coded 1 = knocked out; OLS on
+cell means, bootstrap-over-seeds 95\% CIs).}
+\label{tab:factorial}
+\begin{tabular}{lcc}
+\toprule
+term & failure & unmet \\
+\midrule
+intercept & $+0.937\;[0.914, 0.960]$ & $+0.190\;[0.180, 0.199]$ \\
+P1 & $-0.008\;[-0.038, 0.025]$ & $-0.006\;[-0.014, 0.002]$ \\
+P2 & $+0.075\;[0.033, 0.119]$ & $+0.005\;[-0.004, 0.014]$ \\
+P3 & $-0.763\;[-0.808, -0.708]$ & $-0.109\;[-0.115, -0.102]$ \\
+P4 & $+0.083\;[0.050, 0.119]$ & $-0.011\;[-0.018, -0.004]$ \\
+P5 & (unidentified; text) & $+0.064\;[0.053, 0.073]$ \\
+P3$\times$P5 & $-0.175\;[-0.236, -0.112]$ & $-0.070\;[-0.080, -0.059]$ \\
+P2$\times$P4 & $-0.058\;[-0.117, 0.004]$ & $+0.000\;[-0.010, 0.010]$ \\
+P1$\times$P2 & $+0.008\;[-0.052, 0.069]$ & $+0.005\;[-0.005, 0.015]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\emph{Six arms at matched information.}  Table~\ref{tab:arms} reports
+the decisive comparison across the three scenarios, with the
+medium-side cost vector.  The honest ordering on latency: the oracle
+resolves fastest ($0.31\,\tau$, reading global state); queue/back-
+pressure and gossip next ($0.9\,\tau$, routing directly on per-cell
+load); the two residual-driven arms at $3.5$--$4.8\,\tau$; fixed
+production fails outright wherever demand refills.  The
+\emph{measured-error} arm --- an ordinary integral controller granted
+site reports --- tracks the physical residual almost exactly (within
+2\% on resolve time and unmet, infection) at $1.5$ messages per unit
+time: the medium computes the same integral for free, and that
+equivalence, not superiority, is the correct reading of P3 at this
+scale.  The hormonal arm's case is carried by the other axes of the
+vector: zero agent-side messages, graceful degradation under
+coordinator denial (below), and no second infrastructure to keep
+alive.  The sandbox's medium bill is real and must not be hidden: the
+field arms pay $\sim\!10^5$ cell-deliveries per unit time against
+gossip's $3.8\times10^3$ messages --- the price of a physics nobody
+has to route.
+
+\begin{table*}
+\centering
+\caption{The six Phase~II arms at matched information and budget
+(30 seeds; time in production delays $\tau$; deadline $8\tau$).
+Resolve = median time to clear demand (censored at run end).  Cost
+components per unit simulated time on the $24\times24$ grid
+(infection scenario; an emission bills $G^2 = 576$ cell-deliveries;
+all arms additionally hold $3G^2$ words of agent state).}
+\label{tab:arms}
+\begin{tabular}{l ccc cccc}
+\toprule
+& \multicolumn{3}{c}{failure / resolve ($\tau$)} &
+\multicolumn{4}{c}{cost per unit time} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-8}
+arm & injury & infection & chronic &
+emissions & deliveries ($10^3$) & messages & medium state (words) \\
+\midrule
+hormonal (P1--P5) & 0.00 / 3.6 & 0.10 / 4.8 & 0.03 / 4.8 &
+191 & 110 & 0 & 2304 \\
+fixed (no P3) & 0.73 / $>8$ & 1.00 / $>8$ & 1.00 / $>8$ &
+191 & 110 & 0 & 2304 \\
+measured-error & 0.00 / 3.5 & 0.10 / 4.7 & 0.03 / 4.7 &
+191 & 110 & 1.5 & 2304 \\
+back-pressure & 0.00 / 0.9 & 0.00 / 0.9 & 0.00 / 0.9 &
+1.5 & 0.9 & 0 & --- \\
+gossip & 0.00 / 0.9 & 0.00 / 0.9 & 0.00 / 0.9 &
+--- & --- & 3848 & --- \\
+oracle & 0.00 / 0.3 & 0.00 / 0.3 & 0.00 / 0.3 &
+--- & --- & 0 & --- $^{\dagger}$ \\
+\bottomrule
+\end{tabular}
+
+$^{\dagger}$the oracle instead reads global state ($G^2$ words per
+read, continuously): a coordinator hidden in the instrumentation, by
+design the upper bound.
+\end{table*}
+
+\emph{H1, sandbox face (Fig.~\ref{fig:pilot2}a).}  Sweeping demand
+mass $D$ from 2 to 12 baseline units (injury): the hormonal arm's
+median resolve time grows near-linearly ($26 \to 148$, slope
+$\approx 12$ per unit $D$) with production scaling $u_{\rm peak}/u_0
+= 3.5$--$3.8$; the fixed arm cannot scale ($u_{\rm peak}/u_0 = 1.0$
+throughout), fails 33\% at $D=4$ and 100\% from $D = 8$.  The
+tracking arm's own failures at $D \ge 10$ (17\%, 40\%) are honest:
+they are serving-and-migration limits of the grid, not loop limits
+--- production was still scaling when the deadline expired.
+
+\emph{H2, fibrosis (Fig.~\ref{fig:pilot2}b, bars).}  Chronic demand
+clearing at $t = 6\tau$: with P5 the pool stands down to $1.03\times$
+baseline and production to $1.00\times$; without P5 the pool
+ratchets to $3.07\times$ and production to $3.10\times$ and stays
+there --- Fig.~\ref{fig:loop}(b)'s fibrotic shift, reproduced with
+spatial routing in the loop, in a measurable fraction of runs
+(failure 13\% versus 3\%).
+
+\emph{H2b, adversarial recruitment (Fig.~\ref{fig:pilot2}b, lines).}
+Sweeping false-signal injection rate $\nu = 0 \to 0.2$: with the P4
+co-signal gate, false burn is \emph{zero} at every $\nu$; without it,
+burn rises from 12 (at $\nu = 0$ --- friendly fire at stale halos) to
+78 pool mass at $\nu = 0.2$.  Misallocated holding is similar in
+both arms ($\sim$5--11): P4 gates \emph{expenditure}, not attention
+--- the guard's FPR claim holds, and its cost shows up as the
+throughput tax of Table~\ref{tab:factorial}.
+
+\emph{H3, coordinator denial and churn.}  The oracle arm under two
+outages of its coordinator channel ($(0,30)$ and $(50,90)$, 35\% of
+the run): unmet demand rises $6.5\times$ over the clean oracle (0.104
+versus 0.016) --- to \emph{worse than the hormonal arm} (0.077),
+which has no coordinator to deny.  The hormonal arm under churn
+(random removal of 10--50\% of off-site responders every $\tau$) does
+not degrade: failure 0.10 $\to$ 0.03, unmet 0.077 $\to$ 0.073 ---
+turnover prunes the wandering pool, keeps the residual honest, and
+sustained delivery continues; the loop is robust to, even mildly
+aided by, the constant turnover its biological reference runs
+natively.
+
+\begin{figure*}
+\includegraphics[width=\textwidth]{figA2_phase2}
+\caption{Phase~II pilot.  (a) H1: median time to resolve versus
+demand mass $D$ (injury scenario; deadline $8\tau$): the residual-
+driven arm scales production ($u_{\rm peak}/u_0 = 3.5$--$3.8$) and
+resolves near-linearly, with graceful degradation at $D \ge 10$;
+fixed production cannot scale and fails outright (percentages:
+failure rate).  (b) H2/H2b: bars --- post-release pool $N_{\rm
+end}/N_0$ in the chronic scenario with the antagonist (P5) on and
+off, the fibrotic shift; lines --- false burn (expended pool mass)
+versus adversary rate $\nu$ with the P4 co-signal gate on and off.}
+\label{fig:pilot2}
+\end{figure*}
+
+\subsection{What the pilot changes in the programme}
+\label{app:pilot-changes}
+
+\begin{enumerate}
+\item \emph{The settling budget is the binding constraint, and the
+gate volume is a sliver (11.5\%), not a majority.}  The termination
+criterion stands (a realistic-delay region passes with majority
+robustness), but the definitive Phase~I must either justify
+denominating settling in $\max(\tau, \beta^{-1}, m^{-1})$ --- the
+slowest loop timescale, which the biology arguably supplies --- or
+pre-register the honest volume.  Sobol says the envelope is set by
+timescales and demand, not loop gain: $y$ is nearly free to leave
+unidentified.
+\item \emph{Residual sensing latency, not noise, spends the budget}
+(Table~\ref{tab:ext}): a $0.25\,\tau$ measurement delay removes most
+of the gate volume while $\sigma = 0.1$ jitter costs nothing.  The
+Phase~IV substrate requirement ``medium clears on the signal
+timescale'' is quantitative, not decorative.
+\item \emph{The primitives buy robustness and terminability, not
+throughput.}  P3-only beats the full stack on failure in the benign
+scenario; the guard and antagonist each cost a few points there and
+pay back exactly where H2 (fibrosis: $3.07\times$ versus
+$1.03\times$) and H2b (false burn 78 versus 0) bill them.  The
+preregistered outcome vector must weight termination and adversarial
+axes, as Section~4.2 already commits.
+\item \emph{P3's equivalence, not superiority, at pilot scale}: the
+measured-error integral controller on site reports matches the
+physical residual within 2\% at $1.5$ messages per unit time.  The
+hormonal arm's advantage appears on the denial and infrastructure
+axes (H3: oracle-under-outage 0.104 unmet versus hormonal 0.077), and
+the definitive comparison must report all five cost components to
+make that visible.
+\item \emph{H3's graceful-degradation claim survives contact}: no
+coordinator to deny, robust to 50\% churn.  The churn arm even
+improves slightly --- turnover keeps the residual honest --- which
+the definitive runs should confirm at scale rather than lean on.
+\end{enumerate}
 
 \begin{thebibliography}{32}
 \bibitem[Abelson et~al.(2000)]{abelson2000} Abelson H., Allen D., Coore D.,

@@ -1,0 +1,84 @@
+P1-1 equilibria ...
+{
+ "n": 400,
+ "n_stable": 186,
+ "max_rel_err_stable": 0.2981894161429799,
+ "p95_rel_err_stable": 0.06719929921736195,
+ "p95_rel_err_deep": 0.005541882136163132,
+ "note": "tail error sits at tau/tau_H in [0.5,1): damped ringing slower than 12 tau, not integrator bias"
+}
+P1-2 phase diagram ...
+P1-3/4 box + robustness ...
+{
+ "n": 4096,
+ "frac_stable": 0.45947265625,
+ "frac_overshoot_ok": 0.36328125,
+ "frac_settle_ok": 0.114990234375,
+ "frac_gate": 0.114990234375,
+ "robust_conditional": 0.5031847133757962,
+ "robust_unconditional": 0.057861328125,
+ "median_settle_tau": 4.166639762209352,
+ "median_overshoot": 0.0996183173846163
+}
+P1-5 Sobol ...
+{
+ "names": [
+  "mu",
+  "beta",
+  "tau",
+  "y (gain/antagonist)",
+  "w_mult (demand)"
+ ],
+ "S": [
+  0.7098723225654224,
+  0.3990370706237081,
+  0.560066405922949,
+  0.042969660000195725,
+  0.7547659971924926
+ ],
+ "S_lo": [
+  0.6109149430960089,
+  0.3096797045850839,
+  0.4654965473069225,
+  -0.019360261343006294,
+  0.6476322112582429
+ ],
+ "S_hi": [
+  0.8098440626843244,
+  0.4961919028085415,
+  0.6775859434669734,
+  0.11138547617605722,
+  0.8583571229775453
+ ]
+}
+P1-6 extensions ...
+{
+ "baseline": 0.123046875,
+ "finite capacity (u<=4u0)": 0.1396484375,
+ "MM clearance": 0.142578125,
+ "delayed+noisy residual": 0.01513671875,
+ "noise only (sigma=0.1)": 0.123046875,
+ "delay 0.10 tau only": 0.09130859375,
+ "delay 0.25 tau only": 0.04833984375,
+ "heterogeneous responders": 0.08544921875
+}
+P1-7 no-P3 divergence ...
+  eps=0.3548 fixed     T_sim=    1.20 T_theory(fixed)=    1.20
+  eps=0.3548 hormonal  T_sim=    1.20 T_theory(fixed)=    1.20
+  eps=0.1804 fixed     T_sim=    7.96 T_theory(fixed)=    7.96
+  eps=0.1804 hormonal  T_sim=    7.96 T_theory(fixed)=    7.96
+  eps=0.0917 fixed     T_sim=   14.72 T_theory(fixed)=   14.73
+  eps=0.0917 hormonal  T_sim=   14.72 T_theory(fixed)=   14.73
+  eps=0.0466 fixed     T_sim=   21.48 T_theory(fixed)=   21.49
+  eps=0.0466 hormonal  T_sim=   20.50 T_theory(fixed)=   21.49
+  eps=0.0237 fixed     T_sim=   28.24 T_theory(fixed)=   28.25
+  eps=0.0237 hormonal  T_sim=   21.22 T_theory(fixed)=   28.25
+  eps=0.0121 fixed     T_sim=   35.00 T_theory(fixed)=   35.02
+  eps=0.0121 hormonal  T_sim=   21.48 T_theory(fixed)=   35.02
+  eps=0.0061 fixed     T_sim=   41.74 T_theory(fixed)=   41.78
+  eps=0.0061 hormonal  T_sim=   21.62 T_theory(fixed)=   41.78
+  eps=0.0031 fixed     T_sim=   48.50 T_theory(fixed)=   48.55
+  eps=0.0031 hormonal  T_sim=   21.68 T_theory(fixed)=   48.55
+  eps=0.0016 fixed     T_sim=   55.26 T_theory(fixed)=   55.31
+  eps=0.0016 hormonal  T_sim=   21.72 T_theory(fixed)=   55.31
+done in 73s -> phase1_results.json

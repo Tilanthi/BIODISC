@@ -1,0 +1,88 @@
+P2-A factorial (32 cells x 30 seeds, infection) ...
+  00000 fail=1.00 unmet=0.202
+  00001 fail=1.00 unmet=0.273
+  00010 fail=1.00 unmet=0.169
+  00011 fail=1.00 unmet=0.239
+  00100 fail=0.00 unmet=0.059
+  00101 fail=0.03 unmet=0.065
+  00110 fail=0.33 unmet=0.079
+  00111 fail=0.07 unmet=0.067
+  01000 fail=1.00 unmet=0.201
+  01001 fail=1.00 unmet=0.264
+  01010 fail=1.00 unmet=0.176
+  01011 fail=1.00 unmet=0.237
+  01100 fail=0.27 unmet=0.081
+  01101 fail=0.07 unmet=0.074
+  01110 fail=0.37 unmet=0.086
+  01111 fail=0.10 unmet=0.075
+  10000 fail=1.00 unmet=0.193
+  10001 fail=1.00 unmet=0.261
+  10010 fail=1.00 unmet=0.164
+  10011 fail=1.00 unmet=0.229
+  10100 fail=0.00 unmet=0.058
+  10101 fail=0.03 unmet=0.062
+  10110 fail=0.30 unmet=0.074
+  10111 fail=0.03 unmet=0.063
+  11000 fail=1.00 unmet=0.196
+  11001 fail=1.00 unmet=0.254
+  11010 fail=1.00 unmet=0.177
+  11011 fail=1.00 unmet=0.231
+  11100 fail=0.30 unmet=0.086
+  11101 fail=0.07 unmet=0.077
+  11110 fail=0.33 unmet=0.087
+  11111 fail=0.10 unmet=0.077
+P2-B six arms x three scenarios ...
+  injury    hormonal     fail=0.00 res=  72.8 unmet=0.068
+  injury    fixed        fail=0.73 res= 200.0 unmet=0.127
+  injury    measured     fail=0.00 res=  70.5 unmet=0.066
+  injury    backpressure fail=0.00 res=  17.8 unmet=0.052
+  injury    gossip       fail=0.00 res=  18.0 unmet=0.052
+  injury    oracle       fail=0.00 res=   6.2 unmet=0.015
+  infection hormonal     fail=0.10 res=  95.9 unmet=0.077
+  infection fixed        fail=1.00 res= 200.0 unmet=0.231
+  infection measured     fail=0.10 res=  93.7 unmet=0.076
+  infection backpressure fail=0.00 res=  18.6 unmet=0.055
+  infection gossip       fail=0.00 res=  18.8 unmet=0.056
+  infection oracle       fail=0.00 res=   6.2 unmet=0.016
+  chronic   hormonal     fail=0.03 res=  95.9 unmet=0.048
+  chronic   fixed        fail=1.00 res= 320.0 unmet=0.194
+  chronic   measured     fail=0.03 res=  93.7 unmet=0.047
+  chronic   backpressure fail=0.00 res=  18.6 unmet=0.034
+  chronic   gossip       fail=0.00 res=  18.8 unmet=0.035
+  chronic   oracle       fail=0.00 res=   6.2 unmet=0.010
+P2-C H1 demand scaling ...
+  D= 2.0 hormonal  fail=0.00 res=  26.0 u_pk/u0=  3.5
+  D= 2.0 fixed     fail=0.00 res=  45.1 u_pk/u0=  1.0
+  D= 4.0 hormonal  fail=0.00 res=  48.8 u_pk/u0=  3.5
+  D= 4.0 fixed     fail=0.33 res= 128.5 u_pk/u0=  1.0
+  D= 6.0 hormonal  fail=0.00 res=  72.8 u_pk/u0=  3.6
+  D= 6.0 fixed     fail=0.73 res= 200.0 u_pk/u0=  1.0
+  D= 8.0 hormonal  fail=0.00 res=  98.0 u_pk/u0=  3.7
+  D= 8.0 fixed     fail=1.00 res= 200.0 u_pk/u0=  1.0
+  D=10.0 hormonal  fail=0.17 res= 123.5 u_pk/u0=  3.8
+  D=10.0 fixed     fail=1.00 res= 200.0 u_pk/u0=  1.0
+  D=12.0 hormonal  fail=0.40 res= 147.9 u_pk/u0=  3.8
+  D=12.0 fixed     fail=1.00 res= 200.0 u_pk/u0=  1.0
+P2-D H2 fibrosis (chronic release) ...
+  P5 on: N_end/N0=1.03 u_end/u0=1.00 fail=0.03
+  P5 off: N_end/N0=3.07 u_end/u0=3.10 fail=0.13
+P2-E H2b adversarial recruitment ...
+  adv=0.00 P4=on  fail=0.00 burn=  0.00 held=  4.76
+  adv=0.00 P4=off fail=0.00 burn= 12.42 held=  4.55
+  adv=0.02 P4=on  fail=0.00 burn=  0.00 held=  5.41
+  adv=0.02 P4=off fail=0.00 burn= 14.74 held=  5.41
+  adv=0.05 P4=on  fail=0.00 burn=  0.00 held=  9.07
+  adv=0.05 P4=off fail=0.00 burn= 26.27 held=  9.03
+  adv=0.10 P4=on  fail=0.00 burn=  0.00 held= 11.13
+  adv=0.10 P4=off fail=0.00 burn= 73.49 held= 11.03
+  adv=0.20 P4=on  fail=0.00 burn=  0.00 held= 11.27
+  adv=0.20 P4=off fail=0.00 burn= 77.94 held= 11.21
+P2-F H3 denial / churn ...
+  oracle        fail=0.00 unmet=0.104
+  oracle_clean  fail=0.00 unmet=0.016
+  hormonal      fail=0.10 unmet=0.077
+  churn 0.00: fail=0.10 unmet=0.077
+  churn 0.10: fail=0.10 unmet=0.077
+  churn 0.30: fail=0.07 unmet=0.074
+  churn 0.50: fail=0.03 unmet=0.073
+done in 81s -> phase2_results.json

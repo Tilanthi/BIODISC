@@ -1,0 +1,807 @@
+{
+ "factorial": {
+  "cols": [
+   "int",
+   "P1",
+   "P2",
+   "P3",
+   "P4",
+   "P5",
+   "P3:P5",
+   "P2:P4",
+   "P1:P2"
+  ],
+  "failure": {
+   "int": {
+    "est": 0.9374999999999998,
+    "lo": 0.9135416666666665,
+    "hi": 0.9604166666666669
+   },
+   "P1": {
+    "est": -0.008333333333332906,
+    "lo": -0.03750000000000019,
+    "hi": 0.025000000000000067
+   },
+   "P2": {
+    "est": 0.07499999999999934,
+    "lo": 0.03333333333333237,
+    "hi": 0.11874999999999913
+   },
+   "P3": {
+    "est": -0.7625000000000001,
+    "lo": -0.8083333333333338,
+    "hi": -0.7083333333333334
+   },
+   "P4": {
+    "est": 0.08333333333333365,
+    "lo": 0.05000000000000028,
+    "hi": 0.1188541666666668
+   },
+   "P5": {
+    "est": 3.841848115478998e-17,
+    "lo": -2.0619753275833938e-16,
+    "hi": 3.6078535859144215e-16
+   },
+   "P3:P5": {
+    "est": -0.17499999999999968,
+    "lo": -0.23552083333333312,
+    "hi": -0.1124999999999998
+   },
+   "P2:P4": {
+    "est": -0.05833333333333309,
+    "lo": -0.1166666666666665,
+    "hi": 0.004166666666666765
+   },
+   "P1:P2": {
+    "est": 0.008333333333333397,
+    "lo": -0.05218749999999985,
+    "hi": 0.06885416666666662
+   }
+  },
+  "unmet": {
+   "int": {
+    "est": 0.18951831787545714,
+    "lo": 0.180483503082622,
+    "hi": 0.19874720705818869
+   },
+   "P1": {
+    "est": -0.005747740954743562,
+    "lo": -0.013506269466094368,
+    "hi": 0.0017049086082376302
+   },
+   "P2": {
+    "est": 0.005132180441269421,
+    "lo": -0.003683649778761111,
+    "hi": 0.014062397378836725
+   },
+   "P3": {
+    "est": -0.1086774815897073,
+    "lo": -0.11546664771008089,
+    "hi": -0.1018628995478769
+   },
+   "P4": {
+    "est": -0.01117974619797295,
+    "lo": -0.01771745381061439,
+    "hi": -0.00372411766668212
+   },
+   "P5": {
+    "est": 0.06361161594823246,
+    "lo": 0.05319808265104499,
+    "hi": 0.07318723872385816
+   },
+   "P3:P5": {
+    "est": -0.06966783591532111,
+    "lo": -0.0799842971893762,
+    "hi": -0.05946932406912955
+   },
+   "P2:P4": {
+    "est": 0.000332281314901085,
+    "lo": -0.00970110125072229,
+    "hi": 0.010315048624354079
+   },
+   "P1:P2": {
+    "est": 0.004646169218923347,
+    "lo": -0.0051371306639798045,
+    "hi": 0.014732375851309678
+   }
+  },
+  "cells": [
+   {
+    "bits": "00000",
+    "fail": 1.0,
+    "unmet": 0.2016503636593613
+   },
+   {
+    "bits": "00001",
+    "fail": 1.0,
+    "unmet": 0.2732463015871007
+   },
+   {
+    "bits": "00010",
+    "fail": 1.0,
+    "unmet": 0.16894452981020183
+   },
+   {
+    "bits": "00011",
+    "fail": 1.0,
+    "unmet": 0.23855501585675087
+   },
+   {
+    "bits": "00100",
+    "fail": 0.0,
+    "unmet": 0.059404258795856056
+   },
+   {
+    "bits": "00101",
+    "fail": 0.03333333333333333,
+    "unmet": 0.06473778788247093
+   },
+   {
+    "bits": "00110",
+    "fail": 0.3333333333333333,
+    "unmet": 0.078769999546641
+   },
+   {
+    "bits": "00111",
+    "fail": 0.06666666666666667,
+    "unmet": 0.06652016667684112
+   },
+   {
+    "bits": "01000",
+    "fail": 1.0,
+    "unmet": 0.20058115573472818
+   },
+   {
+    "bits": "01001",
+    "fail": 1.0,
+    "unmet": 0.264308262566427
+   },
+   {
+    "bits": "01010",
+    "fail": 1.0,
+    "unmet": 0.17641748291094883
+   },
+   {
+    "bits": "01011",
+    "fail": 1.0,
+    "unmet": 0.23660618760188742
+   },
+   {
+    "bits": "01100",
+    "fail": 0.26666666666666666,
+    "unmet": 0.0809027616252624
+   },
+   {
+    "bits": "01101",
+    "fail": 0.06666666666666667,
+    "unmet": 0.07429695908448274
+   },
+   {
+    "bits": "01110",
+    "fail": 0.36666666666666664,
+    "unmet": 0.08594862791092071
+   },
+   {
+    "bits": "01111",
+    "fail": 0.1,
+    "unmet": 0.07515355517032728
+   },
+   {
+    "bits": "10000",
+    "fail": 1.0,
+    "unmet": 0.19335175950044128
+   },
+   {
+    "bits": "10001",
+    "fail": 1.0,
+    "unmet": 0.2611909919234818
+   },
+   {
+    "bits": "10010",
+    "fail": 1.0,
+    "unmet": 0.16443339657988268
+   },
+   {
+    "bits": "10011",
+    "fail": 1.0,
+    "unmet": 0.22894862008080435
+   },
+   {
+    "bits": "10100",
+    "fail": 0.0,
+    "unmet": 0.05764611541684559
+   },
+   {
+    "bits": "10101",
+    "fail": 0.03333333333333333,
+    "unmet": 0.06232886602258387
+   },
+   {
+    "bits": "10110",
+    "fail": 0.3,
+    "unmet": 0.07446481162279385
+   },
+   {
+    "bits": "10111",
+    "fail": 0.03333333333333333,
+    "unmet": 0.06348193503044196
+   },
+   {
+    "bits": "11000",
+    "fail": 1.0,
+    "unmet": 0.19617807819390973
+   },
+   {
+    "bits": "11001",
+    "fail": 1.0,
+    "unmet": 0.25373682873492165
+   },
+   {
+    "bits": "11010",
+    "fail": 1.0,
+    "unmet": 0.17736545083604485
+   },
+   {
+    "bits": "11011",
+    "fail": 1.0,
+    "unmet": 0.2312229364600044
+   },
+   {
+    "bits": "11100",
+    "fail": 0.3,
+    "unmet": 0.08569823525893168
+   },
+   {
+    "bits": "11101",
+    "fail": 0.06666666666666667,
+    "unmet": 0.07749628399532799
+   },
+   {
+    "bits": "11110",
+    "fail": 0.3333333333333333,
+    "unmet": 0.08666755433060837
+   },
+   {
+    "bits": "11111",
+    "fail": 0.1,
+    "unmet": 0.07703705090867423
+   }
+  ]
+ },
+ "arms": {
+  "injury": {
+   "hormonal": {
+    "fail": 0.0,
+    "resolve_med": 72.80000000000001,
+    "unmet": 0.06794328954531328,
+    "N_peak_over_base": 1.2655766161019677,
+    "N_end_over_base": 1.1292531507676493,
+    "u_peak_over_u0": 3.6455595071953066,
+    "produced_over_base": 9.001981106698679,
+    "cost": {
+     "emissions": 24.40450000000014,
+     "deliveries": 14056.992000000037,
+     "messages": 0.0,
+     "agent_state": 1728.0,
+     "medium_state": 2304.0
+    }
+   },
+   "fixed": {
+    "fail": 0.7333333333333333,
+    "resolve_med": 200.0,
+    "unmet": 0.12745785411368601,
+    "N_peak_over_base": 0.9992055576923077,
+    "N_end_over_base": 0.3192883912028577,
+    "u_peak_over_u0": 1.0,
+    "produced_over_base": 3.9959999999999996,
+    "cost": {
+     "emissions": 49.72616666666675,
+     "deliveries": 28642.27200000003,
+     "messages": 0.0,
+     "agent_state": 1728.0,
+     "medium_state": 2304.0
+    }
+   },
+   "measured": {
+    "fail": 0.0,
+    "resolve_med": 70.5,
+    "unmet": 0.0661040275023493,
+    "N_peak_over_base": 1.358619503328831,
+    "N_end_over_base": 1.1513524745726866,
+    "u_peak_over_u0": 4.698462676826139,
+    "produced_over_base": 9.242590376299265,
+    "cost": {
+     "emissions": 23.675666666666725,
+     "deliveries": 13637.184000000014,
+     "messages": 1.5,
+     "agent_state": 1728.0,
+     "medium_state": 2304.0
+    }
+   },
+   "backpressure": {
+    "fail": 0.0,
+    "resolve_med": 17.8,
+    "unmet": 0.05154299598849473,
+    "N_peak_over_base": 3.7344068726849544,
+    "N_end_over_base": 1.1712968826497216,
+    "u_peak_over_u0": 8.0,
+    "produced_over_base": 9.216843318214348,
+    "cost": {
+     "emissions": 1.5,
+     "deliveries": 864.0,
+     "messages": 0.0,
+     "agent_state": 1728.0
+    }
+   },
+   "gossip": {
+    "fail": 0.0,
+    "resolve_med": 18.0,
+    "unmet": 0.052214970683117645,
+    "N_peak_over_base": 7.868967488265431,
+    "N_end_over_base": 7.868967488265431,
+    "u_peak_over_u0": 8.0,
+    "produced_over_base": 31.928834374999997,
+    "cost": {
+     "emissions": 0.0,
+     "deliveries": 0.0,
+     "messages": 3847.68,
+     "agent_state": 1728.0
+    }
+   },
+   "oracle": {
+    "fail": 0.0,
+    "resolve_med": 6.2,
+    "unmet": 0.015242837598222576,
+    "N_peak_over_base": 2.8948743014938385,
+    "N_end_over_base": 1.1088016687244306,
+    "u_peak_over_u0": 8.0,
+    "produced_over_base": 7.5842001473950855,
+    "cost": {
+     "emissions": 0.0,
+     "deliveries": 0.0,
+     "messages": 0.0,
+     "agent_state": 1728.0,
+     "oracle_read": 576.0
+    }
+   }
+  },
+  "infection": {
+   "hormonal": {
+    "fail": 0.1,
+    "resolve_med": 95.9,
+    "unmet": 0.07703705090867423,
+    "N_peak_over_base": 1.0044972056275894,
+    "N_end_over_base": 0.9838457360132069,
+    "u_peak_over_u0": 5.22371924041979,
+    "produced_over_base": 19.88564552488655,
+    "cost": {
+     "emissions": 191.33333333333493,
+     "deliveries": 110208.00000000079,
+     "messages": 0.0,
+     "agent_state": 1728.0,
+     "medium_state": 2304.0
+    }
+   },
+   "fixed": {
+    "fail": 1.0,
+    "resolve_med": 200.0,
+    "unmet": 0.2312229364600044,
+    "N_peak_over_base": 0.9992055576923077,
+    "N_end_over_base": 0.18895260910935566,
+    "u_peak_over_u0": 1.0,
+    "produced_over_base": 3.9959999999999996,
+    "cost": {
+     "emissions": 191.33333333333493,
+     "deliveries": 110208.00000000079,
+     "messages": 0.0,
+     "agent_state": 1728.0,
+     "medium_state": 2304.0
+    }
+   },
+   "measured": {
+    "fail": 0.1,
+    "resolve_med": 93.7,
+    "unmet": 0.0755115046516778,
+    "N_peak_over_base": 1.0762724204772405,
+    "N_end_over_base": 1.0205005443474944,
+    "u_peak_over_u0": 6.472715389153443,
+    "produced_over_base": 20.268264856819165,
+    "cost": {
+     "emissions": 191.33333333333493,
+     "deliveries": 110208.00000000079,
+     "messages": 1.5,
+     "agent_state": 1728.0,
+     "medium_state": 2304.0
+    }
+   },
+   "backpressure": {
+    "fail": 0.0,
+    "resolve_med": 18.6,
+    "unmet": 0.05494932193003361,
+    "N_peak_over_base": 3.664526422501681,
+    "N_end_over_base": 1.1687122556793512,
+    "u_peak_over_u0": 8.0,
+    "produced_over_base": 9.889530774667694,
+    "cost": {
+     "emissions": 1.5,
+     "deliveries": 864.0,
+     "messages": 0.0,
+     "agent_state": 1728.0
+    }
+   },
+   "gossip": {
+    "fail": 0.0,
+    "resolve_med": 18.8,
+    "unmet": 0.0557232723623112,
+    "N_peak_over_base": 7.062034308511983,
+    "N_end_over_base": 7.062034308511983,
+    "u_peak_over_u0": 8.0,
+    "produced_over_base": 31.928834374999997,
+    "cost": {
+     "emissions": 0.0,
+     "deliveries": 0.0,
+     "messages": 3847.68,
+     "agent_state": 1728.0
+    }
+   },
+   "oracle": {
+    "fail": 0.0,
+    "resolve_med": 6.2,
+    "unmet": 0.016094289690643422,
+    "N_peak_over_base": 2.714070304043962,
+    "N_end_over_base": 1.1153957622960204,
+    "u_peak_over_u0": 8.0,
+    "produced_over_base": 8.20843248233853,
+    "cost": {
+     "emissions": 0.0,
+     "deliveries": 0.0,
+     "messages": 0.0,
+     "agent_state": 1728.0,
+     "oracle_read": 576.0
+    }
+   }
+  },
+  "chronic": {
+   "hormonal": {
+    "fail": 0.03333333333333333,
+    "resolve_med": 95.9,
+    "unmet": 0.047711472364542755,
+    "N_peak_over_base": 1.3580121294391163,
+    "N_end_over_base": 1.0290333156106268,
+    "u_peak_over_u0": 5.22371924041979,
+    "produced_over_base": 17.25712251641618,
+    "cost": {
+     "emissions": 71.74999999999967,
+     "deliveries": 41327.99999999956,
+     "messages": 0.0,
+     "agent_state": 1728.0,
+     "medium_state": 2304.0
+    }
+   },
+   "fixed": {
+    "fail": 1.0,
+    "resolve_med": 320.0,
+    "unmet": 0.1938677275193734,
+    "N_peak_over_base": 0.9992055576923077,
+    "N_end_over_base": 0.9804912121606564,
+    "u_peak_over_u0": 1.0,
+    "produced_over_base": 6.396000000000001,
+    "cost": {
+     "emissions": 71.74999999999967,
+     "deliveries": 41327.99999999956,
+     "messages": 0.0,
+     "agent_state": 1728.0,
+     "medium_state": 2304.0
+    }
+   },
+   "measured": {
+    "fail": 0.03333333333333333,
+    "resolve_med": 93.7,
+    "unmet": 0.046749938791444505,
+    "N_peak_over_base": 1.3578572273481835,
+    "N_end_over_base": 1.0289099201072238,
+    "u_peak_over_u0": 6.472715389153443,
+    "produced_over_base": 17.537426551820804,
+    "cost": {
+     "emissions": 71.74999999999967,
+     "deliveries": 41327.99999999956,
+     "messages": 1.5,
+     "agent_state": 1728.0,
+     "medium_state": 2304.0
+    }
+   },
+   "backpressure": {
+    "fail": 0.0,
+    "resolve_med": 18.6,
+    "unmet": 0.034177076206271,
+    "N_peak_over_base": 3.664526422501681,
+    "N_end_over_base": 1.0159037403999458,
+    "u_peak_over_u0": 8.0,
+    "produced_over_base": 12.081838226382423,
+    "cost": {
+     "emissions": 1.5,
+     "deliveries": 864.0,
+     "messages": 0.0,
+     "agent_state": 1728.0
+    }
+   },
+   "gossip": {
+    "fail": 0.0,
+    "resolve_med": 18.8,
+    "unmet": 0.034660795226444496,
+    "N_peak_over_base": 7.976295030909345,
+    "N_end_over_base": 7.976295030909345,
+    "u_peak_over_u0": 8.0,
+    "produced_over_base": 51.128834375000004,
+    "cost": {
+     "emissions": 0.0,
+     "deliveries": 0.0,
+     "messages": 3844.8,
+     "agent_state": 1728.0
+    }
+   },
+   "oracle": {
+    "fail": 0.0,
+    "resolve_med": 6.2,
+    "unmet": 0.00989268105665214,
+    "N_peak_over_base": 2.714070304043962,
+    "N_end_over_base": 1.0104601592594684,
+    "u_peak_over_u0": 8.0,
+    "produced_over_base": 10.400603085033268,
+    "cost": {
+     "emissions": 0.0,
+     "deliveries": 0.0,
+     "messages": 0.0,
+     "agent_state": 1728.0,
+     "oracle_read": 576.0
+    }
+   }
+  }
+ },
+ "h1_scaling": {
+  "rows": [
+   {
+    "r_demand": 2.0,
+    "arm": "hormonal",
+    "fail": 0.0,
+    "resolve_med": 26.0,
+    "unmet": 0.02463333790457073,
+    "u_peak_over_u0": 3.497559524278402
+   },
+   {
+    "r_demand": 2.0,
+    "arm": "fixed",
+    "fail": 0.0,
+    "resolve_med": 45.1,
+    "unmet": 0.03134928999124008,
+    "u_peak_over_u0": 1.0
+   },
+   {
+    "r_demand": 4.0,
+    "arm": "hormonal",
+    "fail": 0.0,
+    "resolve_med": 48.800000000000004,
+    "unmet": 0.046725552600753076,
+    "u_peak_over_u0": 3.547302982058014
+   },
+   {
+    "r_demand": 4.0,
+    "arm": "fixed",
+    "fail": 0.3333333333333333,
+    "resolve_med": 128.5,
+    "unmet": 0.07758917016315169,
+    "u_peak_over_u0": 1.0
+   },
+   {
+    "r_demand": 6.0,
+    "arm": "hormonal",
+    "fail": 0.0,
+    "resolve_med": 72.80000000000001,
+    "unmet": 0.06794328954531328,
+    "u_peak_over_u0": 3.6455595071953066
+   },
+   {
+    "r_demand": 6.0,
+    "arm": "fixed",
+    "fail": 0.7333333333333333,
+    "resolve_med": 200.0,
+    "unmet": 0.12745785411368601,
+    "u_peak_over_u0": 1.0
+   },
+   {
+    "r_demand": 8.0,
+    "arm": "hormonal",
+    "fail": 0.0,
+    "resolve_med": 98.0,
+    "unmet": 0.08871348642702936,
+    "u_peak_over_u0": 3.721761376292089
+   },
+   {
+    "r_demand": 8.0,
+    "arm": "fixed",
+    "fail": 1.0,
+    "resolve_med": 200.0,
+    "unmet": 0.17257021621634747,
+    "u_peak_over_u0": 1.0
+   },
+   {
+    "r_demand": 10.0,
+    "arm": "hormonal",
+    "fail": 0.16666666666666666,
+    "resolve_med": 123.5,
+    "unmet": 0.10923621164241798,
+    "u_peak_over_u0": 3.7931335323499287
+   },
+   {
+    "r_demand": 10.0,
+    "arm": "fixed",
+    "fail": 1.0,
+    "resolve_med": 200.0,
+    "unmet": 0.21238198472269273,
+    "u_peak_over_u0": 1.0
+   },
+   {
+    "r_demand": 12.0,
+    "arm": "hormonal",
+    "fail": 0.4,
+    "resolve_med": 147.9,
+    "unmet": 0.12932522861019008,
+    "u_peak_over_u0": 3.8366783977269368
+   },
+   {
+    "r_demand": 12.0,
+    "arm": "fixed",
+    "fail": 1.0,
+    "resolve_med": 200.0,
+    "unmet": 0.24791729653303504,
+    "u_peak_over_u0": 1.0
+   }
+  ]
+ },
+ "h2_fibrosis": {
+  "P5 on": {
+   "fail": 0.03333333333333333,
+   "resolve_med": 95.9,
+   "unmet": 0.047711472364542755,
+   "N_end_over_base": 1.0290333156106268,
+   "N_peak_over_base": 1.3580121294391163,
+   "u_end_over_u0": 1.0001846995183854,
+   "osc": 0.35695264643105684
+  },
+  "P5 off": {
+   "fail": 0.13333333333333333,
+   "resolve_med": 123.80000000000001,
+   "unmet": 0.05502740960690019,
+   "N_end_over_base": 3.0658041285255737,
+   "N_peak_over_base": 3.0658041285255737,
+   "u_end_over_u0": 3.1037200397239513,
+   "osc": 0.48925754202862093
+  }
+ },
+ "h2b_adversarial": {
+  "rows": [
+   {
+    "adv": 0.0,
+    "p4": true,
+    "fail": 0.0,
+    "resolve_med": 72.80000000000001,
+    "false_burn": 0.0,
+    "false_held": 4.755674519623504
+   },
+   {
+    "adv": 0.0,
+    "p4": false,
+    "fail": 0.0,
+    "resolve_med": 71.80000000000001,
+    "false_burn": 12.421990296913023,
+    "false_held": 4.55167505066993
+   },
+   {
+    "adv": 0.02,
+    "p4": true,
+    "fail": 0.0,
+    "resolve_med": 71.6,
+    "false_burn": 0.0,
+    "false_held": 5.406822519692625
+   },
+   {
+    "adv": 0.02,
+    "p4": false,
+    "fail": 0.0,
+    "resolve_med": 70.60000000000001,
+    "false_burn": 14.743968332938413,
+    "false_held": 5.4122544544635485
+   },
+   {
+    "adv": 0.05,
+    "p4": true,
+    "fail": 0.0,
+    "resolve_med": 70.6,
+    "false_burn": 0.0,
+    "false_held": 9.06998069538229
+   },
+   {
+    "adv": 0.05,
+    "p4": false,
+    "fail": 0.0,
+    "resolve_med": 69.4,
+    "false_burn": 26.27421583484657,
+    "false_held": 9.034518911950705
+   },
+   {
+    "adv": 0.1,
+    "p4": true,
+    "fail": 0.0,
+    "resolve_med": 69.2,
+    "false_burn": 0.0,
+    "false_held": 11.130124475065863
+   },
+   {
+    "adv": 0.1,
+    "p4": false,
+    "fail": 0.0,
+    "resolve_med": 67.5,
+    "false_burn": 73.49139233610462,
+    "false_held": 11.0337098391246
+   },
+   {
+    "adv": 0.2,
+    "p4": true,
+    "fail": 0.0,
+    "resolve_med": 66.0,
+    "false_burn": 0.0,
+    "false_held": 11.268234847283912
+   },
+   {
+    "adv": 0.2,
+    "p4": false,
+    "fail": 0.0,
+    "resolve_med": 63.0,
+    "false_burn": 77.93795425531408,
+    "false_held": 11.207177491754312
+   }
+  ]
+ },
+ "h3_denial": {
+  "oracle_outage": {
+   "oracle": {
+    "fail": 0.0,
+    "unmet": 0.10431374895978383,
+    "resolve_med": 34.5
+   },
+   "oracle_clean": {
+    "fail": 0.0,
+    "unmet": 0.016094289690643422,
+    "resolve_med": 6.2
+   },
+   "hormonal": {
+    "fail": 0.1,
+    "unmet": 0.07703705090867423,
+    "resolve_med": 95.9
+   }
+  },
+  "churn": {
+   "0.00": {
+    "fail": 0.1,
+    "unmet": 0.07703705090867423,
+    "resolve_med": 95.9
+   },
+   "0.10": {
+    "fail": 0.1,
+    "unmet": 0.07671576891636725,
+    "resolve_med": 95.4
+   },
+   "0.30": {
+    "fail": 0.06666666666666667,
+    "unmet": 0.07439762547643,
+    "resolve_med": 89.4
+   },
+   "0.50": {
+    "fail": 0.03333333333333333,
+    "unmet": 0.07335607267602924,
+    "resolve_med": 87.10000000000001
+   }
+  }
+ },
+ "timing_s": 81.48381686210632
+}
