@@ -1,0 +1,14 @@
+{
+  "rejections": {
+    "orchestrator_none": 1490,
+    "no_datasets": 228
+  },
+  "last_activity": 1786870242.828305,
+  "last_validated_discovery_time": 1784477210.115511,
+  "last_validated_discovery_iso": "2026-07-19T18:06:50.115511",
+  "validated_count": 103,
+  "last_validated_discovery_id": "DISCOVERY_1784477209",
+  "last_cycle_time": 1785259075.4239511,
+  "last_cycle_iso": "2026-07-28T19:17:55.423951",
+  "last_cycle_discoveries": 0
+}

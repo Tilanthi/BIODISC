@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-07-04T15:28:35.930902",
-  "session_id": "7dc18bea4799",
-  "last_user_question": "What were the key findings from the last discovery?",
+  "timestamp": "2026-07-17T09:25:01.107978",
+  "session_id": "fe00b47bf279",
+  "last_user_question": "What does 2 plus 2 equal?",
   "last_assistant_response": "",
-  "current_task": "test",
+  "current_task": "Processing query in auto mode",
   "files_in_scope": [],
   "context_summary": "",
-  "active_work": "",
+  "active_work": "query_processing",
   "priority": 1,
   "question_type": "user"
 }

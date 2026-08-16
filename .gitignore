@@ -71,3 +71,7 @@ Thumbs.db
 .env
 .env.local
 cache/
+
+# Oversized for GitHub (>100MB hard limit) — kept locally, not pushed
+autonomous_discovery.log
+breakthrough_candidates.jsonl

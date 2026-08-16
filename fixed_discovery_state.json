@@ -1,6 +1,12 @@
 {
-  "timestamp": "2026-07-07T04:53:51.462448",
-  "running": true,
-  "discoveries_made": 16,
+  "timestamp": "2026-08-16T10:03:47.488305",
+  "running": false,
+  "discoveries_made": 0,
+  "discoveries_rejected": 0,
+  "discoveries_validated": 0,
+  "session_discoveries_made": 0,
+  "session_discoveries_rejected": 20,
+  "session_discoveries_validated": 0,
+  "discovery_count": 0,
   "pipeline_version": "FIXED_6.0"
 }
