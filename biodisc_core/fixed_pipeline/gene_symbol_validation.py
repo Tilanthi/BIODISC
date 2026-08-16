@@ -26,15 +26,61 @@ This is a NON-NEGOTIABLE hard gate in the discovery pipeline.
 """
 
 import logging
+import os
 import re
 import requests
 import json
 import time
+from pathlib import Path
 from typing import List, Dict, Set, Tuple, Optional
 from dataclasses import dataclass
 from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+# Disk-persisted HGNC verdict cache.
+#
+# Validating one dataset means up to ~1,750 sequential HTTPS lookups against
+# rest.genenames.org, and the in-process caches below die with the process, so
+# every restart repeated the whole walk from cold. Persisting only what the
+# HGNC API itself said turns the second and later runs into local lookups. The
+# gene-symbol *heuristics* are deliberately NOT cached — they are code, and
+# caching them would freeze a heuristic that may be corrected later.
+HGNC_CACHE_FILE = _PROJECT_ROOT / "cache" / "hgnc_symbol_cache.json"
+HGNC_CACHE_TTL_SECONDS = float(os.environ.get(
+    "BIODISC_HGNC_CACHE_TTL_DAYS", "30")) * 86400
+_HGNC_CACHE_VERSION = 1
+
+
+def _hgnc_cache_path() -> Path:
+    """Cache location, honouring BIODISC_HGNC_CACHE. Read at call time rather
+    than import time so a test fixture can redirect it, exactly like
+    BIODISC_VERDICT_LOG."""
+    override = os.environ.get("BIODISC_HGNC_CACHE")
+    return Path(override) if override else HGNC_CACHE_FILE
+
+
+def _report_progress() -> None:
+    """Tell the supervision layer this operation is alive and advancing.
+
+    STEP 2.5 legitimately runs for far longer than the watchdog's 30-minute
+    stall threshold while making thousands of sequential network calls, and it
+    records nothing while it does so. The watchdog therefore read it as a hang
+    and killed it. Emitting a throttled heartbeat per completed symbol makes
+    the silence go away without weakening hang detection: the heartbeat only
+    advances when a symbol has actually been resolved, so a process that is
+    genuinely stuck still goes stale and is still restarted.
+
+    Import is local and failure is swallowed so that this module remains usable
+    (and testable) on its own, with no dependency on the discovery runtime.
+    """
+    try:
+        from biodisc_core.fixed_pipeline import discovery_status
+        discovery_status.progress_heartbeat()
+    except Exception:  # noqa: BLE001 - liveness reporting must never break the gate
+        pass
 
 
 class ValidationResult(Enum):
@@ -68,6 +114,11 @@ class GeneSymbolValidator:
         self.validation_count = 0
         self.rejection_count = 0
 
+        # Verdicts the HGNC API gave us on previous runs, keyed by symbol.
+        # Survives process restarts; see HGNC_CACHE_FILE above.
+        self._hgnc_disk_cache: Dict[str, dict] = self._load_hgnc_disk_cache()
+        self._hgnc_disk_cache_dirty = False
+
         # Database endpoints
         self.hgnc_api = "https://rest.genenames.org/fetch/symbol/"
         self.ensembl_api = "https://rest.ensembl.org"
@@ -77,6 +128,75 @@ class GeneSymbolValidator:
 
         logger.info("🔬 Gene Symbol Validator initialized")
         logger.info(f"   Known real genes: {len(self.known_real_genes)}")
+        logger.info(f"   Cached HGNC verdicts on disk: {len(self._hgnc_disk_cache)}")
+
+    # ------------------------------------------------------------------
+    # Disk-persisted HGNC verdict cache
+    # ------------------------------------------------------------------
+
+    def _load_hgnc_disk_cache(self) -> Dict[str, dict]:
+        """Load previously fetched HGNC verdicts. Never raises."""
+        try:
+            path = _hgnc_cache_path()
+            if not path.exists():
+                return {}
+            blob = json.loads(path.read_text())
+            if blob.get("version") != _HGNC_CACHE_VERSION:
+                return {}
+            entries = blob.get("entries", {})
+            cutoff = time.time() - HGNC_CACHE_TTL_SECONDS
+            return {
+                sym: e for sym, e in entries.items()
+                if isinstance(e, dict) and e.get("t", 0) >= cutoff
+                and e.get("r") in ("valid", "invalid")
+            }
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"   HGNC cache unreadable, starting cold: {e}")
+            return {}
+
+    def _hgnc_disk_cache_lookup(self, symbol: str) -> Optional[ValidationResult]:
+        """Return a still-fresh cached HGNC verdict for ``symbol``, or None."""
+        e = self._hgnc_disk_cache.get(symbol)
+        if not e:
+            return None
+        if (time.time() - e.get("t", 0)) > HGNC_CACHE_TTL_SECONDS:
+            return None
+        return ValidationResult.VALID if e["r"] == "valid" else ValidationResult.INVALID
+
+    def _hgnc_disk_cache_store(self, symbol: str, result: ValidationResult,
+                              gene_id: Optional[str] = None,
+                              gene_name: Optional[str] = None) -> None:
+        """Remember what the HGNC API said. Only VALID/INVALID are cached: an
+        UNKNOWN means the database was unreachable, which is a statement about
+        the network and must never be cached as a verdict about a gene."""
+        if result not in (ValidationResult.VALID, ValidationResult.INVALID):
+            return
+        self._hgnc_disk_cache[symbol] = {
+            "r": "valid" if result == ValidationResult.VALID else "invalid",
+            "t": time.time(),
+            "id": gene_id,
+            "n": gene_name,
+        }
+        self._hgnc_disk_cache_dirty = True
+
+    def _save_hgnc_disk_cache(self) -> bool:
+        """Persist the cache atomically. Returns True if written. Never raises."""
+        if not self._hgnc_disk_cache_dirty:
+            return False
+        try:
+            path = _hgnc_cache_path()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_name(path.name + f".tmp.{os.getpid()}")
+            tmp.write_text(json.dumps({
+                "version": _HGNC_CACHE_VERSION,
+                "entries": self._hgnc_disk_cache,
+            }))
+            os.replace(tmp, path)
+            self._hgnc_disk_cache_dirty = False
+            return True
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"   Could not persist HGNC cache (non-fatal): {e}")
+            return False
 
     def _load_known_real_genes(self) -> Set[str]:
         """
@@ -184,6 +304,16 @@ class GeneSymbolValidator:
             elif result.result == ValidationResult.VALID:
                 self.valid_symbols_cache.add(symbol)
 
+            # Prove liveness from inside the long operation. Throttled to one
+            # status write per 30 s; see _report_progress() for why this does
+            # not blind the watchdog to a genuine hang.
+            _report_progress()
+
+        # Keep what the HGNC API told us for the next run (and the next
+        # process): this batch is the expensive part, and it was being
+        # repeated from cold every time.
+        self._save_hgnc_disk_cache()
+
         # Summary
         valid_count = sum(1 for r in validation_results if r.result == ValidationResult.VALID)
         invalid_count = sum(1 for r in validation_results if r.result == ValidationResult.INVALID)
@@ -261,9 +391,32 @@ class GeneSymbolValidator:
                 error=fake_pattern
             )
 
+        # Disk cache of previous HGNC verdicts. Consulted here and only here —
+        # i.e. exactly where a network round-trip would otherwise happen, and
+        # only after every local rule above has had its say, so the cache can
+        # never override a heuristic or a curated list.
+        cached = self._hgnc_disk_cache_lookup(symbol)
+        if cached is not None:
+            e = self._hgnc_disk_cache[symbol]
+            return GeneSymbolValidation(
+                symbol=symbol,
+                result=cached,
+                source="HGNC_DISK_CACHE",
+                gene_id=e.get("id"),
+                gene_name=e.get("n"),
+                error=None if cached == ValidationResult.VALID
+                else "Symbol not found in HGNC database (cached)"
+            )
+
         # Try HGNC API
         hgnc_result = self._query_hgnc(symbol)
         if hgnc_result:
+            # Remember only what the remote database said. A None return means
+            # the API was unreachable, which is a fact about the network and is
+            # never cached; _hgnc_disk_cache_store enforces the same rule for
+            # an UNKNOWN verdict.
+            self._hgnc_disk_cache_store(symbol, hgnc_result.result,
+                                        hgnc_result.gene_id, hgnc_result.gene_name)
             return hgnc_result
 
         # If API unavailable, return UNKNOWN (not INVALID)
@@ -491,6 +644,7 @@ class GeneSymbolValidator:
             'rejection_count': self.rejection_count,
             'valid_symbols_cached': len(self.valid_symbols_cache),
             'invalid_symbols_cached': len(self.invalid_symbols_cache),
+            'hgnc_verdicts_cached_on_disk': len(self._hgnc_disk_cache),
             'rejection_rate': (
                 self.rejection_count / self.validation_count
                 if self.validation_count > 0 else 0

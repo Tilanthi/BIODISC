@@ -66,6 +66,12 @@ CHECK_INTERVAL = 60   # Check every minute
 # this recovers a hung loop within ~30 min instead of the old 6 h. Downloads are
 # also hard-bounded (geo_data_downloader._read_stream_bounded), so genuine hangs
 # are now rare AND promptly recovered.
+#
+# The threshold is measured against the CURRENT process's own lifetime as well
+# as against the recorded activity timestamps — see _loop_looks_hung(). Without
+# that, a restarted loop inherited its predecessor's silence and was killed on
+# the first tick (~60 s), which is not "recovers a hung loop within ~30 min" but
+# "never lets any loop run for 30 min".
 STALL_THRESHOLD = 30 * 60               # 30 minutes
 STALL_THRESHOLD_USER_ACTIVE = 3 * 3600  # 3 hours (was 24 h) — still tolerant while active
 _LAST_CHECK_TIME = time.time()  # for watchdog sleep/wake detection
@@ -131,14 +137,41 @@ def start_discovery_system():
         return None
 
 
-def _loop_looks_hung(threshold: float) -> bool:
-    """True if the loop has had no recent activity (status or discoveries file)."""
+def _loop_looks_hung(threshold: float, proc_start: float = None) -> bool:
+    """True if the loop has had no recent activity (status or discoveries file).
+
+    ``proc_start`` is the start time (epoch seconds) of the discovery process
+    that is running RIGHT NOW. Activity timestamps recorded before that process
+    existed describe its predecessor, not it, so a freshly started process is
+    given a full ``threshold`` window to record activity of its own.
+
+    Why this matters (the bug this fixes)
+    -------------------------------------
+    ``last_activity`` is only refreshed once a question has been through the
+    orchestrator. A cycle spends several minutes before that point (GEO
+    download, then STEP 2.5 validating up to 2000 gene symbols against HGNC
+    one HTTP request at a time). The watchdog restarts the loop only when the
+    activity clock is ALREADY stale — so the replacement process was born
+    stale, judged on the very next 60 s tick, and killed roughly 30 s into
+    STEP 2.5. It never survived long enough to refresh the timestamp that
+    would have proved it was alive, so it was restarted, and killed again.
+
+    That is a livelock, not a hang: measured over the three rotated
+    fixed_discovery.log files, 1,734 process starts and 0 completed cycles,
+    with a median lifetime of 49 s. Anchoring the window to the process's own
+    start breaks it, while still killing a process that produces nothing for a
+    full ``threshold`` — see also discovery_status.progress_heartbeat(), which
+    lets long operations prove liveness from the inside.
+    """
+    now = time.time()
+    if proc_start is not None and (now - proc_start) < threshold:
+        return False
     s = discovery_status.read_status()
     last_activity = s.get("last_activity")
-    if last_activity and (time.time() - last_activity) < threshold:
+    if last_activity and (now - last_activity) < threshold:
         return False
     ldt = get_last_discovery_time()
-    if ldt and (time.time() - ldt) < threshold:
+    if ldt and (now - ldt) < threshold:
         return False
     return True
 
@@ -165,14 +198,22 @@ def check_and_restart():
     else:
         threshold = STALL_THRESHOLD
 
-    if _loop_looks_hung(threshold):
-        since = discovery_status.seconds_since_validated_discovery()
-        if since is None:
-            logger.warning(f"⚠️  No validated discovery ever recorded and loop idle "
-                           f">{threshold/3600:.0f}h - restarting hung loop")
-        else:
-            logger.warning(f"⚠️  No validated discovery for {since/3600:.1f}h and loop idle "
-                           f"- restarting hung loop")
+    # The current process's own age. Silence older than this process is
+    # evidence about its predecessor, not about it.
+    try:
+        proc_start = discovery_proc.create_time()
+    except Exception:
+        proc_start = None
+
+    if _loop_looks_hung(threshold, proc_start):
+        # Report the quantity the decision was actually made on. The old line
+        # quoted "no validated discovery for N h", which is not what the check
+        # tests and made a livelock look like a science problem.
+        idle = discovery_status.seconds_since_activity()
+        idle_txt = "never" if idle is None else f"{idle/60:.1f} min"
+        age_txt = "unknown" if proc_start is None else f"{(time.time()-proc_start)/60:.1f} min"
+        logger.warning(f"⚠️  Loop idle {idle_txt} (threshold {threshold/60:.0f} min, "
+                       f"current process age {age_txt}) - restarting hung loop")
         try:
             discovery_proc.terminate()
             time.sleep(5)
