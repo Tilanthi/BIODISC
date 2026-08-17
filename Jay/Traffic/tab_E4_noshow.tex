@@ -1,0 +1,18 @@
+\begin{table}
+\centering
+\caption{No-shows (S5): $p_{\rm ns}=0.15$; the no-reclaim row never releases abandoned bookings (stalls idle out their window).  Mean of 10 seeds.  reclaim = abandoned bookings
+dissolved by the decay TTL; for the no-reclaim row the same column
+counts window-end sweeps.}
+\label{tab:e4ns}
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+arm & served & strand & unmet & wait & p95 & Jain & util & reclaim \\
+\midrule
+board & 49584 & 355.0 & 706 & 7.3 & 15 & 0.33 & 0.28 & 8773 \\
+no-decay & 49681 & 346.5 & 693 & 7.3 & 15 & 0.33 & 0.28 & 8736 \\
+central & 48153 & 0.0 & 164 & 13.5 & 32 & 0.69 & 0.28 & 0 \\
+nearest & 47905 & 196.5 & 11754 & 17.1 & 95 & 0.20 & 0.48 & 0 \\
+no-reclaim & 49304 & 356.1 & 800 & 7.4 & 16 & 0.32 & 0.28 & 18199 \\
+\bottomrule
+\end{tabular}
+\end{table}

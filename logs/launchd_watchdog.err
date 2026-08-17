@@ -47295,3 +47295,217 @@ INFO:__main__:✅ Discovery system started (PID: 46961)
 WARNING:__main__:⚠️  No validated discovery for 668.4h and loop idle - restarting hung loop
 INFO:__main__:🚀 Starting autonomous discovery system...
 INFO:__main__:✅ Discovery system started (PID: 47074)
+WARNING:__main__:⚠️  No validated discovery for 669.1h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 53329)
+WARNING:__main__:⚠️  No validated discovery for 669.1h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 53468)
+WARNING:__main__:⚠️  No validated discovery for 669.1h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 53584)
+INFO:biodisc_core.fixed_pipeline.rsi_miner:wrote 10 proposals -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_proposals.md
+INFO:biodisc_core.fixed_pipeline.rsi_miner:wrote measurements -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_measurements.md (rollup=19.6)
+INFO:biodisc_core.fixed_pipeline.capability_index:capability_index = 17.3/100 -> /Users/gjw255/astrodata/SWARM/BIODISC/capability_index.json
+INFO:__main__:📊 hourly metrics refreshed (RSI miner + capability index)
+WARNING:__main__:⚠️  No validated discovery for 669.1h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 53741)
+WARNING:__main__:⚠️  No validated discovery for 669.1h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 53860)
+WARNING:__main__:⚠️  No validated discovery for 669.1h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 53974)
+WARNING:__main__:⚠️  No validated discovery for 669.2h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 54197)
+WARNING:__main__:⚠️  No validated discovery for 669.2h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 54316)
+WARNING:__main__:⚠️  No validated discovery for 669.2h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 54455)
+WARNING:__main__:⚠️  No validated discovery for 669.2h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 54593)
+WARNING:__main__:⚠️  No validated discovery for 669.2h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 54715)
+WARNING:__main__:⚠️  No validated discovery for 669.3h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 54838)
+WARNING:__main__:⚠️  No validated discovery for 669.3h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 54958)
+WARNING:__main__:⚠️  No validated discovery for 669.3h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 55075)
+WARNING:__main__:⚠️  No validated discovery for 669.3h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 55194)
+WARNING:__main__:⚠️  No validated discovery for 669.3h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 55420)
+WARNING:__main__:⚠️  No validated discovery for 669.3h and loop idle - restarting hung loop
+INFO:__main__:🚀 Starting autonomous discovery system...
+INFO:__main__:✅ Discovery system started (PID: 55532)
+WARNING:root:Legacy module import failed: ImportError: cannot import name 'V36CoreSystem' from 'biodisc_core.core_legacy.v36' (unknown location)
+WARNING:biodisc_core.physics:Differentiable physics module not available, using fallbacks
+WARNING:biodisc_core.physics:AstrophysicalConstraints not available
+WARNING:biodisc_core.core.unified_enhanced:Base unified system not available, using standalone mode
+2026-08-16 15:42:39,073 - INFO - 🐕 BIODISC Discovery Watchdog Started
+2026-08-16 15:42:39,074 - INFO - ============================================================
+2026-08-16 15:42:39,074 - INFO - Ensuring autonomous discovery system is ALWAYS running
+2026-08-16 15:42:39,074 - INFO - Check interval: 60 seconds
+2026-08-16 15:42:39,074 - INFO - Max idle time: 15.0 minutes
+2026-08-16 15:42:39,074 - INFO - ============================================================
+2026-08-16 15:42:39,075 - INFO - 🔍 Initial system check...
+2026-08-16 15:42:39,345 - INFO - 📡 Discovery system not running - starting now...
+2026-08-16 15:42:39,643 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-16 15:42:39,659 - INFO - ✅ Discovery system started (PID: 58104)
+WARNING:root:Legacy module import failed: ImportError: cannot import name 'V36CoreSystem' from 'biodisc_core.core_legacy.v36' (unknown location)
+WARNING:biodisc_core.physics:Differentiable physics module not available, using fallbacks
+WARNING:biodisc_core.physics:AstrophysicalConstraints not available
+WARNING:biodisc_core.core.unified_enhanced:Base unified system not available, using standalone mode
+2026-08-16 18:33:54,575 - INFO - 🐕 BIODISC Discovery Watchdog Started
+2026-08-16 18:33:54,575 - INFO - ============================================================
+2026-08-16 18:33:54,576 - INFO - Ensuring autonomous discovery system is ALWAYS running
+2026-08-16 18:33:54,576 - INFO - Check interval: 60 seconds
+2026-08-16 18:33:54,576 - INFO - Max idle time: 15.0 minutes
+2026-08-16 18:33:54,576 - INFO - ============================================================
+2026-08-16 18:33:54,576 - INFO - 🔍 Initial system check...
+2026-08-16 18:33:55,302 - INFO - 📡 Discovery system not running - starting now...
+2026-08-16 18:33:56,349 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-16 18:33:56,423 - INFO - ✅ Discovery system started (PID: 4255)
+2026-08-16 19:19:19,400 - WARNING - ⚠️  No validated discovery for 673.2h and loop idle - restarting hung loop
+2026-08-16 19:19:25,168 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-16 19:19:25,225 - INFO - ✅ Discovery system started (PID: 14997)
+2026-08-16 19:36:46,637 - INFO - wrote 10 proposals -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_proposals.md
+2026-08-16 19:36:46,648 - INFO - wrote measurements -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_measurements.md (rollup=18.9)
+2026-08-16 19:36:51,920 - INFO - capability_index = 18.6/100 -> /Users/gjw255/astrodata/SWARM/BIODISC/capability_index.json
+2026-08-16 19:36:51,921 - INFO - 📊 hourly metrics refreshed (RSI miner + capability index)
+2026-08-16 19:52:09,659 - WARNING - ⚠️  No validated discovery for 673.8h and loop idle - restarting hung loop
+2026-08-16 19:52:16,140 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-16 19:52:16,194 - INFO - ✅ Discovery system started (PID: 19633)
+2026-08-16 20:24:45,254 - WARNING - ⚠️  No validated discovery for 674.3h and loop idle - restarting hung loop
+2026-08-16 20:24:50,712 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-16 20:24:50,729 - INFO - ✅ Discovery system started (PID: 23809)
+2026-08-16 20:38:00,661 - INFO - wrote 10 proposals -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_proposals.md
+2026-08-16 20:38:00,682 - INFO - wrote measurements -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_measurements.md (rollup=18.4)
+2026-08-16 20:38:03,269 - INFO - capability_index = 18.4/100 -> /Users/gjw255/astrodata/SWARM/BIODISC/capability_index.json
+2026-08-16 20:38:03,270 - INFO - 📊 hourly metrics refreshed (RSI miner + capability index)
+2026-08-16 20:57:14,270 - WARNING - ⚠️  No validated discovery for 674.8h and loop idle - restarting hung loop
+2026-08-16 20:57:20,700 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-16 20:57:20,716 - INFO - ✅ Discovery system started (PID: 28703)
+2026-08-16 21:28:35,989 - WARNING - ⚠️  No validated discovery for 675.4h and loop idle - restarting hung loop
+2026-08-16 21:28:41,328 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-16 21:28:41,345 - INFO - ✅ Discovery system started (PID: 33341)
+2026-08-16 21:38:51,115 - INFO - wrote 10 proposals -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_proposals.md
+2026-08-16 21:38:51,128 - INFO - wrote measurements -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_measurements.md (rollup=17.8)
+2026-08-16 21:38:54,166 - INFO - capability_index = 18.3/100 -> /Users/gjw255/astrodata/SWARM/BIODISC/capability_index.json
+2026-08-16 21:38:54,166 - INFO - 📊 hourly metrics refreshed (RSI miner + capability index)
+2026-08-16 22:01:15,688 - WARNING - ⚠️  No validated discovery for 675.9h and loop idle - restarting hung loop
+2026-08-16 22:01:20,999 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-16 22:01:21,072 - INFO - ✅ Discovery system started (PID: 39656)
+2026-08-16 22:33:43,149 - WARNING - ⚠️  No validated discovery for 676.4h and loop idle - restarting hung loop
+2026-08-16 22:33:48,643 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-16 22:33:48,670 - INFO - ✅ Discovery system started (PID: 45026)
+2026-08-16 22:39:58,331 - INFO - wrote 10 proposals -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_proposals.md
+2026-08-16 22:39:58,344 - INFO - wrote measurements -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_measurements.md (rollup=17.3)
+2026-08-16 22:40:01,986 - INFO - capability_index = 18.2/100 -> /Users/gjw255/astrodata/SWARM/BIODISC/capability_index.json
+2026-08-16 22:40:01,992 - INFO - 📊 hourly metrics refreshed (RSI miner + capability index)
+2026-08-16 23:06:15,952 - WARNING - ⚠️  No validated discovery for 677.0h and loop idle - restarting hung loop
+2026-08-16 23:06:21,346 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-16 23:06:21,355 - INFO - ✅ Discovery system started (PID: 53686)
+2026-08-16 23:38:35,451 - WARNING - ⚠️  No validated discovery for 677.5h and loop idle - restarting hung loop
+2026-08-16 23:38:40,928 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-16 23:38:40,948 - INFO - ✅ Discovery system started (PID: 58383)
+2026-08-16 23:40:46,194 - INFO - wrote 10 proposals -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_proposals.md
+2026-08-16 23:40:46,209 - INFO - wrote measurements -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_measurements.md (rollup=16.7)
+2026-08-16 23:40:49,282 - INFO - capability_index = 18.1/100 -> /Users/gjw255/astrodata/SWARM/BIODISC/capability_index.json
+2026-08-16 23:40:49,283 - INFO - 📊 hourly metrics refreshed (RSI miner + capability index)
+2026-08-17 00:17:16,892 - WARNING - 😴 Watchdog gap 16.7 min (system sleep?) - skipping restart check this round
+2026-08-17 00:18:18,442 - WARNING - ⚠️  No validated discovery for 678.2h and loop idle - restarting hung loop
+2026-08-17 00:18:23,958 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 00:18:23,989 - INFO - ✅ Discovery system started (PID: 62983)
+2026-08-17 01:02:20,888 - WARNING - 😴 Watchdog gap 16.6 min (system sleep?) - skipping restart check this round
+2026-08-17 01:03:53,121 - WARNING - ⚠️  No validated discovery for 679.0h and loop idle - restarting hung loop
+2026-08-17 01:04:11,068 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 01:04:11,287 - INFO - ✅ Discovery system started (PID: 71529)
+2026-08-17 01:19:16,899 - INFO - wrote 10 proposals -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_proposals.md
+2026-08-17 01:19:16,925 - INFO - wrote measurements -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_measurements.md (rollup=16.3)
+2026-08-17 01:19:21,490 - INFO - capability_index = 18.0/100 -> /Users/gjw255/astrodata/SWARM/BIODISC/capability_index.json
+2026-08-17 01:19:21,491 - INFO - 📊 hourly metrics refreshed (RSI miner + capability index)
+2026-08-17 01:49:50,591 - WARNING - 😴 Watchdog gap 17.3 min (system sleep?) - skipping restart check this round
+2026-08-17 01:50:51,637 - WARNING - ⚠️  No validated discovery for 679.7h and loop idle - restarting hung loop
+2026-08-17 01:50:57,085 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 01:50:57,135 - INFO - ✅ Discovery system started (PID: 76000)
+2026-08-17 02:36:35,889 - WARNING - 😴 Watchdog gap 17.4 min (system sleep?) - skipping restart check this round
+2026-08-17 02:37:36,378 - WARNING - ⚠️  No validated discovery for 680.5h and loop idle - restarting hung loop
+2026-08-17 02:37:41,721 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 02:37:41,747 - INFO - ✅ Discovery system started (PID: 80346)
+2026-08-17 02:59:32,948 - WARNING - 😴 Watchdog gap 17.2 min (system sleep?) - skipping restart check this round
+2026-08-17 03:18:50,456 - WARNING - 😴 Watchdog gap 16.6 min (system sleep?) - skipping restart check this round
+2026-08-17 03:35:18,564 - WARNING - 😴 Watchdog gap 16.5 min (system sleep?) - skipping restart check this round
+2026-08-17 03:36:19,447 - WARNING - ⚠️  No validated discovery for 681.5h and loop idle - restarting hung loop
+2026-08-17 03:36:24,893 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 03:36:24,921 - INFO - ✅ Discovery system started (PID: 82362)
+2026-08-17 03:53:45,584 - WARNING - 😴 Watchdog gap 16.3 min (system sleep?) - skipping restart check this round
+2026-08-17 04:18:44,247 - WARNING - 😴 Watchdog gap 21.9 min (system sleep?) - skipping restart check this round
+2026-08-17 04:37:11,076 - WARNING - 😴 Watchdog gap 18.4 min (system sleep?) - skipping restart check this round
+2026-08-17 04:38:11,636 - WARNING - ⚠️  No validated discovery for 682.5h and loop idle - restarting hung loop
+2026-08-17 04:38:17,051 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 04:38:17,078 - INFO - ✅ Discovery system started (PID: 84713)
+2026-08-17 04:38:22,160 - INFO - wrote 10 proposals -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_proposals.md
+2026-08-17 04:38:22,165 - INFO - wrote measurements -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_measurements.md (rollup=15.6)
+2026-08-17 04:38:24,148 - INFO - capability_index = 17.9/100 -> /Users/gjw255/astrodata/SWARM/BIODISC/capability_index.json
+2026-08-17 04:38:24,149 - INFO - 📊 hourly metrics refreshed (RSI miner + capability index)
+2026-08-17 04:56:33,747 - WARNING - 😴 Watchdog gap 17.2 min (system sleep?) - skipping restart check this round
+2026-08-17 05:21:05,971 - WARNING - 😴 Watchdog gap 16.6 min (system sleep?) - skipping restart check this round
+2026-08-17 05:38:53,927 - WARNING - 😴 Watchdog gap 17.8 min (system sleep?) - skipping restart check this round
+2026-08-17 05:39:55,380 - WARNING - ⚠️  No validated discovery for 683.6h and loop idle - restarting hung loop
+2026-08-17 05:40:03,377 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 05:40:03,466 - INFO - ✅ Discovery system started (PID: 86556)
+2026-08-17 05:57:38,204 - WARNING - 😴 Watchdog gap 16.5 min (system sleep?) - skipping restart check this round
+2026-08-17 06:21:24,645 - WARNING - 😴 Watchdog gap 16.5 min (system sleep?) - skipping restart check this round
+2026-08-17 06:37:47,043 - WARNING - 😴 Watchdog gap 16.4 min (system sleep?) - skipping restart check this round
+2026-08-17 06:38:49,596 - WARNING - ⚠️  No validated discovery for 684.5h and loop idle - restarting hung loop
+2026-08-17 06:38:55,119 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 06:38:55,129 - INFO - ✅ Discovery system started (PID: 88883)
+2026-08-17 06:55:28,911 - WARNING - 😴 Watchdog gap 16.7 min (system sleep?) - skipping restart check this round
+2026-08-17 07:22:59,769 - WARNING - 😴 Watchdog gap 17.1 min (system sleep?) - skipping restart check this round
+2026-08-17 07:39:29,864 - WARNING - 😴 Watchdog gap 16.5 min (system sleep?) - skipping restart check this round
+2026-08-17 07:40:30,377 - WARNING - ⚠️  No validated discovery for 685.6h and loop idle - restarting hung loop
+2026-08-17 07:40:35,886 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 07:40:35,911 - INFO - ✅ Discovery system started (PID: 90939)
+2026-08-17 08:12:59,191 - WARNING - ⚠️  No validated discovery for 686.1h and loop idle - restarting hung loop
+2026-08-17 08:13:04,624 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 08:13:04,635 - INFO - ✅ Discovery system started (PID: 1474)
+2026-08-17 08:20:12,038 - INFO - wrote 10 proposals -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_proposals.md
+2026-08-17 08:20:12,046 - INFO - wrote measurements -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_measurements.md (rollup=14.4)
+2026-08-17 08:20:14,848 - INFO - capability_index = 17.6/100 -> /Users/gjw255/astrodata/SWARM/BIODISC/capability_index.json
+2026-08-17 08:20:14,848 - INFO - 📊 hourly metrics refreshed (RSI miner + capability index)
+2026-08-17 08:44:24,462 - WARNING - ⚠️  No validated discovery for 686.6h and loop idle - restarting hung loop
+2026-08-17 08:44:29,860 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 08:44:29,877 - INFO - ✅ Discovery system started (PID: 5784)
+2026-08-17 09:16:45,502 - WARNING - ⚠️  No validated discovery for 687.2h and loop idle - restarting hung loop
+2026-08-17 09:16:50,919 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 09:16:50,936 - INFO - ✅ Discovery system started (PID: 10491)
+2026-08-17 09:20:56,738 - INFO - wrote 10 proposals -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_proposals.md
+2026-08-17 09:20:56,749 - INFO - wrote measurements -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_measurements.md (rollup=13.9)
+2026-08-17 09:21:01,472 - INFO - capability_index = 17.5/100 -> /Users/gjw255/astrodata/SWARM/BIODISC/capability_index.json
+2026-08-17 09:21:01,472 - INFO - 📊 hourly metrics refreshed (RSI miner + capability index)
+2026-08-17 09:48:18,397 - WARNING - ⚠️  No validated discovery for 687.7h and loop idle - restarting hung loop
+2026-08-17 09:48:23,948 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 09:48:23,960 - INFO - ✅ Discovery system started (PID: 15212)
+2026-08-17 10:19:47,693 - WARNING - ⚠️  No validated discovery for 688.2h and loop idle - restarting hung loop
+2026-08-17 10:19:53,008 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 10:19:53,036 - INFO - ✅ Discovery system started (PID: 21159)
+2026-08-17 10:22:03,930 - INFO - wrote 10 proposals -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_proposals.md
+2026-08-17 10:22:03,980 - INFO - wrote measurements -> /Users/gjw255/astrodata/SWARM/BIODISC/rsi_measurements.md (rollup=13.4)
+2026-08-17 10:22:09,286 - INFO - capability_index = 17.4/100 -> /Users/gjw255/astrodata/SWARM/BIODISC/capability_index.json
+2026-08-17 10:22:09,286 - INFO - 📊 hourly metrics refreshed (RSI miner + capability index)
+2026-08-17 10:51:49,768 - WARNING - ⚠️  No validated discovery for 688.7h and loop idle - restarting hung loop
+2026-08-17 10:51:57,525 - INFO - 🚀 Starting autonomous discovery system...
+2026-08-17 10:51:57,540 - INFO - ✅ Discovery system started (PID: 99012)

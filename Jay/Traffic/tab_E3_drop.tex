@@ -1,0 +1,17 @@
+\begin{table}
+\centering
+\caption{Report loss (S2): $p_{\rm drop}=0.25$.  Mean of 10 seeds.  reclaim = abandoned bookings
+dissolved by the decay TTL; for the no-reclaim row the same column
+counts window-end sweeps.}
+\label{tab:e3drop}
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+arm & served & strand & unmet & wait & p95 & Jain & util & reclaim \\
+\midrule
+board & 56302 & 3.8 & 1747 & 7.5 & 16 & 0.30 & 0.29 & 64 \\
+no-decay & 56364 & 2.0 & 1700 & 7.5 & 16 & 0.31 & 0.29 & 65 \\
+central & 56269 & 0.0 & 151 & 13.7 & 33 & 0.69 & 0.29 & 0 \\
+nearest & 47905 & 196.5 & 11754 & 17.1 & 95 & 0.20 & 0.48 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}

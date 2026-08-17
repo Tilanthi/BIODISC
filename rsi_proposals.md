@@ -1,12 +1,12 @@
 # RSI proposals — mined from discovery_verdicts.jsonl
 
-_Candidate failures analyzed: 45044  (themes: 10)_
-_Verdict coverage: 44964 rejected of 44989 logged (100%) — a system that stops logging failures would look healthier here for worse behavior._
+_Candidate failures analyzed: 45357  (themes: 10)_
+_Verdict coverage: 45277 rejected of 45302 logged (100%) — a system that stops logging failures would look healthier here for worse behavior._
 
 _Propose-only. Applying any [APPROVAL] fix is a human-gated act; record it in rsi_proposals_applied.jsonl so its effect can be measured._
 
 ## 1. unclassified  [APPROVAL]
-- occurrences: **42338**  (1451.914/day over 29.16d)
+- occurrences: **42546**  (1417.31/day over 30.019d)
 - proposed fix: Investigate root cause.
 - samples:
     - Does TP53 change in the OPPOSITE direction in cancer than the textbook
@@ -14,7 +14,7 @@ _Propose-only. Applying any [APPROVAL] fix is a human-gated act; record it in rs
     - Does TP53 change in the OPPOSITE direction in leukemia than the textbo
 
 ## 2. generation_failed  [APPROVAL]
-- occurrences: **1432**  (44.0/day over 32.545d)
+- occurrences: **1484**  (44.434/day over 33.398d)
 - proposed fix: Root-cause the pre-validation failure (download timeout, gene-symbol validation, DE setup); treat as a reliability fix.
 - samples:
     - Which lipid-metabolism genes are differentially expressed in mouse liv
@@ -22,7 +22,7 @@ _Propose-only. Applying any [APPROVAL] fix is a human-gated act; record it in rs
     - How does eIF2α phosphorylation alter global translation during ER stre
 
 ## 3. duplicate_profile  [APPROVAL]
-- occurrences: **500**  (15.295/day over 32.689d)
+- occurrences: **552**  (16.457/day over 33.542d)
 - proposed fix: Broaden question/dataset diversity or perturb DE so repeated pairs yield distinct statistical profiles (the small dataset pool is the deeper cause).
 - samples:
     - How does novel gene X affect pathway Y in cancer?
@@ -30,7 +30,7 @@ _Propose-only. Applying any [APPROVAL] fix is a human-gated act; record it in rs
     - How does novel gene X affect pathway Y in cancer?
 
 ## 4. abandoned_mid_validation  [APPROVAL]
-- occurrences: **352**  (11.1/day over 31.711d)
+- occurrences: **353**  (11.067/day over 31.898d)
 - proposed fix: Reliability: a validation cycle started but never wrote a final verdict — the process was likely killed mid-validation. Reduce mid-cycle kills (bound downloads, lengthen watchdog patience, avoid SIGKILL mid-cycle).
 - samples:
     - How does DNA methylation at the MLH1 promoter differ between MSI-H and

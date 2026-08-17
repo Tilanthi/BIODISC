@@ -45,15 +45,29 @@ from biodisc_core.fixed_pipeline import discovery_status
 log_dir = Path(__file__).parent / "logs"
 log_dir.mkdir(exist_ok=True)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        RotatingFileHandler(log_dir / "discovery_watchdog.log", maxBytes=10_000_000, backupCount=3),
-        logging.StreamHandler()
-    ]
-)
 logger = logging.getLogger(__name__)
+
+
+def _setup_logging():
+    """Attach handlers at runtime, not import time.
+
+    Importing biodisc_core (line above) can leave root handlers behind — an
+    import-chain ``logging.basicConfig`` call made our own basicConfig a silent
+    no-op, so kill lines reached launchd's stderr as bare
+    ``WARNING:__main__:...`` with NO timestamps (the 2026-08 kill-spiral
+    forensics had to reconstruct timing by sampling). force=True reclaims the
+    root logger; done in main() so importing this module (tests) is
+    side-effect-free.
+    """
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            RotatingFileHandler(log_dir / "discovery_watchdog.log", maxBytes=10_000_000, backupCount=3),
+            logging.StreamHandler()
+        ],
+        force=True,
+    )
 
 # Discovery system configuration
 DISCOVERY_SCRIPT = Path(__file__).parent / ".fixed_autonomous_discovery.py"
@@ -68,6 +82,18 @@ CHECK_INTERVAL = 60   # Check every minute
 # are now rare AND promptly recovered.
 STALL_THRESHOLD = 30 * 60               # 30 minutes
 STALL_THRESHOLD_USER_ACTIVE = 3 * 3600  # 3 hours (was 24 h) — still tolerant while active
+# GRACE (2026-08-16): a discovery process younger than this is NEVER killed,
+# no matter how stale last_activity is. Root cause of the 2.7-minute
+# kill-death spiral (1734 starts, 0 completed cycles): staleness is absolute,
+# and only completion events (record_rejection / record_cycle) refresh it —
+# events a killed process can never reach. Once one long gene-symbol
+# validation pushed staleness past STALL_THRESHOLD, every restart inherited
+# the stale timestamp and died at the next 60 s check, before validation
+# could finish. Grace gives each restart a full shot at its first heartbeat
+# (cycle-start + in-validation heartbeats land within ~2 min of boot).
+# True hangs are still recovered: an old process with a stale heartbeat is
+# killed exactly as before (worst case now ~grace+threshold, ~45 min).
+WATCHDOG_GRACE = 15 * 60                 # 15 minutes
 _LAST_CHECK_TIME = time.time()  # for watchdog sleep/wake detection
 
 
@@ -165,6 +191,17 @@ def check_and_restart():
     else:
         threshold = STALL_THRESHOLD
 
+    # Grace: never judge a freshly (re)started process by history that
+    # predates its birth. See WATCHDOG_GRACE above.
+    try:
+        proc_age = time.time() - discovery_proc.create_time()
+    except Exception:
+        proc_age = float("inf")  # can't tell -> fall through to normal rules
+    if proc_age < WATCHDOG_GRACE:
+        logger.debug(f"Discovery process {proc_age/60:.1f} min old (< grace "
+                     f"{WATCHDOG_GRACE/60:.0f} min) - not judging it on stale history")
+        return None
+
     if _loop_looks_hung(threshold):
         since = discovery_status.seconds_since_validated_discovery()
         if since is None:
@@ -205,6 +242,7 @@ def run_metrics():
 
 def main():
     """Main watchdog loop"""
+    _setup_logging()
     logger.info("🐕 BIODISC Discovery Watchdog Started")
     logger.info("=" * 60)
     logger.info("Ensuring autonomous discovery system is ALWAYS running")

@@ -1,0 +1,18 @@
+\begin{table}
+\centering
+\caption{Session overruns (S4): lognormal $\sigma=0.6$.  Mean of 10 seeds.  reclaim = abandoned bookings
+dissolved by the decay TTL; for the no-reclaim row the same column
+counts window-end sweeps.}
+\label{tab:e4lt}
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+arm & served & strand & unmet & wait & p95 & Jain & util & reclaim \\
+\midrule
+board & 49095 & 153.6 & 7630 & 8.2 & 19 & 0.29 & 0.36 & 62 \\
+no-decay & 49327 & 142.2 & 7442 & 8.2 & 20 & 0.30 & 0.36 & 56 \\
+central & 55277 & 0.0 & 466 & 14.7 & 36 & 0.67 & 0.35 & 0 \\
+nearest & 42820 & 453.2 & 16009 & 21.0 & 112 & 0.22 & 0.55 & 0 \\
+no-reclaim & 48880 & 169.1 & 7704 & 8.3 & 20 & 0.29 & 0.36 & 13342 \\
+\bottomrule
+\end{tabular}
+\end{table}

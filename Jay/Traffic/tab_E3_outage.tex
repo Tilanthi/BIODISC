@@ -1,0 +1,17 @@
+\begin{table}
+\centering
+\caption{Wholesale decline (S3): 40\% of stations dead hours 8--14.  Mean of 10 seeds.  reclaim = abandoned bookings
+dissolved by the decay TTL; for the no-reclaim row the same column
+counts window-end sweeps.}
+\label{tab:e3out}
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+arm & served & strand & unmet & wait & p95 & Jain & util & reclaim \\
+\midrule
+board & 54892 & 12.2 & 3259 & 9.2 & 21 & 0.22 & 0.31 & 25 \\
+no-decay & 54786 & 13.6 & 3302 & 9.1 & 20 & 0.22 & 0.31 & 25 \\
+central & 56050 & 0.0 & 237 & 14.3 & 34 & 0.69 & 0.30 & 0 \\
+nearest & 44425 & 451.5 & 15893 & 22.4 & 115 & 0.24 & 0.49 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}

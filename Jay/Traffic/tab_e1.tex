@@ -1,0 +1,19 @@
+\begin{table}
+\centering
+\caption{Baseline (S1), $n=10^4$, $m=250$, demand $\delta=2.4$; mean of
+10 seeds.  Central sees perfect fresh information; its 5- and 15-min
+cycle variants bracket the batching latency.  $k$ = vicinity stations
+per query.}
+\label{tab:e1}
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+arm & served & strand & unmet & wait & p95 & Jain & util & $k$ \\
+\midrule
+board & 56316 & 2.7 & 1791 & 7.5 & 16 & 0.32 & 0.29 & 15.2 \\
+no-decay & 56368 & 2.5 & 1714 & 7.5 & 16 & 0.31 & 0.29 & 15.2 \\
+central (cyc5) & 57906 & 0.0 & 86 & 8.2 & 20 & 0.67 & 0.27 & -- \\
+central (cyc15) & 56269 & 0.0 & 151 & 13.7 & 33 & 0.69 & 0.29 & -- \\
+nearest & 47905 & 196.5 & 11754 & 17.1 & 95 & 0.20 & 0.48 & -- \\
+\bottomrule
+\end{tabular}
+\end{table}

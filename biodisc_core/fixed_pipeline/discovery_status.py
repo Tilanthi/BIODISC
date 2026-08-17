@@ -78,6 +78,23 @@ def record_rejection(reason: str) -> None:
     _write(d)
 
 
+def record_activity(note: str = "") -> None:
+    """Heartbeat: the loop is alive and working right now.
+
+    Long blocking phases (e.g. the gene-symbol HGNC crawl) call this so the
+    watchdog's idle check distinguishes "busy for minutes on one network
+    phase" from "hung". Cheap and additive — completion events
+    (record_cycle / record_rejection) keep their richer semantics.
+    """
+    d = _read()
+    now = time.time()
+    d["last_activity"] = now
+    d["last_activity_iso"] = datetime.fromtimestamp(now).isoformat()
+    if note:
+        d["last_phase"] = note
+    _write(d)
+
+
 def read_status() -> dict:
     return _read()
 

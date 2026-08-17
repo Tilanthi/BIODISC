@@ -1,0 +1,35 @@
+  E1 BOARD                 served=56316 strand=2.7 wait=7.5 p95=16 jain=0.32 util=0.29
+  E1 CENTRAL  cyc15        served=56269 strand=0.0 wait=13.7 p95=33 jain=0.69 util=0.29
+  E1 CENTRAL  cyc5         served=57906 strand=0.0 wait=8.2 p95=20 jain=0.67 util=0.27
+  E1 NEAREST               served=47905 strand=196.5 wait=17.1 p95=95 jain=0.20 util=0.48
+  E1 NODECAY               served=56368 strand=2.5 wait=7.5 p95=16 jain=0.31 util=0.29
+E2 N=   500: k=15.0373 central_ops=7.27e+05 wall=0.46s
+E2 N=  1000: k=15.0388 central_ops=1.45e+06 wall=0.5967s
+E2 N=  2000: k=15.0353 central_ops=2.9e+06 wall=0.8267s
+E2 N=  5000: k=15.0505 central_ops=7.27e+06 wall=1.4433s
+E2 N= 10000: k=15.0409 central_ops=1.45e+07 wall=2.4933s
+  E3-outage BOARD    outage       served=54892 strand=12.2 wait=9.2 p95=21 jain=0.22 util=0.31
+  E3-outage CENTRAL  outage       served=56050 strand=0.0 wait=14.3 p95=34 jain=0.69 util=0.30
+  E3-outage NEAREST  outage       served=44425 strand=451.5 wait=22.4 p95=115 jain=0.24 util=0.49
+  E3-outage NODECAY  outage       served=54786 strand=13.6 wait=9.1 p95=20 jain=0.22 util=0.31
+  E3-drop BOARD    drop         served=56302 strand=3.8 wait=7.5 p95=16 jain=0.30 util=0.29
+  E3-drop CENTRAL  drop         served=56269 strand=0.0 wait=13.7 p95=33 jain=0.69 util=0.29
+  E3-drop NEAREST  drop         served=47905 strand=196.5 wait=17.1 p95=95 jain=0.20 util=0.48
+  E3-drop NODECAY  drop         served=56364 strand=2.0 wait=7.5 p95=16 jain=0.31 util=0.29
+  E4-noshow BOARD    noshow       served=49584 strand=355.0 wait=7.3 p95=15 jain=0.33 util=0.28
+  E4-noshow CENTRAL  noshow       served=56269 strand=0.0 wait=13.7 p95=33 jain=0.69 util=0.29
+  E4-noshow NEAREST  noshow       served=47905 strand=196.5 wait=17.1 p95=95 jain=0.20 util=0.48
+  E4-noshow NODECAY  noshow       served=49681 strand=346.5 wait=7.3 p95=15 jain=0.33 util=0.28
+  E4-longtail BOARD    longtail     served=49095 strand=153.6 wait=8.2 p95=19 jain=0.29 util=0.36
+  E4-longtail CENTRAL  longtail     served=55331 strand=0.0 wait=14.6 p95=36 jain=0.67 util=0.35
+  E4-longtail NEAREST  longtail     served=42820 strand=453.2 wait=21.0 p95=112 jain=0.22 util=0.55
+  E4-longtail NODECAY  longtail     served=49327 strand=142.2 wait=8.2 p95=20 jain=0.30 util=0.36
+  E5 BOARD    f0.05_a0     served=56384 strand=2.1 wait=7.4 p95=16 jain=0.32 util=0.29
+  E5 BOARD    f0.05_a1     served=56384 strand=2.1 wait=7.4 p95=16 jain=0.32 util=0.29
+  E5 BOARD    f0.0_a0      served=56371 strand=3.5 wait=7.5 p95=16 jain=0.31 util=0.29
+  E5 BOARD    f0.0_a1      served=56371 strand=3.5 wait=7.5 p95=16 jain=0.31 util=0.29
+  E5 BOARD    f0.2_a0      served=56366 strand=3.3 wait=7.4 p95=16 jain=0.32 util=0.29
+  E5 BOARD    f0.2_a1      served=56366 strand=3.3 wait=7.4 p95=16 jain=0.32 util=0.29
+  E6 BOARD    beam0        served=54766 strand=14.8 wait=9.1 p95=21 jain=0.22 util=0.31
+  E6 BOARD    beam1        served=54892 strand=12.2 wait=9.2 p95=21 jain=0.22 util=0.31
+done in 758s -> traffic_results.json

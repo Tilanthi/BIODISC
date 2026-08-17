@@ -195,6 +195,7 @@ class FixedAutonomousDiscovery:
                     continue
 
                 logger.info("🔄 Starting fixed discovery cycle...")
+                discovery_status.record_activity("cycle_start")
 
                 # Generate biological questions
                 questions = self._generate_biological_questions()
@@ -228,6 +229,7 @@ class FixedAutonomousDiscovery:
 
                 for i, question in enumerate(questions, 1):
                     logger.info(f"\n🔬 Processing question {i}/{len(questions)}: {question[:60]}...")
+                    discovery_status.record_activity(f"question_{i}_of_{len(questions)}")
 
                     # Search for REAL GEO datasets instead of synthetic test data
                     geo_datasets = self._search_real_geo_datasets(question, max_results=3)
@@ -254,6 +256,7 @@ class FixedAutonomousDiscovery:
                         sample_count = dataset_metadata.get('samples', 0)
 
                         logger.info(f"   Trying dataset {j}/{len(geo_datasets)}: {dataset_id} ({sample_count} samples)")
+                        discovery_status.record_activity(f"dataset_attempt {dataset_id}")
 
                         try:
                             # Generate GENUINE discovery using REAL GEO dataset

@@ -26,15 +26,34 @@ This is a NON-NEGOTIABLE hard gate in the discovery pipeline.
 """
 
 import logging
+import os
 import re
 import requests
 import json
 import time
+from pathlib import Path
 from typing import List, Dict, Set, Tuple, Optional
 from dataclasses import dataclass
 from enum import Enum
 
+from biodisc_core.fixed_pipeline import discovery_status
+
 logger = logging.getLogger(__name__)
+
+# On-disk cache of confirmed valid/invalid symbols. The 2026-08 kill spiral
+# showed why this must persist: caches lived only in process memory, so every
+# watchdog kill+restart re-crawled the same ~2000 symbols from HGNC at zero —
+# the loop could never bank progress across restarts. UNKNOWN verdicts are
+# deliberately NOT persisted (a transient API outage must not become fact).
+CACHE_PATH = Path(os.environ.get(
+    "BIODISC_GENE_SYMBOL_CACHE",
+    str(Path(__file__).resolve().parents[2] / "cache"
+        / "gene_symbol_validation_cache.json")))
+
+# Heartbeat/flush cadence inside the crawl. 30 s bounds the watchdog's view of
+# idleness no matter how slow HGNC answers (10 s timeout per call), and caps
+# lost work on a mid-crawl kill at ~30 s.
+PROGRESS_FLUSH_S = 30.0
 
 
 class ValidationResult(Enum):
@@ -67,6 +86,7 @@ class GeneSymbolValidator:
         self.invalid_symbols_cache: Set[str] = set()
         self.validation_count = 0
         self.rejection_count = 0
+        self._last_progress_flush = 0.0
 
         # Database endpoints
         self.hgnc_api = "https://rest.genenames.org/fetch/symbol/"
@@ -75,8 +95,52 @@ class GeneSymbolValidator:
         # Real human gene symbols from HGNC (curated list)
         self.known_real_genes = self._load_known_real_genes()
 
+        self._load_persistent_cache()
+
         logger.info("🔬 Gene Symbol Validator initialized")
         logger.info(f"   Known real genes: {len(self.known_real_genes)}")
+        logger.info(f"   Persisted symbol cache: "
+                    f"{len(self.valid_symbols_cache)} valid / "
+                    f"{len(self.invalid_symbols_cache)} invalid")
+
+    def _load_persistent_cache(self) -> None:
+        """Warm the in-memory caches from the on-disk cache (best-effort)."""
+        try:
+            if CACHE_PATH.exists():
+                data = json.loads(CACHE_PATH.read_text())
+                self.valid_symbols_cache.update(data.get("valid", []))
+                self.invalid_symbols_cache.update(data.get("invalid", []))
+        except Exception as e:  # noqa: BLE001 — corrupt cache must not kill the gate
+            logger.warning(f"Gene-symbol cache unreadable, starting cold: {e}")
+
+    def _save_persistent_cache(self) -> None:
+        """Atomically persist confirmed verdicts so restarts bank progress."""
+        try:
+            CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            payload = {
+                "valid": sorted(self.valid_symbols_cache),
+                "invalid": sorted(self.invalid_symbols_cache),
+                "saved_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            }
+            tmp = CACHE_PATH.with_suffix(CACHE_PATH.suffix + ".tmp")
+            tmp.write_text(json.dumps(payload))
+            os.replace(tmp, CACHE_PATH)
+        except Exception as e:  # noqa: BLE001 — cache write failure is non-fatal
+            logger.warning(f"Gene-symbol cache write failed (non-fatal): {e}")
+
+    def _heartbeat(self, note: str, force: bool = False) -> None:
+        """Throttled liveness signal + cache flush.
+
+        Called from inside the crawl so (a) the watchdog's idle check sees the
+        loop is busy on a long network phase, and (b) a kill mid-crawl loses at
+        most PROGRESS_FLUSH_S of validation work instead of everything.
+        """
+        now = time.time()
+        if not force and (now - self._last_progress_flush) < PROGRESS_FLUSH_S:
+            return
+        self._last_progress_flush = now
+        discovery_status.record_activity(note)
+        self._save_persistent_cache()
 
     def _load_known_real_genes(self) -> Set[str]:
         """
@@ -170,11 +234,13 @@ class GeneSymbolValidator:
         logger.info(f"🔬 Validating {len(gene_symbols)} gene symbols")
 
         self.validation_count += 1
+        self._heartbeat(f"gene_symbol_validation 0/{len(gene_symbols)}",
+                        force=True)
 
         validation_results = []
         invalid_symbols = []
 
-        for symbol in gene_symbols:
+        for i, symbol in enumerate(gene_symbols, 1):
             result = self._validate_single_symbol(symbol)
             validation_results.append(result)
 
@@ -183,6 +249,15 @@ class GeneSymbolValidator:
                 self.invalid_symbols_cache.add(symbol)
             elif result.result == ValidationResult.VALID:
                 self.valid_symbols_cache.add(symbol)
+
+            if i % 50 == 0:
+                self._heartbeat(
+                    f"gene_symbol_validation {i}/{len(gene_symbols)}")
+
+        # Persist the completed crawl before the gate decision.
+        self._heartbeat(
+            f"gene_symbol_validation {len(gene_symbols)}/{len(gene_symbols)}",
+            force=True)
 
         # Summary
         valid_count = sum(1 for r in validation_results if r.result == ValidationResult.VALID)
