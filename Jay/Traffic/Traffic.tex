@@ -11,7 +11,7 @@
 
 \author[Tilanthi]{Tilanthi\\
 BIODISC --- Biology Discovery and Intelligence System}
-\date{Version 1.00. Accepted XXX. Received YYY; in original form ZZZ.}
+\date{Version 1.10. Accepted XXX. Received YYY; in original form ZZZ.}
 
 \begin{document}
 \label{firstpage}
@@ -830,7 +830,9 @@ are additive server semantics.
 \paragraph{Recommendation.}  Proceed to a bounded field trial, not
 to full build-out.  The trial: one metro, real OCPI feeds,
 decay-weighted client-side reading first (zero coordination cost,
-pure client change), booking TTLs second, priority last.  Kill
+pure client change), booking TTLs second, priority last; the
+registered protocol, frozen kill criteria, and rung-1 first light
+are reported in Appendix~\ref{app:trial}.  Kill
 criteria as falsifiable as the simulator's: if real-telemetry decay
 constants push $T$ far from $30$~min, or if field no-show rates make
 reclaim lag costlier than statistical overbooking (the E4 trade at
@@ -876,10 +878,111 @@ until it holds.
 \paragraph{Reproducibility.}  Simulator, experiment driver, table
 and figure generators are in \texttt{Jay/Traffic/}
 (\texttt{board\_sim.py}, \texttt{run\_experiments.py},
-\texttt{gen\_tables.py}, \texttt{make\_figures.py}); all tables and
+\texttt{gen\_tables.py}, \texttt{make\_figures.py}); the field-trial
+instrument and pre-registered criteria are in
+\texttt{Jay/Traffic/trial/} (\texttt{trial\_client.py},
+\texttt{kill\_criteria.py}).  All tables and
 figures in this paper are generated from
-\texttt{traffic\_results.json} with no hand-transcribed numbers.
-Version 1.00; results and text version together in future updates.
+\texttt{traffic\_results.json} (trial table from
+\texttt{trial/data/*.json}) with no hand-transcribed numbers.
+Version 1.10; results and text version together in future updates.
+
+\appendix
+
+\section{The bounded field trial: protocol and first light}
+\label{app:trial}
+
+Version 1.00 closed with a recommendation: a bounded field trial
+rather than full build-out.  This appendix, added in version 1.10,
+registers the trial's design, freezes its kill criteria, and reports
+the first rung's first light on real feeds.
+
+\subsection{The ladder and the instrument}
+
+The trial climbs three rungs, cheapest first.  \emph{Rung 1} is a
+pure client change: read the timestamped status that existing feeds
+already carry and weight it by the staleness law
+(Eq.~\ref{eq:decay}) --- no standardisation, no server changes, no
+coordination.  \emph{Rung 2} adds booking TTL semantics on the
+server side (decay-reclaim of no-show capacity, the E4 mechanism).
+\emph{Rung 3} is attested priority, last, because its billing and
+liability layers dominate the engineering.
+
+The rung-1 instrument (\texttt{trial/trial\_client.py}) captures a
+snapshot from a provider, canonicalises each EVSE to (station,
+EVSE, position, status, power, stalls, timestamp, source), and
+imports $T$, $\alpha$ and $f$ directly from the simulator so that
+trial and paper cannot drift apart.  Its analysis has two parts.
+The \emph{calibration} measurement is the age distribution of
+timestamps, summarised by the implied $T$: the TTL at which the
+median observed age would score $f = 0.9$.  The \emph{decision}
+measurement is a leave-one-out analysis: queries placed at station
+locations (vicinity 6~km, $k \le 15$ --- the decision radius of
+Sec.~\ref{sec:protocol}), each candidate scored by
+Eq.~\ref{eq:score} with the booking terms absent (rung 1 has no
+bookings), and the top-1 choice compared between the
+trust-everything ranking and the decay-weighted ranking.  That flip
+rate is the rung's entire value proposition in one number: if
+decay-weighted reading never changes a decision, rung 1 is a no-op.
+
+\subsection{Pre-registered kill criteria}
+
+Table~\ref{tab:trialkill} freezes the exit conditions; the rows
+were written into \texttt{trial/kill\_criteria.py} before the first
+real-feed capture, and the thresholds are the paper's own (K3
+doubles the simulator's tested no-show rate; K4 is the E1 fairness
+floor; K5 is the E5 attestation budget).
+
+\input{tab_trialkill.tex}
+
+\subsection{Rung-1 first light}
+\label{app:firstlight}
+
+With no operator credentials to hand, first light was taken on the
+one keyless feed that carries timestamps: OpenStreetMap (via
+Overpass), whose \texttt{check\_date} and \texttt{survey:date} tags
+record when a human last verified a station --- the worst-case feed
+a client might read, and therefore the honest place to start.  Two
+snapshots were captured on 2026-08-17: all of Ireland (1{,}061
+stations) and an Amsterdam bounding box (1{,}378).  The web-grade
+feed fails both rung-1 criteria, decisively.
+
+\paragraph{K1 (calibration).}  Only $2.4$ per cent (IE) and $1.6$
+per cent (AMS) of records carry any date tag at all, and the dated
+tail is months to years old (median age $2.3$~yr and $6.4$~mo
+respectively).  The implied $T$ --- the TTL the law would need for
+this cadence --- is $4.9$~yr and $1.2$~yr against an envelope of
+$[15, 60]$~min: five orders of magnitude out.  A 30-minute
+pheromone cannot live on a map that is resurveyed annually.
+
+\paragraph{K2 (decision value).}  Top-1 flip rate $0/346$ (IE) and
+$0/400$ (AMS).  The mechanism is worth stating, because it is the
+criterion working rather than the instrument failing: with $98$
+per cent of records undated (assigned trust $0$) and the dated $2$
+per cent far beyond any plausible TTL (also trust $0$), the decay
+term reduces to a constant offset on every candidate --- and a
+constant offset reorders nothing.  To a ranking, uniformly zero
+trust is indistinguishable from uniformly full trust.  An
+instrument check confirms that the analyser does flip when trust is
+heterogeneous: on a synthetic OCPI-shaped fixture with ages
+spanning 2--88~min, the implied $T$ is $39.8$~min (inside the
+envelope) and the top-1 flip rate is $58$ per cent.  The zero on
+real OSM data is a property of the feed.
+
+\subsection{Verdict and next step}
+
+Per the frozen criteria: K1 \textsc{Revise-T} (no re-fit closes
+five orders of magnitude) and K2 \textsc{Kill} --- rung 1 is a
+no-op \emph{on web-grade feeds}.  The kill criteria did what
+pre-registration is for: they killed the worst-case data source on
+first contact, rather than letting the trial drift onto whatever
+feed happened to be available.  The requirement is thereby
+sharpened, not the trial ended: rung 1 needs OCPI-grade telemetry,
+where \texttt{last\_updated} is machine-written on every status
+change.  The instrument is drop-in ready for an operator (OCPI
+2.2.1 \texttt{GET /locations} with Token A; an Open Charge Map
+provider and a recorded fixture are implemented alongside), and
+K3--K5 stand registered for the rungs above.
 
 \begin{thebibliography}{32}
 
