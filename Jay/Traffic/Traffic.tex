@@ -11,7 +11,7 @@
 
 \author[Tilanthi]{Tilanthi\\
 BIODISC --- Biology Discovery and Intelligence System}
-\date{Version 1.10. Accepted XXX. Received YYY; in original form ZZZ.}
+\date{Version 1.11. Accepted XXX. Received YYY; in original form ZZZ.}
 
 \begin{document}
 \label{firstpage}
@@ -23,9 +23,9 @@ BIODISC --- Biology Discovery and Intelligence System}
 Can ten thousand electric fleet vehicles share two hundred and fifty
 charging stations without a central planner, while stations fail, drivers
 overrun their sessions, reports go missing, and a minority lies about
-urgency?  We examine a proposal --- a stock-exchange-style
-\emph{board} of decaying information that every participant reads and
-none is commanded by --- through a five-phase study: problem
+urgency?  We examine a stock-exchange-style
+\emph{board} of decaying information, read by every participant and
+commanded by none, through a five-phase study: problem
 formalisation and adversarial edge-case analysis (Phase I), anecdotal
 validation against deployed analogues from limit order books to
 airport ground-delay programmes (Phase II), a literature survey that
@@ -42,12 +42,12 @@ shows per-query work flat in $n$ at $k\approx15$ vicinity stations (the
 $O(nk)$ claim, versus $O(nm)$ for central assignment), zero
 double-bookings across all runs, graceful degradation under wholesale
 outage and report loss, and decay-reclaim recovering capacity lost to
-no-shows without overbooking exposure --- while a perfect-information
-central assigner at matched cadence is matched on throughput and wait
-but wins on wait fairness.  Phase~V concludes: a good candidate for a
-bounded field trial --- not because it beats central optimisation on
-quality, but because it holds quality under failure with
-per-participant compute that does not grow with the fleet.
+no-shows without overbooking exposure; a perfect-information
+central assigner at matched cadence achieves the same throughput and
+wait but wins on wait fairness.  Phase~V concludes that the protocol
+is a fit for a bounded field trial: it concedes nothing to central
+optimisation on throughput, holds quality under failure, and keeps
+per-participant compute independent of fleet size.
 \end{abstract}
 
 \begin{keywords}
@@ -63,9 +63,9 @@ This paper is the second study in a programme that takes coordination
 mechanisms evolved by biological systems and tests them against
 large-scale engineering problems.  The companion paper
 (``Coordination Without a Coordinator'') distilled wound healing into
-five signalling primitives --- receiver-defined meaning,
+five signalling primitives (receiver-defined meaning,
 concentration-as-instruction, residual-signal-as-demand, co-stimulus
-guards, antagonist termination --- and asked what a medium must provide
+guards, antagonist termination) and asked what a medium must provide
 for $n$ minimally-informed agents to produce a specified global
 behaviour.  Here we instantiate those primitives on a concrete,
 commercially urgent problem supplied with a specific design sketch:
@@ -77,7 +77,7 @@ $\sim\!10{,}000$ delivery EVs over a metropolitan area served by
 $\sim\!250$ charging stations with heterogeneous connectors, stall
 counts, power classes, and fleet contracts guaranteeing capacity.
 Vehicles check in every five minutes; the proposed coordination
-artifact is a \emph{board} --- in the sense of a stock-exchange price
+artifact is a \emph{board}, in the sense of a stock-exchange price
 board: a shared display that anyone may read, updated by
 participants' own reports, that commands no one.  Trust in a report
 decays pheromone-style: slowly at first, then faster, reaching zero at
@@ -86,14 +86,14 @@ one vehicle--station interaction at a time using only vicinity data
 --- central computation, never central planning.  An ``attractor
 beam'' shepherds vehicles stranded by a station failure into a
 cohort behind the first rerouted peer; a ``repulsor radius'' forbids
-two vehicles holding the same stall-slot, enforced not by negotiation
-but by minimal-data computation; a priority channel with anti-fraud
+two vehicles holding the same stall-slot, enforced by minimal-data
+computation rather than negotiation; a priority channel with anti-fraud
 mechanisms serves dire-need vehicles, including preemption of
 mid-session charges for medical courier runs.  The claimed prize: per-
 participant work that scales as $O(nk)$ in the number of local
 participants $k$, not $O(n^2)$ system-wide coordination.
 
-Our task is not to admire this sketch but to attack it.  The study
+Our task is to attack it.  The study
 proceeds in the five phases the problem statement demands:
 Phase~I restates the problem formally and rounds out its edge cases
 (\S\ref{sec:phase1}); Phase~II validates the idea anecdotally against
@@ -111,10 +111,10 @@ identified in Phase~I (\S\ref{sec:weaklinks}), the $O(n^2)$
 comparison must be restated as $O(nm)$ versus $O(nk)$, the repulsor
 radius must be recognised as transactional atomicity rather than
 physics, and the priority channel is gameable without attestation.
-Second, the idea is not new in its parts --- order books,
+Second, the parts are old: order books,
 ground-delay programmes, overbooking, pheromone routing, tuple
-spaces, and the OCPI roaming protocol each own a component --- but
-the composition (decaying shared state as the reservation substrate)
+spaces, and the OCPI roaming protocol each own a component.  The
+composition --- decaying shared state as the reservation substrate ---
 is absent from both the literature and the deployed art.  Third,
 simulation supports the scale and failure claims and quantifies the
 price: the board trades a few minutes of mean wait and some stall
@@ -212,8 +212,8 @@ at the herding cost examined in E6).
 
 \emph{The repulsor radius is atomicity.}  The magnet analogy
 decorates a database invariant: no two vehicles may hold the same
-(station, bucket) slot.  Enforced by compare-and-set writes ---
-one bit of sequencing at the board, no pairwise negotiation --- the
+(station, bucket) slot.  Enforced by compare-and-set writes
+(one bit of sequencing at the board, no pairwise negotiation), the
 invariant is structural, and our instrumented runs verify zero
 violations (E1--E6; the simulator counts every failed CAS race
 separately).  What the analogy does capture is that exclusion is
@@ -221,10 +221,10 @@ separately).  What the analogy does capture is that exclusion is
 
 \emph{Vicinity must include time.}  A spatial radius alone misses
 competitors arriving later.  The board's future-bucket occupancy
-\emph{is} the time dimension: a vehicle scores a station by the
+supplies the time dimension: a vehicle scores a station by the
 minimum free capacity over its whole needed window, so the slot
 vector functions as a pheromone field over time-of-day.  Vicinity in
-the protocol is spatio-temporal by construction.
+the protocol is spatio-temporal.
 
 \begin{table*}
 \centering
@@ -305,7 +305,7 @@ FAA rations slots by schedule under Collaborative Decision Making
 (Vossen \& Ball 2006) --- a \emph{central} replan, paused and
 recomputed.  The board performs the same rationing continuously and
 locally: stale capacity decays out of the picture rather than being
-re-optimised by edict.  E3's outage scenario is the head-to-head.
+re-optimised by edict.  E3 runs that comparison.
 \item[Airline overbooking.] Carriers statistically oversell because
 no-shows waste seats (Littlewood 1972; Belobaba 1987).  The board's
 decay-reclaim is the structural alternative: never oversell, but
@@ -408,9 +408,9 @@ partners, with reservation states and patch semantics since 2.2.1.
 Reservation-enabled consumer apps track no-shows at small scale.
 What none of them carries is a \emph{decision substrate}: trust
 weighting of stale data, decay-reclaim, priority with attestation.
-The gap the board protocol occupies is exactly this: the industry
-built the medium's transport layer and left its semantics --- and
-with them, failure-tolerant decentralised reservation --- unbuilt.
+The board protocol occupies the resulting gap.  The industry
+built the medium's transport layer; its semantics, and with them
+failure-tolerant decentralised reservation, remain unbuilt.
 
 \section{The Board protocol}
 
@@ -430,7 +430,7 @@ invariants:
 compare-and-set against capacity; a failed CAS is a refused booking,
 never an overbooking.  (Instrumented: zero violations in all runs.)
 \item[\textbf{I2}] \emph{One-way flow}: the board never writes to
-participants; they poll, read, and act (the React analogy --- data
+participants; they poll, read, and act (the React analogy: data
 flows one way, decisions are local re-renders of shared state).
 \item[\textbf{I3}] \emph{Everything decays}: stations' reports,
 vehicles' reports, and bookings all age under Eq.~\ref{eq:decay} ---
@@ -467,9 +467,8 @@ emergency radius, displace the newest non-priority booking (the
 displaced vehicle re-enters seeking with a preempt-once flag).  Unbooked vehicles fall back to nearest
 walk-in rather than idling --- the protocol degrades to the naive
 arm rather than to nothing.  Central computation (CENTCOMP) executes
-this per-vehicle scoring server-side: one EV's $\sim\!15$-station
-scan per request --- computational centrality without planning
-centrality.
+this per-vehicle scoring server-side, one EV's $\sim\!15$-station
+scan at a time.
 
 \subsection{Priority, attestation, audit}
 
@@ -544,18 +543,18 @@ fraud claims served/caught, preempted count.  Each cell is the mean
 of 10 seeds ($n=10^4$) or 3 seeds (scaling runs); the full suite is
 $\sim$400 runs, about 13 minutes on one laptop.
 
-\subsection{Calibration and honesty notes}
+\subsection{Calibration notes}
 
 Three modelling choices are deliberately conservative toward the
 incumbents.  Central gets perfect information (no staleness at all)
-while the board sees only reports --- so any board advantage is
-\emph{despite} an information handicap, and any central advantage is
+while the board sees only reports, so any board advantage survives
+an information handicap and any central advantage is
 an upper bound.  Contract stalls are hard-masked (no speculative
 resale), which understates board-side utilisation.  Unbooked board
 vehicles fall back to nearest walk-in rather than idling, so the
 board arm inherits the naive arm's failure modes at the margin
-instead of a synthetic purity.  The protocol's wait-fairness weakness
-reported in \S\ref{sec:results} was found, not tuned away: the
+instead of a synthetic purity.  We did not tune away the protocol's
+wait-fairness weakness reported in \S\ref{sec:results}: the
 anti-starvation aging term in Eq.~\ref{eq:score} never binds in these
 scenarios, and the Jain gap is structural (booked head-of-line versus
 walk-in tails).
@@ -589,12 +588,12 @@ prio budget & 5\%/fleet/h & demand $\delta$ & 2.4 \\
 \subsection{E1: baseline --- the board matches a perfect planner}
 
 Table~\ref{tab:e1}.  Under the loaded city (S1), the board serves
-$56{,}316$ sessions/day at $7.5$~min mean wait --- statistically
+$56{,}316$ sessions/day at $7.5$~min mean wait, statistically
 matching the \emph{perfect-information} central assigner run at the
-same cadence ($57{,}906$ served, $8.2$~min wait), and this despite
-seeing the world only through aged reports while central reads it
-fresh.  Two honest qualifications.  (i) Central at a realistic
-$15$-min replanning cycle pays batching latency ($13.7$~min wait) ---
+same cadence ($57{,}906$ served, $8.2$~min wait), although it sees
+the world only through aged reports while central reads it
+fresh.  Two qualifications.  (i) Central at a realistic
+$15$-min replanning cycle pays batching latency ($13.7$~min wait);
 the board's continuous per-vehicle resolution does not.  (ii) Central
 wins fairness decisively: Jain $0.67$--$0.69$ against the board's
 $0.32$.  The board's wait distribution is bimodal --- booked vehicles
@@ -605,8 +604,8 @@ a tuning artefact, and is the protocol's weakest quality axis.  The
 naive arm confirms that coordination is doing the work: no
 reservations means $197$ stranded vehicles/day ($\sim\!70\times$ the
 board), $95$-min p95 waits, Jain $0.20$.  The no-decay arm is
-indistinguishable from the board in benign conditions --- exactly as
-it should be: the pheromone costs nothing when nothing rots.
+indistinguishable from the board in benign conditions, as expected:
+the pheromone costs nothing when nothing rots.
 
 \input{tab_e1.tex}
 
@@ -622,8 +621,9 @@ and are absorbed as re-polls at the next cadence.
 Table~\ref{tab:e2} and Fig.~\ref{fig:t1}b.  With the city fixed
 ($m=250$ stations) and the fleet grown $20\times$ ($n=500$ to
 $10{,}000$), the board's per-query work is flat at $k=15.0$ vicinity
-stations ($15.04/15.04/15.04/15.05/15.04$ across the five sizes) ---
-the decision radius bounds work, not the fleet --- while the central
+stations ($15.04/15.04/15.04/15.05/15.04$ across the five sizes);
+the decision radius bounds the work, not the fleet size.  The
+central
 assigner's total scan grows linearly in $n$: $7.3\times10^5$ ops/day
 at $n=500$ to $1.45\times10^7$ at $n=10^4$, exactly $20\times$.
 Simulator wall-time grows sub-linearly ($0.5\to2.5$~s), the
@@ -643,12 +643,12 @@ booked arms absorb the shock: the board strands $12.2$ vehicles/day
 against $2.7$ at baseline --- the outage costs about ten vehicles ---
 while the unreserved arm bleeds $452$ ($37\times$ the board) with
 $22$-min waits and $15{,}893$ unserved sessions.  Central, seeing
-death instantly, strands nothing.  The honest decomposition of the
-board's survival is that the shared machinery does the heavy lifting:
+death instantly, strands nothing.  Decomposed, the board's survival
+rests mostly on shared machinery:
 bookings carry TTLs, in-flight vehicles reroute on arrival-time ground
-truth, and decay-reclaim releases whatever goes silent --- so the
+truth, and decay-reclaim releases whatever goes silent, so the
 no-decay control survives nearly as well ($13.6$ stranded).  Decay's
-own contribution is a margin, not a rescue: $14\%$ fewer forced
+own contribution is a margin rather than a rescue: $14\%$ fewer forced
 reroutes ($138$ vs $160$ --- undecayed trust keeps booking at
 stations whose last report predates the outage), $1\%$ less unmet
 demand, an $8\%$ lower worst-station queue.  In this model arrival
@@ -662,8 +662,8 @@ Report loss is absorbed entirely: at $25\%$ Bernoulli loss on
 station reports the board is statistically indistinguishable from
 baseline ($7.5$-min wait, $3.8$ stranded).  With a $5$-min cadence
 and $30$-min horizon the median report age stays near one period, so
-confidence remains $\gtrsim0.99$ --- five-fold temporal redundancy,
-not cleverness, is what carries S2.  Central and nearest are
+confidence remains $\gtrsim0.99$: five-fold temporal redundancy,
+rather than any cleverness, carries S2.  Central and nearest are
 untouched by construction (one reads ground truth, the other reads
 nothing).
 
@@ -676,15 +676,15 @@ nothing).
 Tables~\ref{tab:e4ns} and \ref{tab:e4lt}, Fig.~\ref{fig:t2}b.
 No-shows (S5, $p_{\rm ns}=0.15$) cost the system twice, and the
 dominant term is not the one the sketch feared.  The no-shower wastes
-its own trip --- it drove to the station on real charge --- and
+its own trip (it drove to the station on real charge), and
 repeated misses strand it: strandings jump from $2.7$ to
 $346$--$356$/day across every booked arm, so the no-show tax falls
 mostly on the no-shower.  The abandoned-slot term prices cleanly.
 The board dissolves a silent owner's booking at the $30$-min TTL;
 the airline-style control honours it blind to window end (up to
 $120$~min).  Holding blind costs $280$ sessions/day ($0.6\%$),
-$13\%$ more unserved break windows, $0.8$~pp of stall utilisation
---- and, most visibly, a $6.8\times$ walk-in flood ($8{,}513$ vs
+$13\%$ more unserved break windows, $0.8$~pp of stall utilisation,
+and, most visibly, a $6.8\times$ walk-in flood ($8{,}513$ vs
 $1{,}256$ vehicles/day falling back to unreserved arrivals):
 without reclaim the protocol degrades measurably toward the naive
 arm's failure mode.  Central, given the same no-show behaviour,
@@ -695,10 +695,10 @@ compounds no-shows.
 Session overruns (S4, lognormal $\sigma=0.6$) hurt the unreserved
 arm most ($453$ stranded, $21$-min waits).  The booked arms strand
 $\sim\!150$: the overrun cost lands on walk-in arrivals queueing
-behind stretched sessions.  Decay does not help here, honestly by
-construction --- the damage is physical (occupied stalls), not
-informational, and NODECAY is marginally better ($142$ vs $154$):
-no trust model repairs physics.  The no-reclaim control pays the
+behind stretched sessions.  Decay does not help here, by
+construction: the damage is physical (occupied stalls), not
+informational, and NODECAY is marginally better ($142$ vs $154$).
+No trust model repairs physics.  The no-reclaim control pays the
 same window-hold tax as in S5 ($215$ sessions, $15$ more
 strandings, $4\times$ the walk-in flood).
 
@@ -720,11 +720,11 @@ by the budget path), and nothing measurable degrades: honest wait
 $7.43$ against $7.45$ with no fraud at all.  With attestation off,
 the channel itself is what breaks: $168$ false claims/day buy
 priority ($6.5\times$), the genuine dire wait degrades $76\%$
-($1.79\to3.15$~min) --- fraud does not tax the honest fleet, it
-crowds the lifeboat it impersonates --- and throughput drops by
-$552$ sessions/day.  The falsifiable summary: attestation converts
+($1.79\to3.15$~min; the fraud lands on the channel's intended
+users, not the honest fleet) and throughput drops by
+$552$ sessions/day.  Attestation converts
 fraud from a system-integrity problem into a rounding error;
-without it, the priority channel's value inverts for exactly the
+without it, the priority channel's value inverts for the very
 vehicles it exists to serve.
 
 \input{tab_e5.tex}
@@ -737,9 +737,9 @@ read-side bias, zero extra messages --- trims the damage consistently
 but modestly: $18\%$ fewer strandings ($12.2$ vs $14.8$), $3\%$ less
 unmet demand, $8\%$ lower worst-station queue, identical reroute
 counts (the beam reshapes \emph{where} the cohort goes, not whether it
-moves).  The beam is a nudge, not a rescue --- it prevents the
+moves).  The beam nudges rather than rescues: it prevents the
 follow-the-leader pile-up at whatever single station a leader picks,
-which is precisely the failure mode the sketch imported from biological
+the failure mode the sketch imported from biological
 trail formation.
 
 \input{tab_e6.tex}
@@ -805,16 +805,16 @@ capacity reclamation --- decay-reclaim recovers no-show capacity
 without any overbooking exposure ($280$ sessions/day and a
 $6.8\times$ walk-in reduction against airline-style window holds
 at $p_{\rm ns}=0.15$; E4).
-The quality claim must be stated carefully: the board \emph{matches}
---- does not beat --- a perfect-information central assigner on
+The quality claim must be stated carefully: the board \emph{matches},
+and does not beat, a perfect-information central assigner on
 throughput and wait at matched cadence, and \emph{loses} on wait
-fairness (Jain $0.31$ vs $0.67$; E1).  Anyone selling this protocol
-as a better optimiser is selling the wrong product.
+fairness (Jain $0.31$ vs $0.67$; E1).  It is not a better
+optimiser, and should not be sold as one.
 
 \paragraph{Is the need real?}  The trivial check fails, and fails
 dangerously: uncoordinated nearest-first operation strands roughly
 two orders of magnitude more vehicles under load (E1, E3), and the
-central alternative carries costs the baseline tables hide ---
+central alternative carries costs the baseline tables hide:
 $O(nm)$ compute per cycle concentrated in one service, batching
 latency at realistic replanning rates ($13.7$ vs $7.5$~min mean
 wait at cycle 15), and institutional impossibility at the seams:
@@ -822,7 +822,7 @@ wait at cycle 15), and institutional impossibility at the seams:
 deployed art (OCPI) already moves the data and even the bookings,
 but carries no semantics for trust, decay, or priority --- the
 medium's transport layer exists and its decision layer does not.
-Notably, the first rung of the protocol needs no standardisation at
+The first rung of the protocol needs no standardisation at
 all: any client can compute staleness decay from existing
 timestamped OCPI status today; decay-reclaim and attested priority
 are additive server semantics.
@@ -853,27 +853,27 @@ This study took a biologically-derived sketch --- a stock-exchange
 board of pheromone-decaying reports coordinating ten thousand
 vehicles without a planner --- and put it through five phases of
 adversarial development.  The outcome is narrower and more useful
-than the sketch: a \emph{protocol}, not an algorithm --- four
+than the sketch: a \emph{protocol} rather than an algorithm,
+assembled from four
 invariants (atomic slots, one-way flow, universal decay, bounded
 locality), a scoring rule (Eq.~\ref{eq:score}), and a priority
-channel with attestation --- whose value is not optimality (the
+channel with attestation.  The
 perfect-information central assigner matches it on throughput and
-beats it on fairness) but \emph{failure-tolerant coordination at
+beats it on fairness; the protocol's value is \emph{failure-tolerant
+coordination at
 institutional seams}: per-participant work that does not grow with
 the fleet, double-booking that is structurally impossible rather
 than penalised, capacity that self-heals when participants go
-silent, and deployment that begins as a pure client-side reading of
+silent, and deployment that begins as a client-side reading of
 feeds that already exist.
 
-The biology, in the end, contributed exactly what the companion
-programme predicted it would: not a metaphor but a semantics.  The
+The biology contributed what the companion
+programme predicted: a semantics rather than a metaphor.  The
 staleness law is pheromone evaporation with a deadline; reclaim is
 antagonist termination; the priority channel is a co-stimulus gate.
-Five primitives, one board, zero coordinators --- and a list of
+Five primitives, one board, zero coordinators, and a list of
 fifteen repairs without which none of it would have survived its
-own simulation.  That is what idea-derived engineering looks like
-when it works: the organism's trick, shorn of the organism, audited
-until it holds.
+own simulation.
 
 \paragraph{Reproducibility.}  Simulator, experiment driver, table
 and figure generators are in \texttt{Jay/Traffic/}
@@ -885,7 +885,8 @@ instrument and pre-registered criteria are in
 figures in this paper are generated from
 \texttt{traffic\_results.json} (trial table from
 \texttt{trial/data/*.json}) with no hand-transcribed numbers.
-Version 1.10; results and text version together in future updates.
+Version 1.11; a text-only revision of 1.10 (results unchanged).
+Results and text version together in future updates.
 
 \appendix
 
@@ -942,10 +943,10 @@ With no operator credentials to hand, first light was taken on the
 one keyless feed that carries timestamps: OpenStreetMap (via
 Overpass), whose \texttt{check\_date} and \texttt{survey:date} tags
 record when a human last verified a station --- the worst-case feed
-a client might read, and therefore the honest place to start.  Two
+a client might read, and therefore where a trial should start.  Two
 snapshots were captured on 2026-08-17: all of Ireland (1{,}061
 stations) and an Amsterdam bounding box (1{,}378).  The web-grade
-feed fails both rung-1 criteria, decisively.
+feed fails both rung-1 criteria.
 
 \paragraph{K1 (calibration).}  Only $2.4$ per cent (IE) and $1.6$
 per cent (AMS) of records carry any date tag at all, and the dated
@@ -976,8 +977,8 @@ five orders of magnitude) and K2 \textsc{Kill} --- rung 1 is a
 no-op \emph{on web-grade feeds}.  The kill criteria did what
 pre-registration is for: they killed the worst-case data source on
 first contact, rather than letting the trial drift onto whatever
-feed happened to be available.  The requirement is thereby
-sharpened, not the trial ended: rung 1 needs OCPI-grade telemetry,
+feed happened to be available.  The trial continues with a sharper
+requirement: rung 1 needs OCPI-grade telemetry,
 where \texttt{last\_updated} is machine-written on every status
 change.  The instrument is drop-in ready for an operator (OCPI
 2.2.1 \texttt{GET /locations} with Token A; an Open Charge Map
