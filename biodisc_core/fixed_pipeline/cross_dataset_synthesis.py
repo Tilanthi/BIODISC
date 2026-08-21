@@ -49,7 +49,9 @@ from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+from .paths import DATA_ROOT
+
+_PROJECT_ROOT = DATA_ROOT
 _DEFAULT_STORE = _PROJECT_ROOT / "autonomous_discoveries.jsonl"
 
 

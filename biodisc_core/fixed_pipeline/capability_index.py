@@ -34,7 +34,9 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+from .paths import DATA_ROOT
+
+PROJECT_ROOT = DATA_ROOT
 INDEX_FILE = PROJECT_ROOT / "capability_index.json"
 EFFECTIVENESS_FILE = PROJECT_ROOT / "rsi_effectiveness.txt"
 GENUINE_STORE = PROJECT_ROOT / "autonomous_discoveries.jsonl"

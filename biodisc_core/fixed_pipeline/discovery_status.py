@@ -28,7 +28,9 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+from .paths import DATA_ROOT
+
+PROJECT_ROOT = DATA_ROOT
 STATUS_FILE = PROJECT_ROOT / "discovery_status.json"
 HEARTBEAT_FILE = Path.home() / ".biodisc" / "user_heartbeat"
 USER_ACTIVE_WINDOW = 300.0  # seconds — heartbeat fresher than this means user active

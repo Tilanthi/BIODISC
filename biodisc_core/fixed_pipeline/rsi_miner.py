@@ -58,7 +58,9 @@ from typing import List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+from .paths import DATA_ROOT
+
+PROJECT_ROOT = DATA_ROOT
 VERDICT_LOG = PROJECT_ROOT / "discovery_verdicts.jsonl"
 PROPOSALS_MD = PROJECT_ROOT / "rsi_proposals.md"
 APPLIED_JSONL = PROJECT_ROOT / "rsi_proposals_applied.jsonl"

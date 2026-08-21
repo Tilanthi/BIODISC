@@ -34,21 +34,23 @@ logger = logging.getLogger(__name__)
 
 # Try to import existing components
 try:
-    from ..reasoning.differentiable_physics import (
-        DualNumber, GradientTape, PhysicsModel,
-        fisher_information_matrix
-    )
+    from ..reasoning.differentiable_physics import DualNumber, GradientTape
 except ImportError:
     DualNumber = None
     GradientTape = None
-    PhysicsModel = None
     logger.warning("Differentiable physics module not available, using fallbacks")
 
-try:
-    from ..astro_physics.physics import AstrophysicalConstraints
-except ImportError:
-    AstrophysicalConstraints = None
-    logger.warning("AstrophysicalConstraints not available")
+# PhysicsModel and fisher_information_matrix no longer exist in
+# reasoning.differentiable_physics; the names remain exported as None for
+# compatibility (a single combined try/except used to null all four names
+# whenever any one was missing — silently losing DualNumber/GradientTape too).
+PhysicsModel = None
+fisher_information_matrix = None
+
+# ASTRONOMY-SPECIFIC MODULES - REMOVED FROM BIODISC
+# The astro_physics package was deleted in the de-astrophysics cleanup and is
+# available in separate astronomy systems. DO NOT USE in BIODISC biology research.
+AstrophysicalConstraints = None
 
 try:
     from ..reasoning.symbolic_math_engine import SymbolicMathEngine

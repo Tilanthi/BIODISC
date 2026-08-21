@@ -45,10 +45,11 @@ logger = logging.getLogger(__name__)
 # watchdog kill+restart re-crawled the same ~2000 symbols from HGNC at zero —
 # the loop could never bank progress across restarts. UNKNOWN verdicts are
 # deliberately NOT persisted (a transient API outage must not become fact).
+from .paths import data_path
+
 CACHE_PATH = Path(os.environ.get(
     "BIODISC_GENE_SYMBOL_CACHE",
-    str(Path(__file__).resolve().parents[2] / "cache"
-        / "gene_symbol_validation_cache.json")))
+    str(data_path("cache", "gene_symbol_validation_cache.json"))))
 
 # Heartbeat/flush cadence inside the crawl. 30 s bounds the watchdog's view of
 # idleness no matter how slow HGNC answers (10 s timeout per call), and caps

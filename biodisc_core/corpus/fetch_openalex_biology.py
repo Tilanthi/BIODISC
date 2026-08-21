@@ -146,7 +146,7 @@ def create_openalex_metadata(concept_code, concept_name, papers):
 
 def main():
     """Main fetch function"""
-    corpus_dir = Path('/Users/gjw255/astrodata/SWARM/BIODISC/biodisc_core/corpus')
+    corpus_dir = Path(__file__).resolve().parent  # the package's own corpus/ dir
     corpus_dir.mkdir(exist_ok=True)
 
     all_results = {}
