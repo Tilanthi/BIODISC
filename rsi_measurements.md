@@ -5,7 +5,7 @@
 - effectiveness: **n/a**  (no prior failures of this class — effect unmeasurable)
 
 ## duplicate_profile  (applied 2026-07-15T08:00:00+00:00)
-- before -> after: 10 -> 542 events  (18.951/day -> 16.417/day)
-- effectiveness: **13.4/100**  (18.95/day -> 16.42/day (10 -> 542 events))
+- before -> after: 10 -> 861 events  (18.951/day -> 23.045/day)
+- effectiveness: **0.0/100**  (18.95/day -> 23.05/day (10 -> 861 events))
 
-**RSI effectiveness roll-up: 13.4/100** _(before-count-weighted; improving, not solved)_
+**RSI effectiveness roll-up: 0.0/100** _(before-count-weighted; improving, not solved)_

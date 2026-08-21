@@ -1,42 +1,42 @@
 {
-  "capability_index": 17.4,
-  "capability_index_v1": 16.0,
+  "capability_index": 14.5,
+  "capability_index_v1": 13.3,
   "metric_version": 2,
-  "computed_at": "2026-08-17T08:22:08+00:00",
+  "computed_at": "2026-08-21T16:40:27+00:00",
   "dimensions": {
     "replication_rate": 0.265,
-    "gate_pass_rate": 0.049,
+    "gate_pass_rate": 0.042,
     "gate_pass_rate_v1_diluted": 0.002,
-    "rsi_effectiveness": 13.4
+    "rsi_effectiveness": 0.0
   },
   "drivers": {
     "genuine": 26,
     "quarantined": 72,
-    "total_candidates": 45302,
-    "abandoned": 353,
+    "total_candidates": 46595,
+    "abandoned": 356,
     "rsi_measured": true
   },
   "denominator_audit": {
-    "funded_attempts": 1996,
-    "funded_decided": 1643,
-    "low_ev_deprioritized": 42543,
+    "funded_attempts": 2326,
+    "funded_decided": 1970,
+    "low_ev_deprioritized": 43187,
     "no_datasets": 228,
-    "verdict_log_total": 45302,
+    "verdict_log_total": 46595,
     "note": "v2 gate denominator counts only attempts that spent real discovery compute (dataset-bearing verdicts + mid-validation kills). low_ev_deprioritized entries were considered by the EV gate and never funded \u2014 bookkeeping, not attempts."
   },
   "contrarian_success_rate": {
-    "contrarian_tested": 530,
-    "supported": 64,
-    "supported_and_novel": 64,
+    "contrarian_tested": 849,
+    "supported": 67,
+    "supported_and_novel": 67,
     "supported_but_known": 0,
-    "supported_novel_rate": 0.1208,
+    "supported_novel_rate": 0.0789,
     "note": "genuine-surprise candidates = contrarian claim supported AND novel. 0 until the loop runs V8.0.27+ and funds gene-naming questions."
   },
   "kill_recovery_rates": {
-    "kill_rate": 0.9994,
-    "recovery_rate": 0.0006,
-    "decided": 44949,
-    "in_progress": 940,
+    "kill_rate": 0.9995,
+    "recovery_rate": 0.0005,
+    "decided": 46239,
+    "in_progress": 1262,
     "note": "kill-rate + recovery-rate reported as a PAIR. Kill-rate alone rewards refusing everything (perfect specificity, zero sensitivity)."
   },
   "note": "Compass needle, not a benchmark. 100 = formula saturation, not 'solved biology'. genuine/quarantined counted from the chokepoint-gated stores (authoritative); replication_rate is the load-bearing dimension. v2 (2026-08-16): funded-attempt gate denominator; capability_index_v1 preserves the original diluted formula."
