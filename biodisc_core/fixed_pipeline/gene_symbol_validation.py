@@ -30,6 +30,7 @@ import os
 import re
 import requests
 import json
+import threading
 import time
 from pathlib import Path
 from typing import List, Dict, Set, Tuple, Optional
@@ -55,6 +56,151 @@ CACHE_PATH = Path(os.environ.get(
 # idleness no matter how slow HGNC answers (10 s timeout per call), and caps
 # lost work on a mid-crawl kill at ~30 s.
 PROGRESS_FLUSH_S = 30.0
+
+
+# ---------------------------------------------------------------------------
+# HGNC access layer
+#
+# The original code issued ONE serial `requests.get` per symbol that reached
+# this stage, with no Session, so every symbol paid a fresh DNS lookup, TCP
+# handshake and TLS handshake. Validating one dataset means ~1,000-2,000 of
+# those, one after another.
+#
+# HGNC state their rate limit verbatim on https://www.genenames.org/help/rest/ :
+#
+#   "Please only send REST requests at a rate of 10 requests per second
+#    otherwise you may swamp the server and reduce the speed and user
+#    experience for all. If we are experiencing higher rates, causing an
+#    adverse affect on the service we may IP block the machine and send a 403
+#    error from our servers."
+#
+# so the answer is NOT to fire the same requests in parallel - that heads
+# straight at an IP block. The answer is to stop making thousands of requests:
+# HGNC will hand over every symbol it knows in ONE request.
+#
+# EQUIVALENCE. The catalogue must answer exactly what `fetch/symbol/<S>`
+# answers, or this is not an optimisation, it is a silent change to the
+# science. `fetch/symbol` matches the `symbol` field of ANY record, including
+# the 1,800 records whose status is "Entry Withdrawn" - so the catalogue is
+# built from `search/symbol/*` (every record that has a symbol), NOT from
+# `search/status/Approved`. Measured 2026-08-16: symbol/* = 46,840 records,
+# status/Approved = 45,040; the 1,800-record difference is entirely withdrawn
+# entries, and `fetch/symbol` returns numFound=1 for those, i.e. today's code
+# calls them VALID. Building the catalogue from Approved-only would have
+# silently reclassified 1,800 symbols. See tests/test_hgnc_catalogue.py.
+# ---------------------------------------------------------------------------
+
+# Every record HGNC holds that has a symbol - the exact population that
+# `fetch/symbol/<S>` matches against.
+HGNC_CATALOGUE_URL = "https://rest.genenames.org/search/symbol/*"
+HGNC_CATALOGUE_TTL_SECONDS = float(
+    os.environ.get("BIODISC_HGNC_CATALOGUE_TTL_DAYS", "7")) * 86400
+# Per-symbol fallback pacing: HGNC's published ceiling is 10 requests/second.
+HGNC_MIN_REQUEST_INTERVAL = 0.11
+
+_HGNC_SESSION = requests.Session()
+_HGNC_LOCK = threading.Lock()
+_HGNC_CATALOGUE: Optional[Dict[str, str]] = None
+_HGNC_CATALOGUE_TRIED = False
+_HGNC_LAST_REQUEST = 0.0
+# Non-200 responses seen on the per-symbol fallback, by status code. Every one
+# of these is a symbol that gets dropped from the analysis, so the count is
+# reported at the end of validation instead of being thrown away.
+_HGNC_STATUS_COUNTS: Dict[int, int] = {}
+
+
+def _hgnc_catalogue_path() -> Path:
+    """Where the downloaded catalogue is cached. Read at call time, not import
+    time, so a test fixture can redirect it."""
+    override = os.environ.get("BIODISC_HGNC_CATALOGUE")
+    if override:
+        return Path(override)
+    return Path(__file__).resolve().parents[2] / "cache" / "hgnc_symbol_catalogue.json"
+
+
+def _hgnc_pace() -> None:
+    """Hold per-symbol fallback requests under HGNC's published 10 req/s."""
+    global _HGNC_LAST_REQUEST
+    with _HGNC_LOCK:
+        wait = HGNC_MIN_REQUEST_INTERVAL - (time.time() - _HGNC_LAST_REQUEST)
+        if wait > 0:
+            time.sleep(wait)
+        _HGNC_LAST_REQUEST = time.time()
+
+
+def _hgnc_catalogue(timeout: int = 180) -> Optional[Dict[str, str]]:
+    """Return ``{UPPERCASED_SYMBOL: hgnc_id}`` for every symbol HGNC holds.
+
+    One HTTP request per process, then an on-disk copy with a 7-day TTL so a
+    restart costs nothing. Returns None if the catalogue cannot be obtained or
+    looks incomplete, in which case the caller falls back to the original
+    per-symbol endpoint and nothing about the verdicts changes.
+
+    Uppercased because `fetch/symbol/<S>` is case-INSENSITIVE (verified against
+    the live API: `MTOR` and `Mtor` both return numFound=1). That behaviour is
+    preserved deliberately - changing it would change which symbols validate,
+    which is a scientific decision and not this change's to make.
+    """
+    global _HGNC_CATALOGUE, _HGNC_CATALOGUE_TRIED
+
+    if _HGNC_CATALOGUE is not None or _HGNC_CATALOGUE_TRIED:
+        return _HGNC_CATALOGUE
+
+    with _HGNC_LOCK:
+        if _HGNC_CATALOGUE is not None or _HGNC_CATALOGUE_TRIED:
+            return _HGNC_CATALOGUE
+        _HGNC_CATALOGUE_TRIED = True
+
+        path = _hgnc_catalogue_path()
+        try:
+            if path.exists() and (time.time() - path.stat().st_mtime) < HGNC_CATALOGUE_TTL_SECONDS:
+                blob = json.loads(path.read_text())
+                if isinstance(blob, dict) and blob:
+                    _HGNC_CATALOGUE = blob
+                    logger.info("   HGNC catalogue: %d symbols from disk cache (%s)",
+                                len(blob), path.name)
+                    return _HGNC_CATALOGUE
+        except Exception as e:  # noqa: BLE001 - a bad cache must never be fatal
+            logger.warning("   HGNC catalogue cache unreadable (%s); refetching", e)
+
+        try:
+            t0 = time.time()
+            response = _HGNC_SESSION.get(
+                HGNC_CATALOGUE_URL,
+                headers={"Accept": "application/json"},
+                timeout=timeout,
+            )
+            if response.status_code != 200:
+                logger.warning("   HGNC catalogue fetch returned HTTP %s; falling back to "
+                               "per-symbol lookups", response.status_code)
+                return None
+
+            payload = response.json()["response"]
+            docs, num_found = payload["docs"], payload["numFound"]
+            if num_found != len(docs):
+                # A truncated catalogue would mark real genes invalid. Refuse it.
+                logger.warning("   HGNC catalogue looks TRUNCATED (numFound=%s, docs=%s); "
+                               "refusing it and falling back to per-symbol lookups",
+                               num_found, len(docs))
+                return None
+
+            catalogue = {d["symbol"].upper(): d["hgnc_id"] for d in docs}
+            logger.info("   HGNC catalogue: %d symbols in ONE request (%.2fs, %d bytes)",
+                        len(catalogue), time.time() - t0, len(response.content))
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                tmp = path.with_name(path.name + f".tmp.{os.getpid()}")
+                tmp.write_text(json.dumps(catalogue))
+                os.replace(tmp, path)
+            except Exception as e:  # noqa: BLE001 - caching is an optimisation
+                logger.warning("   HGNC catalogue could not be cached to disk: %s", e)
+
+            _HGNC_CATALOGUE = catalogue
+            return _HGNC_CATALOGUE
+        except Exception as e:  # noqa: BLE001
+            logger.warning("   HGNC catalogue fetch failed (%s); falling back to "
+                           "per-symbol lookups", e)
+            return None
 
 
 class ValidationResult(Enum):
@@ -278,7 +424,17 @@ class GeneSymbolValidator:
             return validation_results, False
 
         if unknown_count > 0:
-            logger.warning(f"⚠️  Could not verify {unknown_count} symbols (database unavailable)")
+            # Say what actually happens to them. The callers of this method keep
+            # only VALID symbols, so every UNVERIFIED symbol is REMOVED FROM THE
+            # ANALYSIS - an outcome that depends on network conditions rather
+            # than on biology, and one that used to be reported as nothing worse
+            # than "database unavailable".
+            pct = 100.0 * unknown_count / max(len(gene_symbols), 1)
+            logger.warning(
+                f"⚠️  Could not verify {unknown_count}/{len(gene_symbols)} symbols "
+                f"({pct:.1f}%); these are DROPPED from the analysis, not kept. "
+                f"Non-200 HGNC responses seen: "
+                f"{_HGNC_STATUS_COUNTS if _HGNC_STATUS_COUNTS else 'none - the failures were timeouts/exceptions, not HTTP statuses'}")
 
         logger.info(f"✅ Gene symbols validated successfully")
         return validation_results, True
@@ -514,17 +670,58 @@ class GeneSymbolValidator:
 
     def _query_hgnc(self, symbol: str, timeout: int = 10) -> Optional[GeneSymbolValidation]:
         """
-        Query HGNC API to validate gene symbol.
+        Query HGNC to validate gene symbol.
 
-        Returns validation result if API available, None otherwise.
+        Fast path: the HGNC symbol CATALOGUE, fetched once per process in a
+        single request (and cached on disk). Behaviour-equivalent to the
+        per-symbol `fetch/symbol/<S>` call it replaces, because that endpoint
+        matches the same population, exactly, case-insensitively.
+
+        Slow path: the original per-symbol request, used only when the
+        catalogue could not be obtained. It now reuses one Session, paces
+        itself under HGNC's published limit, and - unlike before - never
+        discards a non-200 response without saying so.
+
+        Returns validation result if HGNC could answer, None otherwise.
         """
 
+        catalogue = _hgnc_catalogue()
+        if catalogue is not None:
+            hgnc_id = catalogue.get(symbol.upper())
+            if hgnc_id:
+                return GeneSymbolValidation(
+                    symbol=symbol,
+                    result=ValidationResult.VALID,
+                    source="HGNC_CATALOGUE",
+                    gene_id=hgnc_id
+                )
+            return GeneSymbolValidation(
+                symbol=symbol,
+                result=ValidationResult.INVALID,
+                source="HGNC_CATALOGUE",
+                error="Symbol not found in HGNC database"
+            )
+
         try:
-            response = requests.get(
+            _hgnc_pace()
+            response = _HGNC_SESSION.get(
                 f"{self.hgnc_api}{symbol}",
                 headers={"Accept": "application/json"},
                 timeout=timeout
             )
+
+            if response.status_code != 200:
+                # PREVIOUSLY: fell through to `return None` with no log line at
+                # all, so a non-200 became an UNKNOWN verdict, and an UNKNOWN
+                # symbol is dropped from the analysis by the caller. Genes were
+                # therefore leaving the analysis without anything, anywhere,
+                # recording that it had happened.
+                _HGNC_STATUS_COUNTS[response.status_code] = (
+                    _HGNC_STATUS_COUNTS.get(response.status_code, 0) + 1)
+                logger.warning("   HGNC returned HTTP %s for %r - cannot verify it, so it "
+                               "will be DROPPED from the analysis",
+                               response.status_code, symbol)
+                return None
 
             if response.status_code == 200:
                 data = response.json()
@@ -547,7 +744,11 @@ class GeneSymbolValidator:
                             error="Symbol not found in HGNC database"
                         )
 
-            # API unavailable or error
+            # HTTP 200, but not a response this code can read. Same consequence
+            # as a non-200 - the symbol is dropped - so it is said out loud too.
+            logger.warning("   HGNC returned a 200 for %r that could not be interpreted "
+                           "- cannot verify it, so it will be DROPPED from the analysis",
+                           symbol)
             return None
 
         except requests.exceptions.Timeout:
