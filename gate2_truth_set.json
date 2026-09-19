@@ -1,0 +1,32 @@
+{
+  "schema": "biodisc-gate2-truth-set/1.0",
+  "created": "2026-09-19",
+  "note": "The gate that guards novelty must itself be measured. KNOWN side: real textbook claims that MUST score 'known' (external ground truth — catches an over-permissive gate letting textbook biology through as novel). NOVEL side: seeded at runtime from the genuine store's own questions (regression — catches threshold drift that would kill verified findings). Hand-authoring 'novel' claims is deliberately avoided: we cannot know a hand-written claim is absent from PubMed, but we know the store's claims passed Gate-2 and replicated.",
+  "known_claims": [
+    {"claim": "BCL2 is upregulated in follicular lymphoma", "basis": "textbook/established — must be scored known by Gate-2"},
+    {"claim": "ERBB2 is overexpressed in HER2-positive breast cancer", "basis": "textbook/established"},
+    {"claim": "TP53 is the most frequently mutated gene in human cancer", "basis": "textbook/established"},
+    {"claim": "MYC is amplified in Burkitt lymphoma", "basis": "textbook/established"},
+    {"claim": "KRAS mutations are common in pancreatic cancer", "basis": "textbook/established"},
+    {"claim": "APC loss initiates colorectal tumorigenesis", "basis": "textbook/established"},
+    {"claim": "PTEN loss activates PI3K AKT signaling", "basis": "textbook/established"},
+    {"claim": "VEGFA promotes tumor angiogenesis", "basis": "textbook/established"},
+    {"claim": "SOD1 mutations cause familial ALS", "basis": "textbook/established"},
+    {"claim": "HBB mutation causes sickle cell anemia", "basis": "textbook/established"},
+    {"claim": "CFTR mutations cause cystic fibrosis", "basis": "textbook/established"},
+    {"claim": "HFE mutations cause hereditary hemochromatosis", "basis": "textbook/established"},
+    {"claim": "LDLR mutations cause familial hypercholesterolemia", "basis": "textbook/established"},
+    {"claim": "BRCA1 mutations increase breast cancer risk", "basis": "textbook/established"},
+    {"claim": "CDKN2A deletion is common in melanoma", "basis": "textbook/established"},
+    {"claim": "BRAF V600E mutation is common in melanoma", "basis": "textbook/established"},
+    {"claim": "IDH1 mutations occur in glioma", "basis": "textbook/established"},
+    {"claim": "JAK2 V617F mutation is common in polycythemia vera", "basis": "textbook/established"},
+    {"claim": "BCR-ABL1 fusion drives chronic myeloid leukemia", "basis": "textbook/established"},
+    {"claim": "NOTCH1 mutations occur in T-cell acute lymphoblastic leukemia", "basis": "textbook/established"},
+    {"claim": "EZH2 is overexpressed in many cancers", "basis": "textbook/established"},
+    {"claim": "TERT promoter mutations are common in melanoma", "basis": "textbook/established"},
+    {"claim": "SMAD4 loss occurs in pancreatic cancer", "basis": "textbook/established"},
+    {"claim": "RB1 loss drives retinoblastoma", "basis": "textbook/established"}
+  ],
+  "novel_source": "genuine_store_questions"
+}
