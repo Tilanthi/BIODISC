@@ -1,0 +1,278 @@
+{
+  "mode": "offline_selfcheck",
+  "generated_at": "2026-09-19T14:30:27+00:00",
+  "threshold": 0.55,
+  "summary": {
+    "known_accuracy": 0.375,
+    "novel_accuracy": 0.4167,
+    "n_known": 24,
+    "n_novel": 12,
+    "retrieval_failures": 0
+  },
+  "known_claims": [
+    "BCL2 is upregulated in follicular lymphoma",
+    "ERBB2 is overexpressed in HER2-positive breast cancer",
+    "TP53 is the most frequently mutated gene in human cancer",
+    "MYC is amplified in Burkitt lymphoma",
+    "KRAS mutations are common in pancreatic cancer",
+    "APC loss initiates colorectal tumorigenesis",
+    "PTEN loss activates PI3K AKT signaling",
+    "VEGFA promotes tumor angiogenesis",
+    "SOD1 mutations cause familial ALS",
+    "HBB mutation causes sickle cell anemia",
+    "CFTR mutations cause cystic fibrosis",
+    "HFE mutations cause hereditary hemochromatosis",
+    "LDLR mutations cause familial hypercholesterolemia",
+    "BRCA1 mutations increase breast cancer risk",
+    "CDKN2A deletion is common in melanoma",
+    "BRAF V600E mutation is common in melanoma",
+    "IDH1 mutations occur in glioma",
+    "JAK2 V617F mutation is common in polycythemia vera",
+    "BCR-ABL1 fusion drives chronic myeloid leukemia",
+    "NOTCH1 mutations occur in T-cell acute lymphoblastic leukemia",
+    "EZH2 is overexpressed in many cancers",
+    "TERT promoter mutations are common in melanoma",
+    "SMAD4 loss occurs in pancreatic cancer",
+    "RB1 loss drives retinoblastoma"
+  ],
+  "novel_claims": [
+    "Whereas MYC typically increases in prostate cancer, does it paradoxically decrease here instead?",
+    "Whereas MTOR typically increases in liver, does it paradoxically decrease here instead?",
+    "Which extracellular-matrix and adhesion genes distinguish pancreatic tumors from normal pancreas?",
+    "How does ABCB1 (MDR1) expression differ between chemosensitive and chemoresistant ovarian cancer?",
+    "Does MMP2 expression correlate with invasiveness in triple-negative vs HER2+ breast cancer?",
+    "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+    "How does ABCB1 (MDR1) expression differ between chemosensitive and chemoresistant ovarian cancer?",
+    "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+    "How does a high-fat diet alter hepatic gene expression compared to a standard diet in mouse liver?",
+    "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+    "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+    "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?"
+  ],
+  "fetcher_injected": true,
+  "known_accuracy": 0.375,
+  "novel_accuracy": 0.4167,
+  "n_known": 24,
+  "n_novel": 12,
+  "known_correct": 9,
+  "novel_correct": 5,
+  "retrieval_failures": 0,
+  "per_claim": [
+    {
+      "claim": "BCL2 is upregulated in follicular lymphoma",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "ERBB2 is overexpressed in HER2-positive breast cancer",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "TP53 is the most frequently mutated gene in human cancer",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "MYC is amplified in Burkitt lymphoma",
+      "expected": "known",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "KRAS mutations are common in pancreatic cancer",
+      "expected": "known",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "APC loss initiates colorectal tumorigenesis",
+      "expected": "known",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "PTEN loss activates PI3K AKT signaling",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "VEGFA promotes tumor angiogenesis",
+      "expected": "known",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "SOD1 mutations cause familial ALS",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "HBB mutation causes sickle cell anemia",
+      "expected": "known",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "CFTR mutations cause cystic fibrosis",
+      "expected": "known",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "HFE mutations cause hereditary hemochromatosis",
+      "expected": "known",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "LDLR mutations cause familial hypercholesterolemia",
+      "expected": "known",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "BRCA1 mutations increase breast cancer risk",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "CDKN2A deletion is common in melanoma",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "BRAF V600E mutation is common in melanoma",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "IDH1 mutations occur in glioma",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "JAK2 V617F mutation is common in polycythemia vera",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "BCR-ABL1 fusion drives chronic myeloid leukemia",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "NOTCH1 mutations occur in T-cell acute lymphoblastic leukemia",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "EZH2 is overexpressed in many cancers",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "TERT promoter mutations are common in melanoma",
+      "expected": "known",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "SMAD4 loss occurs in pancreatic cancer",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "RB1 loss drives retinoblastoma",
+      "expected": "known",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "Whereas MYC typically increases in prostate cancer, does it paradoxically decrease here instead?",
+      "expected": "novel",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "Whereas MTOR typically increases in liver, does it paradoxically decrease here instead?",
+      "expected": "novel",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "Which extracellular-matrix and adhesion genes distinguish pancreatic tumors from normal pancreas?",
+      "expected": "novel",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "How does ABCB1 (MDR1) expression differ between chemosensitive and chemoresistant ovarian cancer?",
+      "expected": "novel",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "Does MMP2 expression correlate with invasiveness in triple-negative vs HER2+ breast cancer?",
+      "expected": "novel",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+      "expected": "novel",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "How does ABCB1 (MDR1) expression differ between chemosensitive and chemoresistant ovarian cancer?",
+      "expected": "novel",
+      "got": "novel",
+      "max_similarity": 0.1
+    },
+    {
+      "claim": "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+      "expected": "novel",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "How does a high-fat diet alter hepatic gene expression compared to a standard diet in mouse liver?",
+      "expected": "novel",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+      "expected": "novel",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+      "expected": "novel",
+      "got": "known",
+      "max_similarity": 0.5
+    },
+    {
+      "claim": "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+      "expected": "novel",
+      "got": "known",
+      "max_similarity": 0.5
+    }
+  ]
+}

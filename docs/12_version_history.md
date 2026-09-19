@@ -1,5 +1,53 @@
 ### Version Summary
 
+**V9.1 - VERIFICATION HARDENING** (September 19, 2026):
+Paper2Agent lessons (Nature s41586-026-11044-y — converting papers into
+verified, runnable tools; 74/100 papers even under heavy verification)
+applied to BIODISC's own instruments. Six upgrades, each TDD'd:
+- **Calibration registry** (V9.1.1): every pipeline constant (EXTREME_LOG2FC,
+  Gate-2 similarity threshold, replication fractions, RSI weights, …) now
+  carries provenance + a store-size fingerprint in `calibration_registry.json`;
+  `validate_against_code()` diffs the registry against live code and
+  `staleness()` flags constants calibrated against a store half the current
+  size or smaller.
+- **Gate-2 truth set + calibration** (V9.1.2): the novelty gate is now itself
+  measured — 24 textbook known_claims that must score `known` vs
+  genuine-tier novel claims that must not; `gate2_calibration.py` runs offline
+  (self-check gate) or live (`--live`, real PubMed) with retrieval failures
+  excluded from denominators and counted separately.
+- **Known-answer control suite** (V9.1.3): real-data regression tripwire.
+  Seeds ≤5-gene contrasts from the GENUINE store, re-downloads the real
+  dataset, re-runs DE, and requires every gene to reappear with the recorded
+  direction and FDR<0.05 (`known_answer_controls/`). First run: 5/5 contrasts
+  PASS on the production data path. Wired into the capability index.
+- **Verifier independence** (V9.1.4): fixed a real defect found by the audit —
+  the machine verification block hardcoded `fdr_significance: True`. It now
+  reads the significance validator's actual verdict (recorded at the source in
+  LAYER 4), returning "unavailable" rather than true when absent.
+  `docs/13_verifier_independence_audit.md` documents the layer-by-layer audit.
+- **Limitations taxonomy** (V9.1.5): genuine-tier records now carry
+  machine-readable `flagging.status` (`verified` | `verified_with_limitations`)
+  and a `limitations[]` list (internal_replication_only, weak_replication_fraction,
+  novelty_margin_thin). Tier assignment unchanged; the capability index breaks
+  the limitation mix out as its own block.
+- **Method-acquisition admission route** (V9.1.6): "Do not invent scientific
+  algorithms" — new analysis capabilities are ACQUIRED bound to peer-reviewed
+  source (repo+commit+paper), quarantined in `acquired_methods.json` until
+  they carry reference-agreement + store-FPR + human-review evidence
+  (`method_acquisition/admission.py`). The RSI miner is confined to PLUMBING;
+  scientific-algorithm proposals are routed to the acquisition queue
+  (`method_acquisition/policy.py`), and every proposal in `rsi_proposals.md`
+  now prints its route. Unknown themes default to the conservative route.
+
+**V9.0 - MULTI-MODALITY BREAKTHROUGH REBUILD** (August–September 2026):
+- (V9.0b) breakthrough runner wired into the live loop; (V9.0c) re-mining
+  framework; (V9.0d/e) data connectors — TCGA GDC + scRNA-seq + AlphaFold EBI
+  — wired for LIVE TCGA re-mining; (V9.0g) anomaly_priority + 4-way ledger
+  (BEAST Gates Recalibration); (V9.0h) consensus_conflict + non-blocking TCGA
+  re-mining; (V9.0i) recalibrated promotion function; (V9.0j-k) calibration +
+  systematic TCGA + review-batch CLI; standalone-ness audit (central data
+  root + dead-import repairs).
+
 **V8.0 - VERIFICATION-FIRST** (July 14, 2026):
 - **Write chokepoint**: exactly ONE function (`discovery_store.append_verified`)
   may write a discovery, and it REQUIRES a machine `verification` block with

@@ -1,0 +1,7 @@
+{
+  "generated_at": "2026-09-19T14:30:18+00:00",
+  "n_constants": 10,
+  "mismatches": [],
+  "stale_entries": [],
+  "note": "mismatches = code edited without re-registered provenance (fix immediately); stale = store doubled since calibration (re-derive the value on the larger data)."
+}
