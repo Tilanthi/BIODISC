@@ -1,0 +1,5 @@
+{
+  "schema": "biodisc-acquired-methods/1.0",
+  "note": "quarantined until reference_agreement + store_fpr_check + human_review all carry evidence; the pipeline consults is_admitted() before any acquired method mints discoveries",
+  "methods": []
+}

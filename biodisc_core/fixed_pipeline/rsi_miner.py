@@ -203,6 +203,10 @@ class Pattern:
     proposed_fix: str
     needs_approval: bool
     samples: List[str] = field(default_factory=list)
+    # V9.1 RSI confinement: plumbing fixes are RSI-direct; scientific-algorithm
+    # fixes route to method-acquisition admission (never invented + auto-applied).
+    change_class: str = ""
+    route: str = ""
 
 
 @dataclass
@@ -247,12 +251,37 @@ def mine(verdicts: List[dict]) -> List[Pattern]:
     for theme, cnt in counts.most_common():
         fix, appr = _THEME_FIX.get(theme, ("Investigate root cause.", True))
         eps = epochs[theme]
+        routed = _classify(theme)
         patterns.append(Pattern(
             theme=theme, count=cnt,
             per_day=round(_per_day(eps), 3), span_days=round(_span_days(eps), 3),
             proposed_fix=fix, needs_approval=appr, samples=samples[theme],
+            change_class=routed["change_class"], route=routed["route"],
         ))
     return patterns
+
+
+def _classify(theme: str) -> dict:
+    """V9.1 confinement policy: plumbing -> rsi_direct; scientific -> acquisition.
+
+    Guarded so the miner still works if the policy package is unavailable; the
+    fallback is the CONSERVATIVE route (scientific_algorithm -> acquisition).
+    """
+    try:
+        from biodisc_core.fixed_pipeline.method_acquisition.policy import classify_proposal
+        return classify_proposal(theme)
+    except Exception:  # noqa: BLE001
+        return {"change_class": "scientific_algorithm", "route": "method_acquisition"}
+
+
+def _route_note(change_class: str) -> str:
+    """One-line explanation of the routing rule (guarded, same as _classify)."""
+    try:
+        from biodisc_core.fixed_pipeline.method_acquisition.policy import route_note
+        return route_note(change_class)
+    except Exception:  # noqa: BLE001
+        return ("scientific algorithm — must pass method-acquisition admission, "
+                "never RSI-direct")
 
 
 # ---------------------------------------------------------------------- MEASURE
@@ -357,6 +386,9 @@ def write_proposals_md(patterns: List[Pattern], path: Path,
         lines.append(f"## {i}. {p.theme}  {gate}")
         lines.append(f"- occurrences: **{p.count}**  ({p.per_day}/day over {p.span_days}d)")
         lines.append(f"- proposed fix: {p.proposed_fix}")
+        if p.route:
+            note = _route_note(p.change_class)
+            lines.append(f"- route: **{p.route}** ({p.change_class}) — {note}")
         if p.samples:
             lines.append("- samples:")
             for s in p.samples:
