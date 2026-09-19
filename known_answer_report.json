@@ -1,0 +1,265 @@
+{
+  "ran_at": "2026-09-19T14:13:50+00:00",
+  "n_cases": 5,
+  "summary": {
+    "pass": 5,
+    "fail": 0,
+    "skip": 0,
+    "error": 0
+  },
+  "pass_rate": 1.0,
+  "min_gene_recovery": 0.7,
+  "results": [
+    {
+      "case_id": "GSE6956:DISCOVERY_1784387399",
+      "dataset_id": "GSE6956",
+      "question": "Whereas MYC typically increases in prostate cancer, does it paradoxically decrease here instead?",
+      "genes": [
+        {
+          "symbol": "UBE4B",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 0.0015755869775328263,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "OGDH",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 1.3838893973131816e-09,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "SRSF1",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 1.3838893973131816e-09,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "SMARCC1",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 2.777948851125277e-09,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "NBPF25P",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 8.224606102591796e-10,
+          "ok": true,
+          "verdict": "ok"
+        }
+      ],
+      "reason": "100% of verified genes recovered",
+      "gene_recovery": 1.0,
+      "status": "PASS"
+    },
+    {
+      "case_id": "GSE6764:DISCOVERY_1784363772",
+      "dataset_id": "GSE6764",
+      "question": "Whereas MTOR typically increases in liver, does it paradoxically decrease here instead?",
+      "genes": [
+        {
+          "symbol": "CYP2A6",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 0.0003910098971669247,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "THRSP",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 3.2619054529429797e-06,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "CYP39A1",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 1.479487319551454e-07,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "ANLN",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 6.91259624529331e-05,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "TIMD4",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 0.0023452383159088923,
+          "ok": true,
+          "verdict": "ok"
+        }
+      ],
+      "reason": "100% of verified genes recovered",
+      "gene_recovery": 1.0,
+      "status": "PASS"
+    },
+    {
+      "case_id": "GSE15471:DISCOVERY_1784311978",
+      "dataset_id": "GSE15471",
+      "question": "Which extracellular-matrix and adhesion genes distinguish pancreatic tumors from normal pancreas?",
+      "genes": [
+        {
+          "symbol": "GPNMB",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 9.489444248056786e-12,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "MOXD1",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 1.1370228264567786e-11,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "SH3KBP1",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 1.8092521915538217e-08,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "ZSCAN10",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 1.0106161119495922e-07,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "STK38",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 2.1077053430683356e-08,
+          "ok": true,
+          "verdict": "ok"
+        }
+      ],
+      "reason": "100% of verified genes recovered",
+      "gene_recovery": 1.0,
+      "status": "PASS"
+    },
+    {
+      "case_id": "GSE42568:DISCOVERY_1784298503",
+      "dataset_id": "GSE42568",
+      "question": "How does ABCB1 (MDR1) expression differ between chemosensitive and chemoresistant ovarian cancer?",
+      "genes": [
+        {
+          "symbol": "ACVR1C",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 2.9033312705235726e-33,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "MRAP",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 2.5652176828307215e-29,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "CD300LG",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 1.3805373739399338e-23,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "ACACB",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 3.1725974853356375e-27,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "ITIH5",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 7.8118933764018e-31,
+          "ok": true,
+          "verdict": "ok"
+        }
+      ],
+      "reason": "100% of verified genes recovered",
+      "gene_recovery": 1.0,
+      "status": "PASS"
+    },
+    {
+      "case_id": "GSE15822:DISCOVERY_1784284748",
+      "dataset_id": "GSE15822",
+      "question": "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+      "genes": [
+        {
+          "symbol": "CYP2E1",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 2.635824407202123e-08,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "BRWD1",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 0.00018020667202422685,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "KLHL13",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 0.0013913579036253952,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "RAD9A",
+          "expected_direction": "down",
+          "observed_direction": "down",
+          "observed_fdr": 0.0017736607561297053,
+          "ok": true,
+          "verdict": "ok"
+        },
+        {
+          "symbol": "NAA38",
+          "expected_direction": "up",
+          "observed_direction": "up",
+          "observed_fdr": 1.5726793965998888e-05,
+          "ok": true,
+          "verdict": "ok"
+        }
+      ],
+      "reason": "100% of verified genes recovered",
+      "gene_recovery": 1.0,
+      "status": "PASS"
+    }
+  ],
+  "note": "pass_rate is over DECIDED cases only (skips are infrastructure, not pipeline health; errors are defects). A FAIL here means the pipeline can no longer recover a finding it already verified."
+}

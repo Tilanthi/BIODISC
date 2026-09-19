@@ -1,0 +1,205 @@
+{
+  "schema": "biodisc-known-answer-cases/1.0",
+  "cases": [
+    {
+      "case_id": "GSE6956:DISCOVERY_1784387399",
+      "dataset_id": "GSE6956",
+      "question": "Whereas MYC typically increases in prostate cancer, does it paradoxically decrease here instead?",
+      "genes": [
+        {
+          "symbol": "UBE4B",
+          "direction": "down",
+          "log2fc": -2.238392019026011,
+          "fdr": 2.6368876137711734e-09
+        },
+        {
+          "symbol": "OGDH",
+          "direction": "down",
+          "log2fc": -1.6356914633592918,
+          "fdr": 1.3222755121901834e-09
+        },
+        {
+          "symbol": "SRSF1",
+          "direction": "down",
+          "log2fc": -1.3863305642126562,
+          "fdr": 1.3222755121901834e-09
+        },
+        {
+          "symbol": "SMARCC1",
+          "direction": "down",
+          "log2fc": -1.3751570451491588,
+          "fdr": 2.8584427705810568e-09
+        },
+        {
+          "symbol": "NBPF25P",
+          "direction": "down",
+          "log2fc": -1.350357730619404,
+          "fdr": 7.858428041996161e-10
+        }
+      ],
+      "source": "genuine_store",
+      "discovery_id": "DISCOVERY_1784387399",
+      "seeded_at": "2026-09-19T14:13:29+00:00"
+    },
+    {
+      "case_id": "GSE6764:DISCOVERY_1784363772",
+      "dataset_id": "GSE6764",
+      "question": "Whereas MTOR typically increases in liver, does it paradoxically decrease here instead?",
+      "genes": [
+        {
+          "symbol": "CYP2A6",
+          "direction": "down",
+          "log2fc": -3.4456954830169337,
+          "fdr": 0.0004061957239344673
+        },
+        {
+          "symbol": "THRSP",
+          "direction": "down",
+          "log2fc": -2.8632532256505234,
+          "fdr": 2.904505318438425e-06
+        },
+        {
+          "symbol": "CYP39A1",
+          "direction": "down",
+          "log2fc": -2.652040737709685,
+          "fdr": 1.317382999045045e-07
+        },
+        {
+          "symbol": "ANLN",
+          "direction": "up",
+          "log2fc": 1.9408674339830525,
+          "fdr": 7.746029389777285e-05
+        },
+        {
+          "symbol": "TIMD4",
+          "direction": "down",
+          "log2fc": -1.912890974917326,
+          "fdr": 0.0024215703750903278
+        }
+      ],
+      "source": "genuine_store",
+      "discovery_id": "DISCOVERY_1784363772",
+      "seeded_at": "2026-09-19T14:13:29+00:00"
+    },
+    {
+      "case_id": "GSE15471:DISCOVERY_1784311978",
+      "dataset_id": "GSE15471",
+      "question": "Which extracellular-matrix and adhesion genes distinguish pancreatic tumors from normal pancreas?",
+      "genes": [
+        {
+          "symbol": "GPNMB",
+          "direction": "up",
+          "log2fc": 0.7613663814745695,
+          "fdr": 8.537570982433807e-12
+        },
+        {
+          "symbol": "MOXD1",
+          "direction": "up",
+          "log2fc": 0.4144519437123297,
+          "fdr": 1.0229696108399722e-11
+        },
+        {
+          "symbol": "SH3KBP1",
+          "direction": "up",
+          "log2fc": 0.32184839236634494,
+          "fdr": 1.932975166458496e-08
+        },
+        {
+          "symbol": "ZSCAN10",
+          "direction": "down",
+          "log2fc": -0.2520966090261835,
+          "fdr": 7.535042799704296e-09
+        },
+        {
+          "symbol": "STK38",
+          "direction": "up",
+          "log2fc": 0.2497302897141795,
+          "fdr": 2.230922685201234e-08
+        }
+      ],
+      "source": "genuine_store",
+      "discovery_id": "DISCOVERY_1784311978",
+      "seeded_at": "2026-09-19T14:13:29+00:00"
+    },
+    {
+      "case_id": "GSE42568:DISCOVERY_1784298503",
+      "dataset_id": "GSE42568",
+      "question": "How does ABCB1 (MDR1) expression differ between chemosensitive and chemoresistant ovarian cancer?",
+      "genes": [
+        {
+          "symbol": "ACVR1C",
+          "direction": "up",
+          "log2fc": 1.6882137274773896,
+          "fdr": 2.580738907132065e-33
+        },
+        {
+          "symbol": "MRAP",
+          "direction": "up",
+          "log2fc": 1.5326296285241598,
+          "fdr": 2.28019349584953e-29
+        },
+        {
+          "symbol": "CD300LG",
+          "direction": "up",
+          "log2fc": 1.3768894775257317,
+          "fdr": 1.2271443323910524e-23
+        },
+        {
+          "symbol": "ACACB",
+          "direction": "up",
+          "log2fc": 1.2259613966807257,
+          "fdr": 2.8200866536316784e-27
+        },
+        {
+          "symbol": "ITIH5",
+          "direction": "up",
+          "log2fc": 1.2081725961525538,
+          "fdr": 6.9439052234682675e-31
+        }
+      ],
+      "source": "genuine_store",
+      "discovery_id": "DISCOVERY_1784298503",
+      "seeded_at": "2026-09-19T14:13:29+00:00"
+    },
+    {
+      "case_id": "GSE15822:DISCOVERY_1784284748",
+      "dataset_id": "GSE15822",
+      "question": "Which insulin-signaling and glucose-metabolism genes change in mouse liver under high-fat vs standard diet?",
+      "genes": [
+        {
+          "symbol": "CYP2E1",
+          "direction": "up",
+          "log2fc": 0.29308552019578693,
+          "fdr": 2.0259338918447064e-08
+        },
+        {
+          "symbol": "BRWD1",
+          "direction": "up",
+          "log2fc": 0.048063209281999676,
+          "fdr": 0.00013850953173999818
+        },
+        {
+          "symbol": "KLHL13",
+          "direction": "down",
+          "log2fc": -0.04627055459321616,
+          "fdr": 0.0011819887630983932
+        },
+        {
+          "symbol": "RAD9A",
+          "direction": "down",
+          "log2fc": -0.04214734210060862,
+          "fdr": 0.0016359144844366857
+        },
+        {
+          "symbol": "NAA38",
+          "direction": "up",
+          "log2fc": 0.0418837437308902,
+          "fdr": 1.2087848044322603e-05
+        }
+      ],
+      "source": "genuine_store",
+      "discovery_id": "DISCOVERY_1784284748",
+      "seeded_at": "2026-09-19T14:13:29+00:00"
+    }
+  ]
+}

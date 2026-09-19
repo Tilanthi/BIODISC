@@ -42,6 +42,30 @@ EFFECTIVENESS_FILE = PROJECT_ROOT / "rsi_effectiveness.txt"
 GENUINE_STORE = PROJECT_ROOT / "autonomous_discoveries.jsonl"
 CANDIDATE_STORE = PROJECT_ROOT / "autonomous_discoveries_candidates.jsonl"
 VERDICT_LOG = PROJECT_ROOT / "discovery_verdicts.jsonl"
+KNOWN_ANSWER_REPORT = PROJECT_ROOT / "known_answer_report.json"
+
+
+def read_known_answer_block() -> Optional[dict]:
+    """The known-answer control result (V9.1), if a report exists.
+
+    Ingested by the index as an instrument (like contrarian_success_rate) — it
+    does NOT enter the composite formula yet; a low pass rate should be READ as
+    "the pipeline cannot recover what it verified", which is a wiring defect,
+    not a lower discovery capability.
+    """
+    try:
+        data = json.loads(KNOWN_ANSWER_REPORT.read_text())
+    except Exception:  # noqa: BLE001 - absent/unreadable report = not run
+        return None
+    s = data.get("summary") or {}
+    return {
+        "pass_rate": data.get("pass_rate"),
+        "n_pass": s.get("pass", 0),
+        "n_fail": s.get("fail", 0),
+        "n_skip": s.get("skip", 0),
+        "n_error": s.get("error", 0),
+        "ran_at": data.get("ran_at"),
+    }
 
 
 def kill_recovery_rates(verdict_log: Optional[Path] = None) -> dict:
@@ -297,6 +321,7 @@ def compute_capability_index(verdict_summary: Optional[dict] = None,
         },
         "contrarian_success_rate": contrarian_success_rate(),
         "kill_recovery_rates": kill_recovery_rates(),
+        "known_answer_controls": read_known_answer_block(),
         "note": ("Compass needle, not a benchmark. 100 = formula saturation, not "
                  "'solved biology'. genuine/quarantined counted from the chokepoint-"
                  "gated stores (authoritative); replication_rate is the load-bearing "
