@@ -1,0 +1,142 @@
+{
+  "schema": "biodisc-calibration-registry/1.0",
+  "registered_at": "2026-09-19",
+  "note": "Every invented constant in the pipeline carries provenance and a staleness fingerprint (Paper2Agent lesson: deviations from calibrated values must be detectable, not judgment calls). An entry goes STALE when the store has doubled since calibration - re-derive the value then. validate_against_code() cross-checks registered values against the LIVE code, so editing a constant without re-registering is flagged.",
+  "constants": [
+    {
+      "id": "anomaly_miner.EXTREME_LOG2FC",
+      "module": "anomaly_miner",
+      "kind": "module_attr",
+      "symbol": "EXTREME_LOG2FC",
+      "value": 1.0,
+      "provenance": {
+        "note": "pool effect distribution: ~11% of reported genes reach |log2FC| 1.0 vs ~4% at 1.5 (V8.0.40, lowered from 1.5 to raise fire-rate; original 1.5 calibrated on median |log2FC| ~0.04)",
+        "calibrated_on": "2026-07-25",
+        "store_lines_at_calibration": 104
+      },
+      "stale_at_multiplier": 2.0
+    },
+    {
+      "id": "replication_gate.NOMINAL_P",
+      "module": "replication_gate",
+      "kind": "module_attr",
+      "symbol": "NOMINAL_P",
+      "value": 0.05,
+      "provenance": {
+        "note": "field-standard replication bar: discover at FDR<0.05, replicate at NOMINAL p<0.05 + same direction (V8.0.5; FDR in the underpowered held-out split blocked ~15/16 real candidates)",
+        "calibrated_on": "2026-07-15",
+        "store_lines_at_calibration": 104
+      },
+      "stale_at_multiplier": 2.0
+    },
+    {
+      "id": "capability_index.W_REPLICATION",
+      "module": "capability_index",
+      "kind": "module_attr",
+      "symbol": "W_REPLICATION",
+      "value": 0.5,
+      "provenance": {
+        "note": "replication is the discovery criterion, so it carries the heaviest weight",
+        "calibrated_on": "2026-07-15",
+        "store_lines_at_calibration": 104
+      },
+      "stale_at_multiplier": 2.0
+    },
+    {
+      "id": "capability_index.W_GATE_PASS",
+      "module": "capability_index",
+      "kind": "module_attr",
+      "symbol": "W_GATE_PASS",
+      "value": 0.3,
+      "provenance": {
+        "note": "v2 denominator (2026-08-16): funded attempts only, not the whole verdict log (93% of which was low-EV bookkeeping)",
+        "calibrated_on": "2026-07-15",
+        "store_lines_at_calibration": 104
+      },
+      "stale_at_multiplier": 2.0
+    },
+    {
+      "id": "capability_index.W_RSI",
+      "module": "capability_index",
+      "kind": "module_attr",
+      "symbol": "W_RSI",
+      "value": 0.2,
+      "provenance": {
+        "note": "whether applied fixes measurably worked; 0 (not None) when unmeasured",
+        "calibrated_on": "2026-07-15",
+        "store_lines_at_calibration": 104
+      },
+      "stale_at_multiplier": 2.0
+    },
+    {
+      "id": "literature_gate.similarity_threshold",
+      "module": "literature_gate",
+      "kind": "ctor_default",
+      "symbol": "LiteratureNoveltyGate",
+      "params": {"class": "LiteratureNoveltyGate", "param": "similarity_threshold"},
+      "value": 0.55,
+      "provenance": {
+        "note": "engineering judgment at V8.0 - NOT yet calibrated on a labeled truth set; gate2_calibration.py measures it against gate2_truth_set.json",
+        "calibrated_on": "2026-07-15",
+        "store_lines_at_calibration": 104
+      },
+      "stale_at_multiplier": 2.0
+    },
+    {
+      "id": "replication_gate.min_fraction",
+      "module": "replication_gate",
+      "kind": "ctor_default",
+      "symbol": "ReplicationGate",
+      "params": {"class": "ReplicationGate", "param": "min_fraction"},
+      "value": 0.4,
+      "provenance": {
+        "note": "fraction of top discovery genes that must replicate in the held-out split",
+        "calibrated_on": "2026-07-15",
+        "store_lines_at_calibration": 104
+      },
+      "stale_at_multiplier": 2.0
+    },
+    {
+      "id": "replication_gate.top_n",
+      "module": "replication_gate",
+      "kind": "ctor_default",
+      "symbol": "ReplicationGate",
+      "params": {"class": "ReplicationGate", "param": "top_n"},
+      "value": 15,
+      "provenance": {
+        "note": "top genes by p-value carried from discovery split into the replication test",
+        "calibrated_on": "2026-07-15",
+        "store_lines_at_calibration": 104
+      },
+      "stale_at_multiplier": 2.0
+    },
+    {
+      "id": "replication_gate.min_replicated",
+      "module": "replication_gate",
+      "kind": "ctor_default",
+      "symbol": "ReplicationGate",
+      "params": {"class": "ReplicationGate", "param": "min_replicated"},
+      "value": 3,
+      "provenance": {
+        "note": "absolute floor so a 1/2 'fraction' can never count as replication",
+        "calibrated_on": "2026-07-15",
+        "store_lines_at_calibration": 104
+      },
+      "stale_at_multiplier": 2.0
+    },
+    {
+      "id": "value_of_compute.exploration_frac",
+      "module": "value_of_compute",
+      "kind": "fn_default",
+      "symbol": "fund_candidates",
+      "params": {"fn": "fund_candidates", "param": "exploration_frac"},
+      "value": 0.15,
+      "provenance": {
+        "note": "eureka-insurance slice (V8.0.21): a random fraction of non-top-k funded candidates so the loop never goes 100% exploitation",
+        "calibrated_on": "2026-07-21",
+        "store_lines_at_calibration": 104
+      },
+      "stale_at_multiplier": 2.0
+    }
+  ]
+}
