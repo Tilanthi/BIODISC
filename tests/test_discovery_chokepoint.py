@@ -162,5 +162,71 @@ def test_store_paths_resolve_to_biodisc_repo_not_parent():
     assert discovery_store.CANDIDATE_QUARANTINE.name == "autonomous_discoveries_candidates.jsonl"
 
 
+# --- verifier independence (V9.1): no unconditional assertions in the block ---
+
+def test_verification_block_reflects_actual_fdr_failure():
+    """The block must record what the gate ACTUALLY decided, not assert True.
+
+    This was a real defect (V9.1 audit): build_verification_block hardcoded
+    ``fdr_significance: True`` unconditionally — an assertion with no evidence
+    behind it (Paper2Agent rule: worker completion alone does not establish
+    success).
+    """
+    from biodisc_core.fixed_pipeline.discovery_store import build_verification_block
+    report = {
+        "dataset_id": "GSE1",
+        "differential_expression": {"significant_genes": 3, "method": "ttest"},
+        "comprehensive_validation_statistics": {
+            "fdr_significance_gate": {"passes_significance_gate": False},
+        },
+    }
+    block = build_verification_block(report)
+    assert block["gates"]["fdr_significance"] is False
+
+
+def test_verification_block_reflects_fdr_pass():
+    from biodisc_core.fixed_pipeline.discovery_store import build_verification_block
+    report = {
+        "dataset_id": "GSE1",
+        "comprehensive_validation_statistics": {
+            "fdr_significance_gate": {"passes_significance_gate": True},
+        },
+    }
+    block = build_verification_block(report)
+    assert block["gates"]["fdr_significance"] is True
+
+
+def test_verification_block_unknown_when_stats_absent():
+    """No recorded evidence -> recorded as unknown (None), never asserted True."""
+    from biodisc_core.fixed_pipeline.discovery_store import build_verification_block
+    block = build_verification_block({"dataset_id": "GSE1"})
+    assert block["gates"]["fdr_significance"] is None
+
+
+def test_orchestrator_records_actual_fdr_verdict_in_stats():
+    """The orchestrator must store the gate's VERDICT (not just counters) so the
+    verification block has evidence to read."""
+    from biodisc_core.fixed_pipeline.FixedDiscoveryOrchestrator import (
+        create_fixed_discovery_orchestrator)
+    orch = create_fixed_discovery_orchestrator()
+    report = {
+        "discovery_id": "VI-TEST-1",
+        "question": "Does TP53 change in this specific contrast of tissue X?",
+        "dataset_id": "GSE1",
+        "differential_expression": {
+            "significant_genes": 0,
+            "best_p_value": 1.0,
+            "total_genes_tested": 100,
+            "top_upregulated": [],
+            "top_downregulated": [],
+        },
+    }
+    _passes, _reasons, stats = orch.validate_discovery_comprehensive(report)
+    g = stats.get("fdr_significance_gate") or {}
+    assert "passes_significance_gate" in g, (
+        "orchestrator records only counters — the verification block cannot "
+        "derive the FDR verdict from the report")
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))

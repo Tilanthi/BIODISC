@@ -161,6 +161,23 @@ __all__ = [
 ]
 
 
+def _fdr_passed(report: dict):
+    """The FDR gate's ACTUAL verdict from the report's recorded stats, or None.
+
+    Verifier-independence fix (V9.1): the verification block must record what the
+    gate decided, never assert it. Evidence is read from the report's recorded
+    validation statistics; absent evidence -> None (unknown), which downstream
+    readers can distinguish from an evidenced pass.
+    """
+    for stats_key in ("comprehensive_validation_statistics", "validation_statistics"):
+        stats = report.get(stats_key) or {}
+        g = stats.get("fdr_significance_gate") or {}
+        v = g.get("passes_significance_gate")
+        if v is not None:
+            return bool(v)
+    return None
+
+
 def build_verification_block(
     report: dict,
     pipeline: str = "fixed_pipeline_v6",
@@ -173,6 +190,11 @@ def build_verification_block(
     (literature novelty, replication, peer review) from a discovery report. Both
     the orchestrator's and the live loop's save paths call this so the block is
     built consistently in exactly one place.
+
+    V9.1 verifier-independence: ``gates.fdr_significance`` is DERIVED from the
+    report's recorded gate verdict (see :func:`_fdr_passed`) — previously it was
+    hardcoded True, an unconditional assertion with no evidence behind it
+    (Paper2Agent rule: worker completion alone does not establish success).
     """
     de = report.get('differential_expression', {}) or {}
     ds = report.get('dataset', {}) or {}
@@ -188,7 +210,7 @@ def build_verification_block(
             "correction": de.get('correction'),
         },
         "gates": {
-            "fdr_significance": True,
+            "fdr_significance": _fdr_passed(report),
             "literature_novelty": (report.get('comprehensive_validation_statistics', {})
                                    .get('literature_novelty', {}).get('status')),
             "replication": (report.get('replication', {}) or {}).get('replicated'),

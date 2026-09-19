@@ -213,7 +213,12 @@ class FixedDiscoveryOrchestrator:
             logger.error(f"❌ LAYER 4 FAILED: {significance_result.reason}")
         else:
             logger.info(f"✅ LAYER 4 PASSED: FDR significance confirmed (score: {significance_result.significance_score}/10)")
-        validation_stats['fdr_significance_gate'] = self.significance_validator.get_statistics()
+        # V9.1 verifier-independence: record the gate's VERDICT, not just counters,
+        # so build_verification_block derives evidence instead of asserting True.
+        validation_stats['fdr_significance_gate'] = {
+            **self.significance_validator.get_statistics(),
+            'passes_significance_gate': bool(significance_result.passes_significance_gate),
+        }
 
         # LAYER 5: Template Pattern Detection
         logger.info("🔍 LAYER 5: TEMPLATE PATTERN DETECTION")
