@@ -28,12 +28,18 @@ When a replication cohort is wired in future (second dataset / held-out split),
 the loop sets ``report['replication'] = {'replicated': True, ...}`` and the gate
 promotes the discovery to ``genuine`` automatically.
 """
-from dataclasses import dataclass
-from typing import Tuple
+from dataclasses import dataclass, field
+from typing import List, Tuple
 
 TIER_GENUINE = "genuine"                    # validated + peer-reviewed + replicated
 TIER_CANDIDATE = "candidate_unconfirmed"    # validated but NOT replicated
 TIER_REJECTED = "rejected"                  # failed validation / peer review
+
+# Gate-2's similarity threshold (must mirror literature_gate's default; kept as a
+# literal so this module stays import-light and stdlib-only).
+_GATE2_THRESHOLD = 0.55
+_NOVELTY_MARGIN = 0.05   # within this of the threshold => thin margin
+_WEAK_FRACTION = 0.5     # replication fraction below this => weak
 
 
 @dataclass
@@ -41,6 +47,41 @@ class FlagDecision:
     tier: str
     is_genuine: bool
     reason: str
+    # V9.1 limitations taxonomy: machine-readable epistemic qualifiers on the
+    # GENUINE tier. Status: 'verified' | 'verified_with_limitations' (genuine
+    # tier only; candidates/rejected carry their tier as status). Readers must
+    # treat a MISSING status as 'verified' (pre-V9.1 records).
+    limitations: List[str] = field(default_factory=list)
+    status: str = ""
+
+
+def _limitations_of(report: dict) -> List[str]:
+    """Machine-checkable limitations of a genuine-tier finding (V9.1).
+
+    Deliberately conservative — each limitation must be derivable from recorded
+    evidence in the report, never asserted from judgment:
+      * internal_replication_only — replicated on the held-out SPLIT of the same
+        dataset, not an independent cohort (weaker than the gold standard).
+      * weak_replication_fraction — under half the tested genes replicated.
+      * novelty_margin_thin — Gate-2 similarity within 0.05 of the known
+        threshold: a small retrieval change would flip novel->known.
+    """
+    out: List[str] = []
+    rep = report.get("replication") or {}
+    if rep.get("replicated"):
+        if rep.get("method") == "internal_held_out_split_nominal_p":
+            out.append("internal_replication_only")
+        try:
+            if float(rep.get("replication_fraction", 1.0)) < _WEAK_FRACTION:
+                out.append("weak_replication_fraction")
+        except (TypeError, ValueError):
+            pass
+    lit = (report.get("comprehensive_validation_statistics") or {}).get(
+        "literature_novelty") or {}
+    sim = lit.get("max_similarity")
+    if isinstance(sim, (int, float)) and sim >= (_GATE2_THRESHOLD - _NOVELTY_MARGIN):
+        out.append("novelty_margin_thin")
+    return out
 
 
 def _validation_passed(report: dict) -> bool:
@@ -66,23 +107,30 @@ def evaluate_for_flagging(report: dict) -> FlagDecision:
     peer = report.get("peer_review_result") or {}
     peer_decision = peer.get("decision")
     if peer_decision in ("REJECT", "REJECTED"):
-        return FlagDecision(TIER_REJECTED, False, "peer review rejected")
+        return FlagDecision(TIER_REJECTED, False, "peer review rejected",
+                            status=TIER_REJECTED)
 
     if not _validation_passed(report):
-        return FlagDecision(TIER_REJECTED, False, "validation gate failed")
+        return FlagDecision(TIER_REJECTED, False, "validation gate failed",
+                            status=TIER_REJECTED)
 
     if replicated:
         peer_ok = (peer_decision in (None, "ACCEPT", "ACCEPTED"))
         if peer_ok:
+            limitations = _limitations_of(report)
+            status = "verified_with_limitations" if limitations else "verified"
             return FlagDecision(TIER_GENUINE, True,
-                                "validated + peer-reviewed + replicated")
+                                "validated + peer-reviewed + replicated",
+                                limitations=limitations, status=status)
         return FlagDecision(TIER_CANDIDATE, False,
-                            "replicated but not peer-accepted — not flagged genuine")
+                            "replicated but not peer-accepted — not flagged genuine",
+                            status=TIER_CANDIDATE)
 
     # Single-dataset default: validated but NOT replicated -> NOT genuine.
     return FlagDecision(
         TIER_CANDIDATE, False,
         "validated but not replicated (single dataset) — not flagged genuine",
+        status=TIER_CANDIDATE,
     )
 
 
@@ -94,6 +142,10 @@ def stamp_report(report: dict) -> Tuple[dict, FlagDecision]:
         "tier": decision.tier,
         "is_genuine": decision.is_genuine,
         "reason": decision.reason,
+        # V9.1 taxonomy: status + machine-readable limitations (absent on
+        # pre-V9.1 records; readers treat missing status as 'verified').
+        "status": decision.status,
+        "limitations": decision.limitations,
     }
     out["is_genuine"] = decision.is_genuine
     return out, decision

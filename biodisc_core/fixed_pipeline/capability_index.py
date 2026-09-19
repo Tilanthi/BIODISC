@@ -176,6 +176,33 @@ def _count_store(path: Path, tier: Optional[str] = None) -> int:
             n += 1
     return n
 
+
+def count_limitation_statuses(store_path: Optional[Path] = None) -> dict:
+    """V9.1 limitations taxonomy over the genuine store.
+
+    Pre-V9.1 records carry no ``flagging.status`` and count as ``verified``;
+    their ``flagging.limitations`` (if any) still feed the breakdown.
+    """
+    p = store_path or GENUINE_STORE
+    counts = {"verified": 0, "verified_with_limitations": 0}
+    breakdown: dict = {}
+    if not p.exists():
+        return {**counts, "limitation_breakdown": breakdown}
+    for line in p.read_text().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            d = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        flag = d.get("flagging") or {}
+        status = flag.get("status") or "verified"
+        counts[status] = counts.get(status, 0) + 1
+        for lim in flag.get("limitations") or []:
+            breakdown[lim] = breakdown.get(lim, 0) + 1
+    return {**counts, "limitation_breakdown": breakdown}
+
 def funded_attempt_stats(verdict_log: Optional[Path] = None) -> dict:
     """Split the verdict log into real discovery compute vs bookkeeping.
 
@@ -322,6 +349,7 @@ def compute_capability_index(verdict_summary: Optional[dict] = None,
         "contrarian_success_rate": contrarian_success_rate(),
         "kill_recovery_rates": kill_recovery_rates(),
         "known_answer_controls": read_known_answer_block(),
+        "genuine_limitations": count_limitation_statuses(),
         "note": ("Compass needle, not a benchmark. 100 = formula saturation, not "
                  "'solved biology'. genuine/quarantined counted from the chokepoint-"
                  "gated stores (authoritative); replication_rate is the load-bearing "
