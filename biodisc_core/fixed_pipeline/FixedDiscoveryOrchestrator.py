@@ -62,6 +62,9 @@ from biodisc_core.fixed_pipeline.discovery_store import (
 )
 from biodisc_core.fixed_pipeline.verdict_log import log_verdict, print_funnel
 from biodisc_core.fixed_pipeline.literature_gate import create_literature_novelty_gate
+from biodisc_core.fixed_pipeline.reference_verification import (
+    create_reference_verifier, verify_evidence_pmids,
+)
 from biodisc_core.fixed_pipeline.replication_gate import (
     create_replication_gate, to_report_dict as replication_to_report_dict,
 )
@@ -104,6 +107,7 @@ class FixedDiscoveryOrchestrator:
 
         # Verification-first layer: real PubMed Gate-2 + held-out replication anchor.
         self.literature_gate = create_literature_novelty_gate()
+        self.reference_verifier = create_reference_verifier()
         self.replication_gate = create_replication_gate()
 
         logger.info("✅ 6-LAYER VALIDATION SYSTEM INITIALIZED")
@@ -267,6 +271,31 @@ class FixedDiscoveryOrchestrator:
                                f"(non-blocking) — {lit_verdict.reason}")
         else:
             validation_stats['literature_novelty'] = {'status': 'not_assessed'}
+
+        # LAYER 6b: Evidence-PMID reference verification (REFERENCE_VERIFICATION_
+        # PROTOCOL Rule 3 — attribution, not existence). The PMIDs Gate-2 cites
+        # as evidence came from Gate-2's own retrieval, so they resolve by
+        # construction; this round-trip + attribution tripwire catches the case
+        # where they resolve to papers NOT in scope of the claim (wrong-paper
+        # attribution — audit failure mode #2). Non-blocking on retrieval
+        # failure (stamped retrieval_failed, never silently passes).
+        lit_pmids = (lit_verdict.evidence_pmids if lit_verdict is not None else [])
+        if lit_pmids:
+            logger.info(f"🔎 LAYER 6b: EVIDENCE-PMID VERIFICATION ({len(lit_pmids)} PMIDs)")
+            ref_check = verify_evidence_pmids(
+                self.reference_verifier, claim_text, lit_pmids)
+            validation_stats['reference_verification'] = ref_check
+            if ref_check['status'] == 'mismatch':
+                passes_all_gates = False
+                rejection_reasons.append(
+                    f"EVIDENCE-PMID MISMATCH: {ref_check['mismatches'][:3]}"
+                )
+                logger.error("❌ LAYER 6b FAILED: cited PMIDs not in scope of claim")
+            elif ref_check['status'] == 'verified':
+                logger.info(f"✅ LAYER 6b PASSED: {len(ref_check['verified'])} "
+                            f"evidence PMIDs round-trip verified")
+            else:
+                logger.warning("⚠️  LAYER 6b INCONCLUSIVE: retrieval failed (non-blocking)")
 
         # LAYER 7: Question-Result Binding (V8.0.26). If the question names a
         # specific gene (contrarian / gene-focused questions), that gene must be

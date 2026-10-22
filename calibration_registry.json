@@ -73,7 +73,10 @@
       "module": "literature_gate",
       "kind": "ctor_default",
       "symbol": "LiteratureNoveltyGate",
-      "params": {"class": "LiteratureNoveltyGate", "param": "similarity_threshold"},
+      "params": {
+        "class": "LiteratureNoveltyGate",
+        "param": "similarity_threshold"
+      },
       "value": 0.55,
       "provenance": {
         "note": "engineering judgment at V8.0 - NOT yet calibrated on a labeled truth set; gate2_calibration.py measures it against gate2_truth_set.json",
@@ -87,7 +90,10 @@
       "module": "replication_gate",
       "kind": "ctor_default",
       "symbol": "ReplicationGate",
-      "params": {"class": "ReplicationGate", "param": "min_fraction"},
+      "params": {
+        "class": "ReplicationGate",
+        "param": "min_fraction"
+      },
       "value": 0.4,
       "provenance": {
         "note": "fraction of top discovery genes that must replicate in the held-out split",
@@ -101,7 +107,10 @@
       "module": "replication_gate",
       "kind": "ctor_default",
       "symbol": "ReplicationGate",
-      "params": {"class": "ReplicationGate", "param": "top_n"},
+      "params": {
+        "class": "ReplicationGate",
+        "param": "top_n"
+      },
       "value": 15,
       "provenance": {
         "note": "top genes by p-value carried from discovery split into the replication test",
@@ -115,7 +124,10 @@
       "module": "replication_gate",
       "kind": "ctor_default",
       "symbol": "ReplicationGate",
-      "params": {"class": "ReplicationGate", "param": "min_replicated"},
+      "params": {
+        "class": "ReplicationGate",
+        "param": "min_replicated"
+      },
       "value": 3,
       "provenance": {
         "note": "absolute floor so a 1/2 'fraction' can never count as replication",
@@ -129,12 +141,41 @@
       "module": "value_of_compute",
       "kind": "fn_default",
       "symbol": "fund_candidates",
-      "params": {"fn": "fund_candidates", "param": "exploration_frac"},
+      "params": {
+        "fn": "fund_candidates",
+        "param": "exploration_frac"
+      },
       "value": 0.15,
       "provenance": {
         "note": "eureka-insurance slice (V8.0.21): a random fraction of non-top-k funded candidates so the loop never goes 100% exploitation",
         "calibrated_on": "2026-07-21",
         "store_lines_at_calibration": 104
+      },
+      "stale_at_multiplier": 2.0
+    },
+    {
+      "id": "reference_verification.TITLE_SIM_THRESHOLD",
+      "module": "reference_verification",
+      "kind": "module_attr",
+      "symbol": "TITLE_SIM_THRESHOLD",
+      "value": 0.75,
+      "provenance": {
+        "note": "from REFERENCE_VERIFICATION_PROTOCOL.md v1.0 Rule 2 (RASTI audit, Oct 2026): title similarity floor 0.75, >=0.5 acceptable if journal+year agree; PubMed/PMID-adapted per the protocol's biomedical domain note",
+        "calibrated_on": "2026-10-22",
+        "source": "/Users/gjw255/astrodata/SWARM/RASTI/RASTI_paper/RASTI_Final/v1.34/REFERENCE_VERIFICATION_PROTOCOL.md"
+      },
+      "stale_at_multiplier": 2.0
+    },
+    {
+      "id": "reference_verification.ATTRIBUTION_SIM_THRESHOLD",
+      "module": "reference_verification",
+      "kind": "module_attr",
+      "symbol": "ATTRIBUTION_SIM_THRESHOLD",
+      "value": 0.35,
+      "provenance": {
+        "note": "Protocol Rule 3 (attribution, not existence), tuned lower than Gate-2's 0.55 because here the citation only needs to be in scope of the claim, not entailed as established knowledge; initial value, re-calibrate against gate2 truth set if mismatches fire on valid citations",
+        "calibrated_on": "2026-10-22",
+        "source": "REFERENCE_VERIFICATION_PROTOCOL.md Rule 3"
       },
       "stale_at_multiplier": 2.0
     }
